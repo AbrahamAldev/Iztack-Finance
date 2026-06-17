@@ -2,9 +2,12 @@
 Sistema Financiero - Configuration Module
 Loads environment variables and provides settings for the entire application.
 """
+import logging
 from pydantic_settings import BaseSettings
 from typing import Optional, Literal
 from functools import lru_cache
+
+logger = logging.getLogger(__name__)
 
 
 class Settings(BaseSettings):

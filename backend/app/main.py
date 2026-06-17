@@ -76,17 +76,19 @@ async def health_check():
 
 
 # =============================================================================
-# Route Registration (to be implemented in future phases)
+# Route Registration
 # =============================================================================
 
-# from app.modules.ocr.routes import router as ocr_router
+from app.modules.ocr.routes import router as ocr_router
+
+app.include_router(ocr_router, prefix="/api/ocr", tags=["OCR"])
+
+# Future modules (to be activated in subsequent phases):
 # from app.modules.bots.routes import router as bots_router
 # from app.modules.facturacion.routes import router as facturacion_router
 # from app.modules.finanzas.routes import router as finanzas_router
 # from app.modules.shopping_list.routes import router as shopping_list_router
 # from app.modules.almacenamiento.routes import router as almacenamiento_router
-
-# app.include_router(ocr_router, prefix="/api/ocr", tags=["OCR"])
 # app.include_router(bots_router, prefix="/api/bots", tags=["Bots"])
 # app.include_router(facturacion_router, prefix="/api/facturacion", tags=["Facturación"])
 # app.include_router(finanzas_router, prefix="/api/finanzas", tags=["Finanzas"])
