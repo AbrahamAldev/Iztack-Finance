@@ -73,15 +73,51 @@ try:
 except ImportError as e:
     logger.warning(f"❌ No se pudo registrar IKEA: {e}")
 
-# Future registrations (to be implemented):
-# PortalFactory.register("walmart")(WalmartPortal)
-# PortalFactory.register("amazon")(AmazonPortal)
-# PortalFactory.register("home_depot")(HomeDepotPortal)
-# PortalFactory.register("oxxo")(OxxoPortal)
-# PortalFactory.register("farmacias_similares")(FarmaciasSimilaresPortal)
-# PortalFactory.register("pemex")(PemexPortal)
-# PortalFactory.register("bp")(BPPortal)
-# PortalFactory.register("costco")(CostcoPortal)
-# PortalFactory.register("sams_club")(SamsClubPortal)
-# PortalFactory.register("soriana")(SorianaPortal)
-# PortalFactory.register("chedraui")(ChedrauiPortal)
+try:
+    from .walmart import WalmartPortal
+    PortalFactory.register("walmart")(WalmartPortal)
+    logger.info("✅ Portal Walmart registrado")
+except ImportError as e:
+    logger.warning(f"❌ No se pudo registrar Walmart: {e}")
+
+try:
+    from .amazon import AmazonPortal
+    PortalFactory.register("amazon")(AmazonPortal)
+    logger.info("✅ Portal Amazon registrado")
+except ImportError as e:
+    logger.warning(f"❌ No se pudo registrar Amazon: {e}")
+
+try:
+    from .homedepot import HomeDepotPortal
+    PortalFactory.register("home_depot")(HomeDepotPortal)
+    logger.info("✅ Portal Home Depot registrado")
+except ImportError as e:
+    logger.warning(f"❌ No se pudo registrar Home Depot: {e}")
+
+try:
+    from .oxxo import OxxoPortal
+    PortalFactory.register("oxxo")(OxxoPortal)
+    logger.info("✅ Portal Oxxo registrado")
+except ImportError as e:
+    logger.warning(f"❌ No se pudo registrar Oxxo: {e}")
+
+try:
+    from .farmacias_similares import FarmaciasSimilaresPortal
+    PortalFactory.register("farmacias_similares")(FarmaciasSimilaresPortal)
+    logger.info("✅ Portal Farmacias Similares registrado")
+except ImportError as e:
+    logger.warning(f"❌ No se pudo registrar Farmacias Similares: {e}")
+
+try:
+    from .pemex import PemexPortal
+    PortalFactory.register("pemex")(PemexPortal)
+    logger.info("✅ Portal Pemex registrado")
+except ImportError as e:
+    logger.warning(f"❌ No se pudo registrar Pemex: {e}")
+
+try:
+    from .bp import BPPortal
+    PortalFactory.register("bp")(BPPortal)
+    logger.info("✅ Portal BP registrado")
+except ImportError as e:
+    logger.warning(f"❌ No se pudo registrar BP: {e}")
