@@ -1,0 +1,70 @@
+# Environment
+.env
+.env.local
+.env.production
+*.env.local
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+.venv/
+venv/
+env/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+*.log
+logs/
+error_log/
+
+# Docker
+docker-data/
+
+# Playwright browsers (downloaded at build time)
+ms-playwright/
+
+# Frontend
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/dist/
+frontend/.env.local
+
+# Uploads
+uploads/
+temp/
+tmp/
+
+# Credentials
+credentials/
+*.key
+*.pem
+*.cert
+
+# Reports
+reports/*.pdf
+reports/*.html
+
+# OS Files
+thumbs.db
+.DS_Store
+*.DS_Store
