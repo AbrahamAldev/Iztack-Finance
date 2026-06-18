@@ -1,0 +1,87 @@
+name: 🚀 Deploy a Hostinger (Producción)
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:  # Permite deploy manual desde GitHub UI
+
+jobs:
+  deploy:
+    name: Deploy to Hostinger VPS
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Configurar SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.HOSTINGER_SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H ${{ secrets.HOSTINGER_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Deploy a Hostinger
+        run: |
+          ssh root@${{ secrets.HOSTINGER_HOST }} bash -c '
+            set -e  # Exit on error
+            
+            cd /opt/sistema-financiero
+            
+            # Backup DB antes del deploy
+            echo "📦 Backing up database..."
+            docker exec sf-postgres pg_dump -U postgres sistema_financiero | gzip > /tmp/db_backup_$(date +%Y%m%d_%H%M%S).sql.gz || echo "⚠️ No backup possible"
+            
+            # Pull latest code
+            echo "📥 Pulling latest code..."
+            git fetch origin main
+            git reset --hard origin/main
+            
+            # Stop and rebuild
+            echo "🔨 Rebuilding containers..."
+            docker-compose down
+            docker-compose build --no-cache backend
+            docker-compose up -d
+            
+            # Wait for services
+            echo "⏳ Waiting for services..."
+            sleep 15
+            
+            # Health checks
+            echo "🔍 Running health checks..."
+            BACKEND_HEALTH=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8000/api/health)
+            FRONTEND_HEALTH=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000)
+            
+            if [ "$BACKEND_HEALTH" != "200" ]; then
+              echo "❌ Backend health check failed: $BACKEND_HEALTH"
+              echo "📋 Checking backend logs..."
+              docker-compose logs --tail=50 backend
+              exit 1
+            fi
+            
+            if [ "$FRONTEND_HEALTH" != "200" ]; then
+              echo "❌ Frontend health check failed: $FRONTEND_HEALTH"
+              exit 1
+            fi
+            
+            echo "✅ Backend: $BACKEND_HEALTH"
+            echo "✅ Frontend: $FRONTEND_HEALTH"
+            
+            # Cleanup old images
+            docker image prune -f
+            
+            echo "🎉 Deploy completado exitosamente"
+          '
+
+      - name: Notificar éxito
+        if: success()
+        run: |
+          echo "✅ Deploy a producción completado exitosamente"
+          echo "🌐 Backend: https://tudominio.com/api/health"
+          echo "🌐 Frontend: https://tudominio.com"
+
+      - name: Notificar fallo
+        if: failure()
+        run: |
+          echo "❌ Deploy a producción FALLÓ"
+          echo "Revise los logs del workflow para más detalles."

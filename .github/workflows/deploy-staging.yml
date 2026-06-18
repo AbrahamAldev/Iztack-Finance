@@ -1,0 +1,57 @@
+name: 🚀 Deploy a Mini PC (Staging)
+
+on:
+  push:
+    branches: [develop]
+
+jobs:
+  deploy:
+    name: Deploy to Mini PC
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Configurar SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.MINIPC_SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H ${{ secrets.MINIPC_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Deploy a Mini PC
+        run: |
+          ssh root@${{ secrets.MINIPC_HOST }} bash -c '
+            cd /opt/sistema-financiero
+            
+            # Pull latest code
+            git fetch origin develop
+            git reset --hard origin/develop
+            
+            # Create .env if not exists
+            if [ ! -f .env ]; then
+              cp .env.example .env
+              echo "SECRET_KEY=${{ secrets.SECRET_KEY }}" >> .env
+              echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" >> .env
+              echo "TELEGRAM_BOT_TOKEN=${{ secrets.TELEGRAM_BOT_TOKEN }}" >> .env
+            fi
+            
+            # Stop and rebuild
+            docker-compose down
+            docker-compose build --no-cache backend
+            docker-compose up -d
+            
+            # Verify
+            sleep 10
+            curl -f http://localhost:8000/api/health && echo "✅ Backend OK" || echo "❌ Backend failed"
+            curl -f http://localhost:3000 && echo "✅ Frontend OK" || echo "❌ Frontend failed"
+            
+            # Cleanup old images
+            docker image prune -f
+          '
+
+      - name: Notificar resultado
+        if: always()
+        run: |
+          echo "🚀 Deploy a Mini PC completado: ${{ job.status }}"
