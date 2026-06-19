@@ -1,6 +1,9 @@
-# 🏦 Sistema Financiero
+# 🏦 Iztack-Tomin
 
-Sistema automatizado de gestión de tickets, facturas (CFDI) y finanzas personales. Procesa fotos de tickets recibidos por WhatsApp/Telegram, extrae datos con OCR, solicita facturas automáticamente en portales web, organiza todo en Google Drive, y genera análisis financieros con dashboards interactivos.
+**Iztack** → *nombre de la agencia digital y marca paraguas*  
+**Tomin** → *"dinero" en Náhuatl (lengua Azteca)*
+
+Sistema automatizado de gestión de tickets, facturas (CFDI) y finanzas personales. Procesa fotos de tickets recibidos por Telegram, extrae datos con OCR (Tesseract + IA), solicita facturas automáticamente en portales web, organiza todo en almacenamiento local + nube personal, y genera análisis financieros con dashboards interactivos.
 
 ---
 
