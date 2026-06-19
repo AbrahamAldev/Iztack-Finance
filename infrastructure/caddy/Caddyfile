@@ -1,0 +1,43 @@
+# Sistema Finanzas MX - Caddy Reverse Proxy
+# HTTPS automático con Let's Encrypt
+
+tudominio.com {
+    # Frontend (Next.js)
+    handle_path / {
+        reverse_proxy web:3000
+    }
+
+    # API (FastAPI)
+    handle_path /api/* {
+        reverse_proxy api:8000
+    }
+
+    # API Docs
+    handle_path /docs {
+        reverse_proxy api:8000
+    }
+
+    handle_path /redoc {
+        reverse_proxy api:8000
+    }
+
+    # OpenAPI spec
+    handle_path /openapi.json {
+        reverse_proxy api:8000
+    }
+
+    # Logs
+    log {
+        output file /data/logs/access.log
+    }
+}
+
+# Staging environment (mini PC local)
+staging.tudominio.com {
+    handle_path / {
+        reverse_proxy web:3000
+    }
+    handle_path /api/* {
+        reverse_proxy api:8000
+    }
+}
