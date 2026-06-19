@@ -1,0 +1,1 @@
+"""Shared package - Modelos SQLAlchemy, Schemas Pydantic y constantes."""
