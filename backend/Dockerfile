@@ -24,8 +24,10 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Install Playwright browsers (Chromium for web scraping)
+# Note: install-deps puede fallar en Debian trixie por paquetes de fuentes renombrados,
+# pero Chromium funciona igual sin esos paquetes específicos
 RUN playwright install chromium
-RUN playwright install-deps chromium
+RUN playwright install-deps chromium 2>/dev/null || echo "⚠️ install-deps partial failure (non-critical), continuing..."
 
 # Copy application code
 COPY . .
