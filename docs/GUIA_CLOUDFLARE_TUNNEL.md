@@ -263,8 +263,13 @@ pct enter NUMERO_DEL_CONTENEDOR -- ip a | grep eth0
 
 ### 6.3 Crear los registros DNS en Cloudflare
 
+> **⚠️ IMPORTANTE:** Estos comandos se ejecutan **DENTRO del contenedor** `cloudflare-tunnel` (después de `pct enter 103`), **NO** desde la terminal de Proxmox. Si los ejecutas desde Proxmox, verás el error: `Cannot determine default origin certificate path. No file cert.pem`.
+
 ```bash
-# Crear subdominios
+# Primero: entrar al contenedor (desde la terminal de Proxmox)
+pct enter 103
+
+# Ya dentro del contenedor (root@cloudflare-tunnel:~#), crear los subdominios:
 cloudflared tunnel route dns iztack-tomin app.tudominio.com
 cloudflared tunnel route dns iztack-tomin api.tudominio.com
 cloudflared tunnel route dns iztack-tomin db.tudominio.com
