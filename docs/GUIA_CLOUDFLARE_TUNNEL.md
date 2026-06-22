@@ -196,8 +196,14 @@ Esto genera un archivo de certificado en `~/.cloudflared/` y te muestra un **UUI
 
 ### 6.2 Configurar el archivo de túneles
 
+> **⚠️ IMPORTANTE:** El archivo debe crearse en `/etc/cloudflared/config.yml` (NO en `~/.cloudflared/`), porque el servicio systemd de cloudflared busca la configuración en `/etc/cloudflared/`. Si lo creas en `~/.cloudflared/`, el servicio fallará con `exit code 1`.
+
 ```bash
-nano ~/.cloudflared/config.yml
+# Crear el directorio del sistema
+mkdir -p /etc/cloudflared
+
+# Crear el archivo de configuración
+nano /etc/cloudflared/config.yml
 ```
 
 Pega esto (ajusta los puertos según tu configuración):
@@ -205,7 +211,7 @@ Pega esto (ajusta los puertos según tu configuración):
 ```yaml
 # Configuración de Cloudflare Tunnel para Iztack-Tomin
 tunnel: TU-UUID-DEL-TUNNEL
-credentials-file: /root/.cloudflared/TU-UUID-DEL-TUNNEL.json
+credentials-file: /etc/cloudflared/TU-UUID-DEL-TUNNEL.json
 
 ingress:
   # Frontend (Next.js)
@@ -222,7 +228,7 @@ ingress:
 
   # Health check
   - hostname: health.tudominio.com
-    service: http://IP_DEL_SERVIDOR:8000/api/health
+    service: http://IP_DEL_SERVIDOR:8000
 
   # Catch-all: rechazar todo lo demás
   - service: http_status:404
@@ -230,8 +236,10 @@ ingress:
 
 **Reemplaza:**
 - `TU-UUID-DEL-TUNNEL` → el UUID que te mostró el comando anterior
-- `IP_DEL_SERVIDOR` → la IP del servidor donde corre Iztack-Tomin (ej: `192.168.1.101`)
+- `IP_DEL_SERVIDOR` → la IP del servidor donde corre Iztack-Tomin (ej: `192.168.1.101`). **NO uses la IP del host Proxmox** si Iztack-Tomin corre en un contenedor separado. Para saber la IP correcta del contenedor, usa `pct list` y `pct enter ID -- ip a | grep eth0` desde Proxmox.
 - `tudominio.com` → tu dominio (ej: `iztack.com`)
+
+**Nota sobre el health check:** No uses rutas como `http://IP:8000/api/health`. Cloudflare Tunnel **no permite** subdirectorios en el `service`. Usa solo la dirección base (`http://IP:8000`).
 
 ### 6.3 Crear los registros DNS en Cloudflare
 
