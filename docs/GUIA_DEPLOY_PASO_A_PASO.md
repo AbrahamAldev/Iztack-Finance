@@ -190,9 +190,19 @@ reboot
 
 ---
 
-# PARTE 3: CONFIGURAR LOS DISCOS DE ALMACENAMIENTO
+# PARTE 3: CONFIGURAR LOS DISCOS DE ALMACENAMIENTO (RECOMENDADO)
 
-Antes de crear el contenedor, es importante entender cómo se organizan los discos en tu servidor:
+> **⚠️ IMPORTANTE:** Esta sección es **opcional**. Iztack-Tomin funciona perfectamente con un solo disco SSD. La configuración de múltiples discos es una **recomendación** para que tu servidor casero pueda soportar mejor servicios adicionales en el futuro:
+> 
+> | Disco | Propósito |
+> |-------|-----------|
+> | **SSD** (cualquier capacidad) | Sistema Proxmox + contenedores (rápido) → **MÍNIMO REQUERIDO** |
+> | **HDD 1TB** | Datos fríos de contenedores → **RECOMENDADO** |
+> | **HDD 2TB (exFAT)** | NAS portátil para transportar archivos → **OPCIONAL** |
+>
+> Si solo tienes un SSD, puedes **saltar directo al [Paso 6](#paso-6-crear-el-contenedor-lxc)**.
+
+Antes de crear el contenedor, así organizamos los discos en este servidor:
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -200,13 +210,13 @@ Antes de crear el contenedor, es importante entender cómo se organizan los disc
 ├──────────────┬──────────┬───────────────────────────────┤
 │    DISCO     │ TAMAÑO   │            USO                │
 ├──────────────┼──────────┼───────────────────────────────┤
-│ SSD (sda)    │ 128 GB   │ Sistema Proxmox + raíz de CTs │
-│ HDD (sdb)    │ 2 TB     │ NAS portátil (exFAT)          │
-│ HDD (sdc)    │ 1 TB     │ Datos fríos para contenedores │
+│ SSD          │ Cualquier│ Sistema Proxmox + raíz de CTs │
+│ HDD (opc)    │ 1 TB     │ Datos fríos para contenedores │
+│ HDD (opc)    │ 2 TB     │ NAS portátil (exFAT)          │
 └──────────────┴──────────┴───────────────────────────────┘
 ```
 
-> **Nota:** Los nombres de los discos (sda, sdb, sdc) pueden variar según tu hardware. Usa `lsblk` para identificar tus discos.
+> **Nota:** Los nombres de los discos (sda, sdb, sdc) varían según tu hardware. Usa `lsblk` para identificar los tuyos.
 
 ## Paso 1: Abrir la terminal de Proxmox
 
@@ -347,7 +357,9 @@ docker --version
 
 Deberías ver algo como: `Docker version 24.0.7, build afdd53b`
 
-## Paso 6: Clonar el proyecto desde GitHub
+> **Nota sobre el mensaje de Docker:** Si ves un mensaje como `To run Docker as a non-privileged user...` o `WARNING: Access to the remote API...` — **no es un error**. Es solo una advertencia de Docker diciendo que puedes ejecutarlo como usuario normal (no root). Docker ya quedó instalado correctamente. Puedes ignorar este mensaje y continuar.
+
+## Paso 10: Clonar el proyecto desde GitHub
 
 ```bash
 # Ir a la carpeta donde se instalará el sistema
@@ -360,7 +372,59 @@ git clone -b develop https://github.com/TU_USUARIO/Iztack-Tomin.git iztack-tomin
 cd iztack-tomin
 ```
 
-## Paso 7: Configurar variables de entorno
+> **¿Cómo obtener un Personal Access Token?**
+> 
+> Cuando ejecutes `git clone`, te pedirá:
+> - **Username**: tu nombre de usuario de GitHub (ej: `juanperez`)
+> - **Password**: NO es tu contraseña de GitHub. Debes usar un **Personal Access Token**.
+>
+> Para generar el token:
+> 1. Ve a **GitHub.com → Settings → Developer settings → Personal access tokens → Tokens (classic)**
+>    - URL directa: https://github.com/settings/tokens
+> 2. Haz clic en **"Generate new token (classic)"**
+> 3. Dale un nombre: **"Iztack-Tomin Deploy"**
+> 4. Marca estos permisos:
+>    - [x] `repo` (acceso completo a repositorios)
+> 5. Haz clic en **"Generate token"**
+> 6. **COPIA EL TOKEN INMEDIATAMENTE** (se ve así: `ghp_xxxxxxxxxxxxxxxxxxxx`). GitHub no lo mostrará de nuevo.
+> 7. Usa ese token como **password** cuando te lo pida el `git clone`.
+>
+> **Nota:** Cada persona que clone el repositorio debe usar **su propio usuario y su propio token**. No uses los míos.
+
+## Paso 11: Instalar Docker Compose (si no está instalado)
+
+```bash
+# Verificar si docker-compose existe
+docker compose version
+```
+
+Si ves `Docker Compose version v2...` → ya está instalado ✅. Usa `docker compose` (sin guión) en lugar de `docker-compose`.
+
+Si no está instalado:
+```bash
+apt install -y docker-compose-plugin
+```
+
+## Paso 12: Instalar Portainer (opcional - administrador visual de contenedores)
+
+Portainer te permite ver y administrar todos tus contenedores desde una interfaz web en lugar de la terminal.
+
+```bash
+# Crear el contenedor de Portainer
+docker run -d \
+  --name portainer \
+  --restart always \
+  -p 9000:9000 \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  portainer/portainer-ce:latest
+```
+
+Luego accede desde el navegador: `http://IP_DEL_CONTENEDOR:9000`
+- En la primera visita, crea una contraseña de administrador
+- Selecciona "Local" como entorno
+- ¡Listo! Verás todos tus contenedores con opciones para iniciar, detener, ver logs, etc.
+
+## Paso 13: Configurar variables de entorno
 
 ```bash
 # Copiar el archivo de ejemplo
@@ -370,7 +434,7 @@ cp .env.example .env
 nano .env
 ```
 
-Se abrirá un editor dentro de la terminal. **Pega esto** (presiona Cmd+V o haz clic derecho → Pegar):
+Se abrirá un editor dentro de la terminal. Verás algo como:
 
 ```
 SECRET_KEY=pon-aqui-una-clave-segura
@@ -378,34 +442,98 @@ TELEGRAM_BOT_TOKEN=pon-aqui-el-token-de-tu-bot
 GEMINI_API_KEY=pon-aqui-tu-api-key-de-gemini
 ```
 
-- **SECRET_KEY**: puedes poner cualquier texto largo, ej: `mi-clave-super-segura-12345`
-- **TELEGRAM_BOT_TOKEN**: lo obtienes de @BotFather en Telegram
-- **GEMINI_API_KEY**: la obtienes de https://aistudio.google.com
+**Reemplaza** los valores de ejemplo con tus datos reales. Si una variable ya tiene un valor de ejemplo y no quieres borrarla, puedes poner `#` al inicio de la línea para comentarla y escribir la tuya debajo:
+
+```
+# SECRET_KEY=pon-aqui-una-clave-segura  ← esta línea se ignora por el #
+SECRET_KEY=mi-clave-real-super-segura
+```
+
+### 🔑 SECRET_KEY
+
+Es la clave maestra para cifrar tus contraseñas de portales CFDI y tokens de nube. 
+
+**Opción 1 — Recomendada (generar una segura):**
+```bash
+# Este comando genera una clave de 64 caracteres aleatorios
+openssl rand -hex 32
+```
+Copia el resultado y pégalo como valor de `SECRET_KEY`.
+
+**Opción 2 — Rápida (cualquier texto largo):**
+```
+SECRET_KEY=mi-clave-super-segura-12345-cambiame-en-produccion
+```
+
+> **Importante:** Si cambias esta clave después de haber guardado credenciales, las credenciales anteriores quedarán inservibles.
+
+### 🤖 TELEGRAM_BOT_TOKEN
+
+1. Abre Telegram en tu celular o computadora
+2. Busca **@BotFather** (es el usuario oficial de Telegram para crear bots, tiene palomita azul)
+3. Haz clic en **"Start"** o escribe `/start`
+4. Escribe: `/newbot`
+5. BotFather te pedirá un nombre para tu bot. Escribe: **IztackTominBot**
+6. Luego te pedirá un username. Debe terminar en "bot". Escribe: **Iztack_Tomin_Bot**
+7. BotFather te responderá con algo como:
+
+```
+Done! Congratulations on your new bot. You will find it at:
+t.me/Iztack_Tomin_Bot
+
+Use this token to access the HTTP API:
+7234567890:AAHdqTcvCH1vGWJxfSeOfS0se
+```
+
+8. **COPIA ESE TOKEN INMEDIATAMENTE** (el número largo con letras y números). Es la única vez que BotFather te lo mostrará.
+9. Pégalo en el `.env`:
+```
+TELEGRAM_BOT_TOKEN=7234567890:AAHdqTcvCH1vGWJxfSeOfS0se
+```
+
+> Si pierdes el token, puedes crear uno nuevo con `/newbot` o pedirle a @BotFather que te lo muestre con `/token`.
+
+### 🧠 GEMINI_API_KEY
+
+1. Ve a **https://aistudio.google.com/app/apikey**
+2. Inicia sesión con tu cuenta de Google
+3. Haz clic en **"Create API Key"** (Crear clave API)
+4. Selecciona tu proyecto de Google Cloud (o crea uno nuevo)
+5. Copia la clave que te aparece (se ve así: `AIzaSyxxxxxxxxxxxxxxxxxxxxx`)
+6. Pégalo en el `.env`:
+```
+GEMINI_API_KEY=AIzaSyxxxxxxxxxxxxxxxxxxxxx
+```
+
+> La clave es **gratuita** para uso personal con límites generosos. No necesitas tarjeta de crédito.
 
 Para guardar los cambios en nano:
 1. Presiona `Ctrl + X` (Control + X)
 2. Presiona `Y` (Yes)
 3. Presiona `Enter`
 
-## Paso 8: Desplegar el sistema
+## Paso 14: Desplegar el sistema
 
 ```bash
 # Iniciar todos los servicios
-docker-compose up -d
+docker compose up -d
 
 # Verificar que están corriendo
-docker-compose ps
+docker compose ps
 ```
 
-Deberías ver 6 servicios con estado "Up":
+Deberías ver 7 servicios con estado "Up" (6 de Iztack-Tomin + 1 de Portainer):
 - postgres
 - redis
 - caddy
 - api
 - worker
 - adminer
+- portainer
 
-## Paso 9: Obtener la IP del contenedor
+> **Nota sobre docker-compose vs docker compose:** En versiones recientes de Docker, el comando `docker-compose` (con guión) fue reemplazado por `docker compose` (sin guión). Si `docker-compose` te da `Command not found`, usa `docker compose`.
+
+## Paso 15: Obtener la IP del contenedor
 
 ```bash
 # Salir del contenedor (presiona Ctrl + D)
@@ -417,7 +545,7 @@ pct enter 100 -- ip a | grep eth0
 
 Anota la dirección IP (algo como `192.168.1.101`)
 
-## Paso 10: ¡Probar que funciona!
+## Paso 16: ¡Probar que funciona!
 
 Desde tu Mac (o cualquier dispositivo en la misma red):
 
