@@ -236,8 +236,25 @@ ingress:
 
 **Reemplaza:**
 - `TU-UUID-DEL-TUNNEL` → el UUID que te mostró el comando anterior
-- `IP_DEL_SERVIDOR` → la IP del servidor donde corre Iztack-Tomin (ej: `192.168.1.101`). **NO uses la IP del host Proxmox** si Iztack-Tomin corre en un contenedor separado. Para saber la IP correcta del contenedor, usa `pct list` y `pct enter ID -- ip a | grep eth0` desde Proxmox.
+- `IP_DEL_SERVIDOR` → la IP del servidor donde corre Iztack-Tomin
 - `tudominio.com` → tu dominio (ej: `iztack.com`)
+
+**⚠️ Cómo saber la IP correcta del servidor:**
+
+Los comandos `pct list` y `pct enter` se ejecutan en la **terminal de Proxmox** (botón **>_ Shell** en la interfaz web), **NO** dentro del contenedor `cloudflare-tunnel`.
+
+```bash
+# Desde la terminal de Proxmox (NO desde el contenedor):
+
+# 1. Listar contenedores y sus IDs
+pct list
+
+# 2. Ver la IP de un contenedor específico (reemplaza ID por el número, ej: 100, 101, 102)
+pct enter ID -- ip a | grep eth0
+```
+
+Si Iztack-Tomin corre en el **mismo host Proxmox** (sin contenedor), usa la IP del host (ej: `192.168.0.2`).  
+Si Iztack-Tomin corre en un **contenedor separado**, usa la IP de ese contenedor.
 
 **Nota sobre el health check:** No uses rutas como `http://IP:8000/api/health`. Cloudflare Tunnel **no permite** subdirectorios en el `service`. Usa solo la dirección base (`http://IP:8000`).
 
