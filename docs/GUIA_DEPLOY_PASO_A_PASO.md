@@ -190,7 +190,23 @@ reboot
 
 ---
 
-# PARTE 3: CREAR EL CONTENEDOR Y DESPLEGAR
+# PARTE 3: CONFIGURAR LOS DISCOS DE ALMACENAMIENTO
+
+Antes de crear el contenedor, es importante entender cómo se organizan los discos en tu servidor:
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                ARQUITECTURA DE ALMACENAMIENTO            │
+├──────────────┬──────────┬───────────────────────────────┤
+│    DISCO     │ TAMAÑO   │            USO                │
+├──────────────┼──────────┼───────────────────────────────┤
+│ SSD (sda)    │ 128 GB   │ Sistema Proxmox + raíz de CTs │
+│ HDD (sdb)    │ 2 TB     │ NAS portátil (exFAT)          │
+│ HDD (sdc)    │ 1 TB     │ Datos fríos para contenedores │
+└──────────────┴──────────┴───────────────────────────────┘
+```
+
+> **Nota:** Los nombres de los discos (sda, sdb, sdc) pueden variar según tu hardware. Usa `lsblk` para identificar tus discos.
 
 ## Paso 1: Abrir la terminal de Proxmox
 
@@ -199,39 +215,111 @@ reboot
 3. Haz clic en **">_ Shell"** en la parte superior
 4. ✅ Terminal abierta
 
-## Paso 2: Crear el contenedor LXC
-
-Copia y pega **exactamente** este comando completo (todas las líneas juntas):
+## Paso 2: Identificar los discos disponibles
 
 ```bash
+lsblk -o NAME,SIZE,TYPE,FSTYPE | grep -v loop
+```
+
+Identifica:
+- **SSD del sistema** → donde está instalado Proxmox (suele ser el más pequeño, ej: 128GB)
+- **Disco para NAS portátil** → el que quieras formatear como exFAT (compatible Windows/Mac)
+- **Disco para datos fríos** → el que usarán los contenedores para almacenamiento masivo
+
+## Paso 3: Formatear el disco NAS portátil (exFAT)
+
+> **⚠️ ADVERTENCIA:** Esto BORRA todos los datos del disco seleccionado.
+
+Elige el disco que será tu NAS portátil (ej: `/dev/sdb`). Ejecuta:
+
+```bash
+# Reemplaza /dev/sdb por el disco que elegiste para NAS
+parted /dev/sdb mklabel gpt
+parted /dev/sdb mkpart primary 0% 100%
+mkfs.exfat /dev/sdb1
+```
+
+Este disco será compatible con Windows, macOS y Linux. Puedes desconectarlo y llevarlo a cualquier computadora.
+
+## Paso 4: Preparar el disco de datos fríos (ext4)
+
+Elige el disco que será para datos fríos (ej: `/dev/sdc`). Ejecuta:
+
+```bash
+# Limpiar firmas de sistemas de archivos anteriores (si el disco se usó antes)
+wipefs -a /dev/sdc1
+
+# Formatear como ext4
+mkfs.ext4 /dev/sdc1
+
+# Crear punto de montaje
+mkdir -p /mnt/NOMBRE_DEL_STORAGE
+
+# Montar el disco
+mount /dev/sdc1 /mnt/NOMBRE_DEL_STORAGE
+
+# Verificar
+df -h /mnt/NOMBRE_DEL_STORAGE
+```
+
+**Reemplaza:**
+- `/dev/sdc1` → por tu disco real
+- `NOMBRE_DEL_STORAGE` → por el nombre que quieras (ej: `datos-frios`, `storage`, `data`)
+
+## Paso 5: Dar de alta el storage en Proxmox
+
+Para que los contenedores puedan usar el disco de datos fríos fácilmente:
+
+```bash
+pvesm add dir NOMBRE_DEL_STORAGE --path /mnt/NOMBRE_DEL_STORAGE --content rootdir,images,vztmpl
+```
+
+Verifica que aparezca:
+
+```bash
+pvesm status
+```
+
+## Paso 6: Crear el contenedor LXC
+
+Ahora creamos el contenedor donde correrá Iztack-Tomin. El disco raíz va en el **SSD** (rápido) y el disco de datos fríos se monta dentro usando `--mp0`.
+
+```bash
+# Descargar template de Ubuntu 22.04 (si no lo tienes)
+pveam update
+pveam download local ubuntu-22.04-standard_22.04-1_amd64.tar.zst
+
+# Crear contenedor (cambia el ID si el 100 ya está ocupado, usa pct list para ver IDs libres)
 pct create 100 local:vztmpl/ubuntu-22.04-standard_22.04-1_amd64.tar.zst \
   --hostname iztack-tomin \
   --storage local-lvm \
-  --rootfs 20 \
-  --cores 4 \
-  --memory 4096 \
+  --rootfs 8 \
+  --cores 2 \
+  --memory 2048 \
   --net0 name=eth0,bridge=vmbr0,ip=dhcp \
   --unprivileged 1 \
-  --features nesting=1
+  --features nesting=1 \
+  --mp0 /mnt/NOMBRE_DEL_STORAGE,mp=/mnt/data
 ```
 
 **Explicación de cada parte:**
-- `pct create 100` → Crea un contenedor con ID 100
+- `pct create 100` → Crea un contenedor con ID 100 (usa otro número si está ocupado)
 - `ubuntu-22.04-standard` → Usa Ubuntu 22.04 (sistema operativo base)
-- `--hostname iztack-tomin` → El nombre del contenedor
-- `--rootfs 20` → 20 GB de disco
-- `--cores 4` → 4 núcleos de CPU
-- `--memory 4096` → 4 GB de RAM
+- `--storage local-lvm` → El disco raíz va en el SSD (más rápido)
+- `--rootfs 8` → 8 GB para el sistema operativo
+- `--cores 2` → 2 núcleos de CPU
+- `--memory 2048` → 2 GB de RAM
 - `ip=dhcp` → Obtiene IP automáticamente
 - `features nesting=1` → Permite ejecutar Docker dentro del contenedor
+- `--mp0 /mnt/NOMBRE_DEL_STORAGE,mp=/mnt/data` → Monta el disco de datos fríos dentro del contenedor en `/mnt/data`
 
-## Paso 3: Iniciar el contenedor
+## Paso 7: Iniciar el contenedor
 
 ```bash
 pct start 100
 ```
 
-## Paso 4: Entrar al contenedor
+## Paso 8: Entrar al contenedor
 
 ```bash
 pct enter 100
@@ -239,7 +327,7 @@ pct enter 100
 
 Ahora tu terminal está DENTRO del contenedor. Lo sabrás porque el prompt cambia a algo como `root@iztack-tomin:~#`
 
-## Paso 5: Instalar Docker dentro del contenedor
+## Paso 9: Instalar Docker dentro del contenedor
 
 Copia y pega **todo esto de una sola vez** (son 3 comandos seguidos):
 

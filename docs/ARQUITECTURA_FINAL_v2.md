@@ -32,6 +32,24 @@ sistema-finanzas-mx/
 └── frontend/ (legado v1 - migrar a apps/web/)
 ```
 
+## Almacenamiento (Plan Maestro)
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                ARQUITECTURA DE ALMACENAMIENTO            │
+├──────────────┬──────────┬───────────────────────────────┤
+│    DISCO     │ TAMAÑO   │            USO                │
+├──────────────┼──────────┼───────────────────────────────┤
+│ SSD (sda)    │ 128 GB   │ Sistema Proxmox + raíz de CTs │
+│ HDD (sdb)    │ 2 TB     │ NAS portátil (exFAT)          │
+│ HDD (sdf)    │ 1 TB     │ Datos fríos para contenedores │
+└──────────────┴──────────┴───────────────────────────────┘
+```
+
+- **Datos Calientes (SSD):** Exclusivo para sistema Proxmox y discos raíz de VMs/CTs
+- **Datos Fríos (HDD 1TB):** Almacenamiento masivo para contenedores mediante mount points
+- **NAS Portátil (HDD 2TB exFAT):** Compatible con Windows/macOS, futuro mirror con rsync
+
 ## Stack Tecnológico Definitivo
 
 | Capa | Tecnología | Estado |
