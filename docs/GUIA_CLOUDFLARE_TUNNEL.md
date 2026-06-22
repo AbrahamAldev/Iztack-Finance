@@ -278,9 +278,31 @@ cloudflared tunnel route dns iztack-tomin health.tudominio.com
 
 ### 6.4 Iniciar el túnel como servicio
 
+> **⚠️ POSIBLES ERRORES Y SOLUCIONES:**
+
+**Error 1 — Conflicto de configs:** Si creaste el archivo `config.yml` primero en `~/.cloudflared/` y luego lo copiaste a `/etc/cloudflared/`, verás: `Possible conflicting configuration in /root/.cloudflared/config.yml and /etc/cloudflared/config.yml`.  
+**Solución:** Elimina el duplicado en `/root/.cloudflared/`:
 ```bash
-# Instalar como servicio del sistema
-cloudflared service install
+rm /root/.cloudflared/config.yml
+```
+
+**Error 2 — Servicio ya instalado:** Si ya habías ejecutado `cloudflared service install` antes, verás: `cloudflared service is already installed at /etc/systemd/system/cloudflared.service`.  
+**Solución:** Desinstala y reinstala con la ruta correcta:
+```bash
+cloudflared service uninstall
+```
+
+**Comando final para instalar el servicio correctamente:**
+
+```bash
+# Desinstalar servicio anterior (si existe)
+cloudflared service uninstall 2>/dev/null
+
+# Eliminar archivo duplicado en /root/.cloudflared/ (si existe)
+rm -f /root/.cloudflared/config.yml
+
+# Instalar como servicio del sistema (apuntando al archivo en /etc/cloudflared/)
+cloudflared --config /etc/cloudflared/config.yml service install
 
 # Iniciar
 systemctl start cloudflared
@@ -307,7 +329,28 @@ journalctl -u cloudflared -f
 
 ---
 
+### 6.6 ⚠️ Requisito importante: Iztack-Tomin debe estar corriendo
+
+Para que el túnel funcione correctamente, **Iztack-Tomin debe estar desplegado y funcionando** ANTES de continuar con los pasos siguientes. Si el servicio no está corriendo, el túnel se conectará a Cloudflare pero devolverá errores 502/503 al intentar acceder.
+
+Verifica que Iztack-Tomin esté funcionando:
+```bash
+# Desde el contenedor donde corre Iztack-Tomin o desde el host Proxmox
+docker ps | grep iztack
+# o
+curl http://IP_DEL_SERVIDOR:8000/api/health
+```
+Deberías ver `{"status": "healthy"}`.
+
+---
+
 ## 7. Seguridad: Bloquear IPs fuera de México
+
+> **⚠️ IMPORTANTE:** Las reglas WAF se pueden aplicar a:
+> - **Todo el dominio** (`iztack.com`) → Afecta también al sitio web principal y cualquier otro servicio
+> - **Subdominios específicos** (`app.iztack.com`, `api.iztack.com`) → Solo afecta al túnel de cloudflared
+>
+> Para este proyecto, recomendamos aplicar las reglas **SOLO a los subdominios del túnel** para no afectar otros servicios que tengas en tu dominio principal.
 
 ### 7.1 Desde Cloudflare Dashboard (recomendado)
 
@@ -315,8 +358,26 @@ journalctl -u cloudflared -f
 2. Haz clic en **"Create rule"**
 3. Configura:
 
+**Opción A — Bloquear solo los subdominios del túnel (RECOMENDADO):**
 ```
-Rule name: Bloquear fuera de México
+Rule name: Bloquear fuera de Mexico - Tunnel
+Field: Hostname
+Operator: equals
+Value: app.iztack.com
+Value: api.iztack.com
+Value: db.iztack.com
+Value: health.iztack.com
+Operator: OR
+---
+Field: Country
+Operator: is not in
+Value: MX
+Action: Block
+```
+
+**Opción B — Bloquear todo el dominio (solo si no tienes otros servicios):**
+```
+Rule name: Bloquear fuera de Mexico
 Field: Country
 Operator: is not in
 Value: MX
