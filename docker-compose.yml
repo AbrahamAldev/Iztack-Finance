@@ -89,6 +89,38 @@ services:
       - frontend_node_modules:/app/node_modules
     command: npm run dev
 
+  # =============================================================================
+  # Telegram Bot (standalone polling process)
+  # =============================================================================
+  telegram-bot:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: sf-telegram-bot
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/sistema_financiero
+      DATABASE_SYNC_URL: postgresql+psycopg2://postgres:postgres@postgres:5432/sistema_financiero
+      REDIS_URL: redis://redis:6379/0
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      TELEGRAM_CHAT_ID_AUTHORIZED: ${TELEGRAM_CHAT_ID_AUTHORIZED:-}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      GOOGLE_REFRESH_TOKEN: ${GOOGLE_REFRESH_TOKEN:-}
+      GOOGLE_DRIVE_FOLDER_ID: ${GOOGLE_DRIVE_FOLDER_ID:-}
+      SECRET_KEY: ${SECRET_KEY:-default-secret-key}
+    volumes:
+      - ./backend:/app
+    command: python bot_main.py
+    # El bot sólo necesita salida HTTPS a api.telegram.org (no expone puertos)
+
 volumes:
   postgres_data:
   redis_data:
