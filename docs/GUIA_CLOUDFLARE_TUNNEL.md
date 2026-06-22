@@ -241,7 +241,7 @@ ingress:
 
 **⚠️ Cómo saber la IP correcta del servidor:**
 
-Los comandos `pct list` y `pct enter` se ejecutan en la **terminal de Proxmox** (botón **>_ Shell** en la interfaz web), **NO** dentro del contenedor `cloudflare-tunnel`.
+> **IMPORTANTE:** Los comandos `pct list` y `pct enter` se ejecutan en la **terminal de Proxmox** (botón **>_ Shell** en la interfaz web del navegador), **NO** dentro del contenedor `cloudflare-tunnel`. Si los escribes dentro del contenedor, verás `Command 'pct' not found`.
 
 ```bash
 # Desde la terminal de Proxmox (NO desde el contenedor):
@@ -249,12 +249,15 @@ Los comandos `pct list` y `pct enter` se ejecutan en la **terminal de Proxmox** 
 # 1. Listar contenedores y sus IDs
 pct list
 
-# 2. Ver la IP de un contenedor específico (reemplaza ID por el número, ej: 100, 101, 102)
-pct enter ID -- ip a | grep eth0
+# 2. Ver la IP de un contenedor específico (reemplaza "ID" por el número real, ej: 100, 101, 102)
+#    Ejemplo correcto: pct enter 103 -- ip a | grep eth0
+#    Ejemplo INCORRECTO: pct enter ID -- ip a | grep eth0  ← "ID" literal no funciona
+pct enter NUMERO_DEL_CONTENEDOR -- ip a | grep eth0
 ```
 
-Si Iztack-Tomin corre en el **mismo host Proxmox** (sin contenedor), usa la IP del host (ej: `192.168.0.2`).  
-Si Iztack-Tomin corre en un **contenedor separado**, usa la IP de ese contenedor.
+- Iztack-Tomin corre en el **host Proxmox** → usa la IP del host (ej: `192.168.0.2`)
+- Iztack-Tomin corre en un **contenedor separado** → usa la IP de ese contenedor
+- **Nota:** El contenedor `cloudflare-tunnel` solo tiene cloudflared. No pongas su IP como destino de los servicios.
 
 **Nota sobre el health check:** No uses rutas como `http://IP:8000/api/health`. Cloudflare Tunnel **no permite** subdirectorios en el `service`. Usa solo la dirección base (`http://IP:8000`).
 
