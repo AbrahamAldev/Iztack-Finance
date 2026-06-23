@@ -81,9 +81,11 @@ async def health_check():
 
 from app.modules.ocr.routes import router as ocr_router
 from app.modules.setup.routes import router as setup_router
+from app.modules.info import router as info_router
 
 app.include_router(ocr_router, prefix="/api/ocr", tags=["OCR"])
 app.include_router(setup_router, prefix="/api/setup", tags=["Setup"])
+app.include_router(info_router, prefix="/api", tags=["System"])
 
 # Future modules (to be activated in subsequent phases):
 # from app.modules.bots.routes import router as bots_router
