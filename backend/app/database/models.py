@@ -570,3 +570,57 @@ class AuditLog(Base):
 
     def __repr__(self):
         return f"<AuditLog {self.action} - {self.entity_type}:{self.entity_id}>"
+
+
+# =============================================================================
+# Tenant tables (multi-tenancy + chat_id -> user mapping)
+# =============================================================================
+
+class Tenant(Base):
+    """A tenant = a family / organization using the system."""
+    __tablename__ = "tenants"
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+    name = Column(String(255), nullable=False)
+    owner_email = Column(String(255), nullable=True)
+    currency = Column(String(10), default="MXN")
+    timezone = Column(String(64), default="America/Mexico_City")
+
+    # Setup state
+    setup_completed = Column(Boolean, default=False)
+    setup_completed_at = Column(DateTime, nullable=True)
+
+    # Encrypted secrets (never in plain text at rest)
+    # We store encrypted blobs + a key_id so we can rotate.
+    encrypted_telegram_bot_token = Column(LargeBinary, nullable=True)
+    encrypted_gemini_api_key = Column(LargeBinary, nullable=True)
+    encrypted_google_client_id = Column(LargeBinary, nullable=True)
+    encrypted_google_client_secret = Column(LargeBinary, nullable=True)
+    encrypted_google_refresh_token = Column(LargeBinary, nullable=True)
+    encryption_key_id = Column(String(100), nullable=True)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def __repr__(self):
+        return f"<Tenant {self.name} - setup_done={self.setup_completed}>"
+
+
+class TelegramChatLink(Base):
+    """Map a Telegram chat_id to a tenant (multi-tenant support)."""
+    __tablename__ = "telegram_chat_links"
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+    chat_id = Column(String(50), nullable=False, unique=True, index=True)
+    tenant_id = Column(String, ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False, index=True)
+
+    # Optional member identity within the tenant
+    member_name = Column(String(255), nullable=True)
+    member_role = Column(String(50), default="member")  # member, head, admin
+    is_active = Column(Boolean, default=True)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    last_seen_at = Column(DateTime, nullable=True)
+
+    def __repr__(self):
+        return f"<TelegramChatLink chat={self.chat_id} -> tenant={self.tenant_id}>"
