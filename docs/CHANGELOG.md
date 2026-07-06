@@ -68,3 +68,5 @@
 | 9 | **Renombre a Iztack-Finance** | Iztack = agencia/marca; Finance = módulo financiero. | `b191f86` |
 | 10 | **Guía de deploy** | `docs/GUIA_DEPLOY_PASO_A_PASO.md`. | `b191f86` |
 | 11 | **IDEA-ORIGINAL.md** | Documento fundacional. | `11a1c6f` |
+| 12 | **Recambio editorial Iztack-Tomin → Iztack-Finance** | Sustitución de todas las menciones del nombre antiguo en código y docs. Tag de backup `backup-pre-rebrand-20260706` (commit `b652e32`). | `93fab0a` |
+| 13 | **Guía manual del recambio** | `docs/manual/CHECKLIST_REBRAND_MANUAL.md` con las 12 acciones humanas (GitHub, Cloudflare, Proxmox, BotFather, GCP, Drive, Apple Passwords, comunicación). | `93fab0a` (mismo commit) |
