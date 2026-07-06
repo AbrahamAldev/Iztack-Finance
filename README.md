@@ -501,6 +501,18 @@ docker-compose ps
 
 ---
 
+## 📚 Documentación adicional
+
+| Documento | Para qué sirve |
+|-----------|----------------|
+| [docs/ARQUITECTURA_FINAL_v2.md](docs/ARQUITECTURA_FINAL_v2.md) | Decisiones de arquitectura (ARQ, Caddy, multi-tenant). |
+| [docs/GUIA_DEPLOY_PASO_A_PASO.md](docs/GUIA_DEPLOY_PASO_A_PASO.md) | Cómo desplegar en Proxmox desde cero. |
+| [docs/GUIA_SETUP_WIZARD.md](docs/GUIA_SETUP_WIZARD.md) | Wizard de primera configuración. |
+| [docs/GUIA_ACCESO_REMOTO.md](docs/GUIA_ACCESO_REMOTO.md) | Acceso seguro vía Cloudflare Tunnel. |
+| [docs/manual/GESTION_SECRETOS.md](docs/manual/GESTION_SECRETOS.md) | **Buenas prácticas de manejo de secretos** (`pass` + GPG + AES-256-GCM). |
+| [docs/manual/CHECKLIST_REBRAND_MANUAL.md](docs/manual/CHECKLIST_REBRAND_MANUAL.md) | Checklist de cambios humanos del rebrand. |
+| [docs/CHANGELOG.md](docs/CHANGELOG.md) | Bitácora cronológica del proyecto. |
+
 ## 📄 Licencia
 
 MIT

@@ -2,7 +2,16 @@
 
 > Registro cronológico de todas las decisiones, cambios y mejoras hechas en este chat.
 > Propósito: Si se cambia de modelo o chat, este documento permite retomar exactamente donde se quedó.
-> Última actualización: 22/06/2026
+> Última actualización: 06/07/2026
+
+---
+
+## 📦 Fecha: 06/07/2026 — Sesión: Gestión de Secretos con `pass` + GPG
+
+| # | Cambio | Explicación | Commit |
+|---|--------|-------------|--------|
+| 28 | **Manual `docs/manual/GESTION_SECRETOS.md`** | Guía completa de las 4 capas: `pass`+GPG en disco → env vars en RAM → AES-256-GCM en BD → wizard sin mostrar secretos. Inventario de secretos, rotación de `SECRET_KEY`, qué hacer si te roban la laptop, checklist de "lo que NUNCA debes hacer". | este commit |
+| 29 | **Script `scripts/load_secrets.sh`** | Carga secretos desde `pass` y arranca `uvicorn` con ellos en ENV. Los valores nunca se loguean ni se persisten a disco. | este commit |
 
 ---
 
