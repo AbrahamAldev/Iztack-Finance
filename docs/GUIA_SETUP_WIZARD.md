@@ -1,4 +1,4 @@
-# 🧙 Guía del Setup Wizard — Iztack-Tomin
+# 🧙 Guía del Setup Wizard — Iztack-Finance
 
 > Configura tu tenant paso a paso, sin editar archivos a mano.
 
@@ -25,11 +25,11 @@ Al terminar:
 
 ### Opción 1: Si acabas de instalar
 
-Entra a `https://app.iztack.com/setup` (o `http://localhost:3000/setup` si estás en LAN).
+Entra a `https://finance.iztack.com/setup` (o `http://localhost:3000/setup` si estás en LAN).
 
 ### Opción 2: Si quieres reconfigurar
 
-1. Detén los contenedores: `ssh proxmox "cd /opt/iztack-tomin && docker compose stop"`
+1. Detén los contenedores: `ssh proxmox "cd /opt/iztack-finance && docker compose stop"`
 2. Borra la fila del tenant: `ssh proxmox "pct exec 101 -- docker exec sf-postgres psql -U postgres -d sistema_financiero -c 'DELETE FROM tenants;'"`
 3. Vuelve a entrar a `/setup`
 
@@ -148,7 +148,7 @@ Respuesta:
 ```
 
 - **AES-256-GCM** = estándar militar, 256 bits de entropía
-- La clave maestra se genera aleatoriamente y se guarda en `/opt/iztack-tomin/.setup_key` con permisos `0600`
+- La clave maestra se genera aleatoriamente y se guarda en `/opt/iztack-finance/.setup_key` con permisos `0600`
 - Cada secreto tiene un nonce único de 96 bits
 - El `key_id` permite rotar la clave sin perder datos
 
@@ -158,7 +158,7 @@ El bot lee `.env`, no la DB. El `.env` se actualiza automáticamente al finaliza
 
 ### ¿Qué pasa si reinicio Proxmox?
 
-La clave maestra está en `/opt/iztack-tomin/.setup_key` que está bind-mounted. **No se pierde.**
+La clave maestra está en `/opt/iztack-finance/.setup_key` que está bind-mounted. **No se pierde.**
 
 ---
 
@@ -186,7 +186,7 @@ El `refresh_token` puede haber expirado (raro) o no tiene los scopes correctos. 
 El endpoint `/finalize` intenta `docker compose restart telegram-bot` desde el contenedor del backend. Si el backend no tiene acceso al socket de Docker, falla silenciosamente. En ese caso, reinicia manualmente:
 
 ```bash
-ssh proxmox "pct exec 101 -- cd /opt/iztack-tomin && docker compose restart telegram-bot"
+ssh proxmox "pct exec 101 -- cd /opt/iztack-finance && docker compose restart telegram-bot"
 ```
 
 ---

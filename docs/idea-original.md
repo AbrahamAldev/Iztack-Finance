@@ -1,4 +1,4 @@
-# 📜 Idea Original — Iztack-Tomin
+# 📜 Idea Original — Iztack-Finance
 
 > **Documento fundacional del proyecto.**
 > Contiene las directrices primigenias que definen el alcance, propósito y filosofía del sistema.
@@ -147,5 +147,5 @@ SISTEMA DE CONTROL DE FINANZAS PARA PYMES Y STARTUPS EN MEXICO
 
 ----------------------------------------------------
 > **Ultima actualizacion:** 19/06/2026
-> **Proyecto:** Iztack-Tomin
+> **Proyecto:** Iztack-Finance
 > **Propósito:** Mantener la vision original como referencia contra desviaciones.

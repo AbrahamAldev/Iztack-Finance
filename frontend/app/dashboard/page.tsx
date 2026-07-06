@@ -5,7 +5,7 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-900">Iztack-Tomin</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Iztack-Finance</h1>
           <span className="text-sm text-gray-500">Dashboard Financiero</span>
         </div>
       </header>
@@ -44,7 +44,7 @@ export default function DashboardPage() {
           </p>
           <div className="mt-6 inline-flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-lg text-sm">
             <span>🤖</span>
-            <span>Busca @Iztack_Tomin_Bot en Telegram</span>
+            <span>Busca @Iztack_Finance_Bot en Telegram</span>
           </div>
         </div>
 

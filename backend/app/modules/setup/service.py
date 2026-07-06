@@ -167,7 +167,7 @@ def _get_or_create_master_key() -> bytes:
         import hashlib
         return hashlib.sha256(env_key.encode()).digest()
 
-    key_file = os.getenv("SETUP_MASTER_KEY_FILE", "/opt/iztack-tomin/.setup_key")
+    key_file = os.getenv("SETUP_MASTER_KEY_FILE", "/opt/iztack-finance/.setup_key")
     if os.path.exists(key_file):
         with open(key_file, "rb") as f:
             return f.read()
@@ -262,9 +262,9 @@ async def finalize_setup(db: AsyncSession, req: FinalizeRequest) -> Tenant:
 
 def _write_env_file(req: FinalizeRequest, tenant_id: str) -> None:
     """
-    Append/update credential lines in /opt/iztack-tomin/.env (the docker-compose bind mount).
+    Append/update credential lines in /opt/iztack-finance/.env (the docker-compose bind mount).
     """
-    env_path = os.getenv("ENV_FILE_PATH", "/opt/iztack-tomin/.env")
+    env_path = os.getenv("ENV_FILE_PATH", "/opt/iztack-finance/.env")
     if not os.path.exists(os.path.dirname(env_path)):
         logger.warning("Cannot write env file: %s does not exist", env_path)
         return
@@ -313,7 +313,7 @@ def _restart_telegram_bot() -> bool:
 
         # Try via docker CLI (mounted socket)
         result = subprocess.run(
-            ["docker", "compose", "-f", "/opt/iztack-tomin/docker-compose.yml",
+            ["docker", "compose", "-f", "/opt/iztack-finance/docker-compose.yml",
              "restart", "telegram-bot"],
             timeout=15,
             capture_output=True,

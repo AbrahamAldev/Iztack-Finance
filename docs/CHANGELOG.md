@@ -1,4 +1,4 @@
-# CHANGELOG — Iztack-Tomin
+# CHANGELOG — Iztack-Finance
 
 > Registro cronológico de todas las decisiones, cambios y mejoras hechas en este chat.
 > Propósito: Si se cambia de modelo o chat, este documento permite retomar exactamente donde se quedó.
@@ -28,14 +28,14 @@
 | # | Cambio | Explicación | Commit |
 |---|--------|-------------|--------|
 | 17 | **Acceso SSH con clave Ed25519** | Par de claves (`~/.ssh/id_ed25519_iztrack`) generado en Mac, clave pública instalada en `root@192.168.0.2`. Alias `ssh proxmox` configurado en `~/.ssh/config`. Entrada sin password habilitada. | — (local, no en repo) |
-| 18 | **Inspección Proxmox completa** | Mapeados CT 101 (iztack-tomin, 5 contenedores sf-* healthy, IP 192.168.0.96), CT 103 (cloudflared daemon nativo, IP 192.168.0.95), CT 200 (ops-ai). | — (diagnóstico) |
+| 18 | **Inspección Proxmox completa** | Mapeados CT 101 (iztack-finance, 5 contenedores sf-* healthy, IP 192.168.0.96), CT 103 (cloudflared daemon nativo, IP 192.168.0.95), CT 200 (ops-ai). | — (diagnóstico) |
 | 19 | **🔐 Acceso remoto seguro vía Cloudflare Tunnel** | **HITO MAYOR.** Se extendió el túnel con SSH + Proxmox UI. Creadas 5 entradas DNS CNAME con proxy 🟠 en Cloudflare (app/api/ssh/proxmox/db → tunnel). El config del tunnel apunta al CT 101 (192.168.0.96) para los servicios HTTP y al host (192.168.0.2) para SSH/Proxmox. | — (config en /etc/cloudflared/config.yml) |
 | 20 | **`cloudflared` instalado en Mac** | Cliente de Cloudflare Tunnel instalado vía `brew install cloudflared` (v2026.6.1). | — (local) |
 | 21 | **Alias SSH `proxmox-remote`** | En `~/.ssh/config`: usa `ProxyCommand /opt/homebrew/bin/cloudflared access tcp --hostname %h` para conectarse al SSH del Proxmox desde cualquier parte del mundo con un solo comando. | — (local) |
 
 ### Hallazgos / Deuda técnica
 
-- ⚠️ El repo en el Proxmox está en `/opt/iztack-tomin` (no `/Iztack-Tomin`).
+- ⚠️ El repo en el Proxmox está en `/opt/iztack-finance` (no `/Iztack-Finance`).
 - ⚠️ El bot actualmente NO persiste tickets en DB, NO clasifica con LLM, NO es multi-tenant. Eso es para el siguiente turn.
 - ⚠️ El frontend (puerto 3000) no responde vía tunnel porque el docker-compose no lo publica correctamente al host — pendiente.
 - ⚠️ La contraseña de root del Proxmox y el API token de Cloudflare quedaron expuestos en este chat; se recomienda rotarlos al finalizar.
@@ -65,6 +65,6 @@
 |---|--------|-------------|--------|
 | 7 | **Backup histórico** | `docs/HISTORICO_ARQUITECTURA_v1.md`. | `28e70ac` |
 | 8 | **Arquitectura v2** | `docs/ARQUITECTURA_FINAL_v2.md`. | `9e2580c` |
-| 9 | **Renombre a Iztack-Tomin** | Iztack = agencia digital, Tomin = "dinero" en Náhuatl. | `b191f86` |
+| 9 | **Renombre a Iztack-Finance** | Iztack = agencia/marca; Finance = módulo financiero. | `b191f86` |
 | 10 | **Guía de deploy** | `docs/GUIA_DEPLOY_PASO_A_PASO.md`. | `b191f86` |
 | 11 | **IDEA-ORIGINAL.md** | Documento fundacional. | `11a1c6f` |

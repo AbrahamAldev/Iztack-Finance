@@ -1,10 +1,10 @@
-# 🏦 Iztack-Tomin
+# 🏦 Iztack-Finance
 
-**Iztack** → *nombre de la agencia digital y marca paraguas*  
-**Tomin** → *"dinero" en Náhuatl (lengua Azteca)*
+**Iztack** → *Agencia digital y marca tecnológica mexicana especializada en automatización inteligente.*  
+**Finance** → *Módulo de gestión financiera personal, familiar y para PyMEs en México.*
 
-> **Sistema integral de control financiero para PyMEs y familias en México.**
-> Automatiza la captura de tickets, facturación CFDI, organización de gastos, análisis financiero, lista de compras inteligente, y preparación de declaraciones fiscales SAT.
+> **Tu CFO personal automatizado: de la foto del ticket a la declaración del SAT, sin esfuerzo.**
+> Captura tickets por Telegram, factura CFDI en automático, organiza tus gastos, detecta fugas de dinero, arma tu lista de compras inteligente y prepárate para la declaración anual — todo desde un solo lugar.
 
 ---
 
@@ -26,7 +26,7 @@
 
 ## 🎯 Visión General
 
-Iztack-Tomin es un **agente financiero autónomo** que:
+Iztack-Finance es un **agente financiero autónomo** que:
 
 1. **Recibe fotos de tickets** por Telegram
 2. **Extrae los datos** con OCR (Tesseract local + IA como fallback)
@@ -186,7 +186,7 @@ Iztack-Tomin es un **agente financiero autónomo** que:
 ## 🏗️ Estructura del Proyecto
 
 ```
-Iztack-Tomin/
+Iztack-Finance/
 ├── apps/
 │   ├── web/                    Next.js 15 + shadcn/ui
 │   ├── bot/                    Telegram Bot (python-telegram-bot v21)
@@ -232,8 +232,8 @@ Iztack-Tomin/
 ### 1. Clonar el repositorio
 
 ```bash
-git clone https://github.com/TU_USUARIO/Iztack-Tomin.git
-cd Iztack-Tomin
+git clone https://github.com/TU_USUARIO/Iztack-Finance.git
+cd Iztack-Finance
 ```
 
 ### 2. Configurar variables de entorno
@@ -518,5 +518,5 @@ Las contribuciones son bienvenidas. Por favor:
 
 ---
 
-> **Iztack-Tomin** — *"Dinero Digital"*  
+> **Iztack-Finance** — *"Dinero Digital"*  
 > Hecho en México 🇲🇽 con amor por la independencia financiera

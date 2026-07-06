@@ -1,4 +1,4 @@
-# 🚀 Guía de Despliegue Paso a Paso — Iztack-Tomin
+# 🚀 Guía de Despliegue Paso a Paso — Iztack-Finance
 
 ## Para principiantes absolutos
 
@@ -35,7 +35,7 @@ GitHub es como un **Google Drive para código**. Guarda tu proyecto en la nube y
 4. Llena:
 
 ```
-Repository name: Iztack-Tomin
+Repository name: Iztack-Finance
 Description (opcional): Sistema de control de finanzas personales y PyMEs
 Private / Public: PRIVATE (marca Private)
 ```
@@ -99,10 +99,10 @@ Ahora pega **estos comandos UNO POR UNO** en la Terminal, presionando Enter desp
 
 ```bash
 # Ir a la carpeta del proyecto
-cd /Users/abraham/Documents/Cursor/Iztack-Tomin
+cd /Users/abraham/Documents/Cursor/Iztack-Finance
 
 # Decirle a Git que se conecte con GitHub (REEMPLAZA "TU_USUARIO" por tu nombre de GitHub)
-git remote add origin git@github.com:TU_USUARIO/Iztack-Tomin.git
+git remote add origin git@github.com:TU_USUARIO/Iztack-Finance.git
 
 # Subir la rama principal
 git push -u origin main
@@ -111,7 +111,7 @@ git push -u origin main
 Si te pide confirmación (`"Are you sure you want to continue connecting?"`), escribe `yes` y Enter.
 
 ✅ **¡Código subido a GitHub!** Puedes verificarlo yendo a:
-`https://github.com/TU_USUARIO/Iztack-Tomin`
+`https://github.com/TU_USUARIO/Iztack-Finance`
 
 ## Paso 5: Crear la rama develop
 
@@ -192,7 +192,7 @@ reboot
 
 # PARTE 3: CONFIGURAR LOS DISCOS DE ALMACENAMIENTO (RECOMENDADO)
 
-> **⚠️ IMPORTANTE:** Esta sección es **opcional**. Iztack-Tomin funciona perfectamente con un solo disco SSD. La configuración de múltiples discos es una **recomendación** para que tu servidor casero pueda soportar mejor servicios adicionales en el futuro:
+> **⚠️ IMPORTANTE:** Esta sección es **opcional**. Iztack-Finance funciona perfectamente con un solo disco SSD. La configuración de múltiples discos es una **recomendación** para que tu servidor casero pueda soportar mejor servicios adicionales en el futuro:
 > 
 > | Disco | Propósito |
 > |-------|-----------|
@@ -292,7 +292,7 @@ pvesm status
 
 ## Paso 6: Crear el contenedor LXC
 
-Ahora creamos el contenedor donde correrá Iztack-Tomin. El disco raíz va en el **SSD** (rápido) y el disco de datos fríos se monta dentro usando `--mp0`.
+Ahora creamos el contenedor donde correrá Iztack-Finance. El disco raíz va en el **SSD** (rápido) y el disco de datos fríos se monta dentro usando `--mp0`.
 
 ```bash
 # Descargar template de Ubuntu 22.04 (si no lo tienes)
@@ -301,7 +301,7 @@ pveam download local ubuntu-22.04-standard_22.04-1_amd64.tar.zst
 
 # Crear contenedor (cambia el ID si el 100 ya está ocupado, usa pct list para ver IDs libres)
 pct create 100 local:vztmpl/ubuntu-22.04-standard_22.04-1_amd64.tar.zst \
-  --hostname iztack-tomin \
+  --hostname iztack-finance \
   --storage local-lvm \
   --rootfs 8 \
   --cores 2 \
@@ -335,7 +335,7 @@ pct start 100
 pct enter 100
 ```
 
-Ahora tu terminal está DENTRO del contenedor. Lo sabrás porque el prompt cambia a algo como `root@iztack-tomin:~#`
+Ahora tu terminal está DENTRO del contenedor. Lo sabrás porque el prompt cambia a algo como `root@iztack-finance:~#`
 
 ## Paso 9: Instalar Docker dentro del contenedor
 
@@ -366,10 +366,10 @@ Deberías ver algo como: `Docker version 24.0.7, build afdd53b`
 cd /opt
 
 # Clonar el proyecto (REEMPLAZA "TU_USUARIO" por tu nombre de GitHub)
-git clone -b develop https://github.com/TU_USUARIO/Iztack-Tomin.git iztack-tomin
+git clone -b develop https://github.com/TU_USUARIO/Iztack-Finance.git iztack-finance
 
 # Entrar a la carpeta
-cd iztack-tomin
+cd iztack-finance
 ```
 
 > **¿Cómo obtener un Personal Access Token?**
@@ -382,7 +382,7 @@ cd iztack-tomin
 > 1. Ve a **GitHub.com → Settings → Developer settings → Personal access tokens → Tokens (classic)**
 >    - URL directa: https://github.com/settings/tokens
 > 2. Haz clic en **"Generate new token (classic)"**
-> 3. Dale un nombre: **"Iztack-Tomin Deploy"**
+> 3. Dale un nombre: **"Iztack-Finance Deploy"**
 > 4. Marca estos permisos:
 >    - [x] `repo` (acceso completo a repositorios)
 > 5. Haz clic en **"Generate token"**
@@ -473,13 +473,13 @@ SECRET_KEY=mi-clave-super-segura-12345-cambiame-en-produccion
 2. Busca **@BotFather** (es el usuario oficial de Telegram para crear bots, tiene palomita azul)
 3. Haz clic en **"Start"** o escribe `/start`
 4. Escribe: `/newbot`
-5. BotFather te pedirá un nombre para tu bot. Escribe: **IztackTominBot**
-6. Luego te pedirá un username. Debe terminar en "bot". Escribe: **Iztack_Tomin_Bot**
+5. BotFather te pedirá un nombre para tu bot. Escribe: **IztackFinanceBot**
+6. Luego te pedirá un username. Debe terminar en "bot". Escribe: **Iztack_Finance_Bot**
 7. BotFather te responderá con algo como:
 
 ```
 Done! Congratulations on your new bot. You will find it at:
-t.me/Iztack_Tomin_Bot
+t.me/Iztack_Finance_Bot
 
 Use this token to access the HTTP API:
 7234567890:AAHdqTcvCH1vGWJxfSeOfS0se
@@ -522,7 +522,7 @@ docker compose up -d
 docker compose ps
 ```
 
-Deberías ver 7 servicios con estado "Up" (6 de Iztack-Tomin + 1 de Portainer):
+Deberías ver 7 servicios con estado "Up" (6 de Iztack-Finance + 1 de Portainer):
 - postgres
 - redis
 - caddy
@@ -551,7 +551,7 @@ Desde tu Mac (o cualquier dispositivo en la misma red):
 
 1. Abre el navegador
 2. Prueba el backend: `http://192.168.1.101:8000/api/health`
-   - Deberías ver: `{"status": "healthy", "app": "Iztack-Tomin", ...}`
+   - Deberías ver: `{"status": "healthy", "app": "Iztack-Finance", ...}`
 3. Prueba el frontend: `http://192.168.1.101:3000`
    - Deberías ver la página principal del dashboard
 4. Prueba Adminer: `http://192.168.1.101:8080`
@@ -572,8 +572,8 @@ Desde tu Mac (o cualquier dispositivo en la misma red):
 2. Busca **@BotFather** (es un usuario verificado con palomita azul)
 3. Haz clic en **"Start"**
 4. Escribe: `/newbot`
-5. Responde: **"IztackTominBot"**
-6. Responde: **"Iztack_Tomin_Bot"** (debe terminar en "bot")
+5. Responde: **"IztackFinanceBot"**
+6. Responde: **"Iztack_Finance_Bot"** (debe terminar en "bot")
 7. @BotFather te dará un **TOKEN**. Se ve así: `7234567890:AAHdqTcvCH1vGWJxfSeOfS0se`
 8. **COPIA ESE TOKEN INMEDIATAMENTE** (no lo pierdas, después no lo podrás ver de nuevo)
 
@@ -584,7 +584,7 @@ Desde tu Mac (o cualquier dispositivo en la misma red):
 pct enter 100
 
 # Ir a la carpeta del proyecto
-cd /opt/iztack-tomin
+cd /opt/iztack-finance
 
 # Editar el .env
 nano .env
@@ -607,7 +607,7 @@ exit
 
 ## 4.3 Usar el bot
 
-1. Busca tu bot en Telegram: **@Iztack_Tomin_Bot**
+1. Busca tu bot en Telegram: **@Iztack_Finance_Bot**
 2. Envía: `/start`
 3. Envía una **foto de un ticket** de cualquier tienda
 4. El bot procesará el ticket y te responderá
@@ -620,7 +620,7 @@ exit
 
 ```bash
 # En tu Mac:
-cd /Users/abraham/Documents/Cursor/Iztack-Tomin
+cd /Users/abraham/Documents/Cursor/Iztack-Finance
 
 # 1. Crear una rama para tu cambio
 git checkout -b feature/mi-mejora

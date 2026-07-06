@@ -1,6 +1,6 @@
 # 🌐 Guía de Exposición Segura con Cloudflare Tunnel
 
-> **Propósito:** Exponer Iztack-Tomin (o cualquier servicio local) a internet de forma segura usando Cloudflare Tunnel, sin abrir puertos en el router, con protección geográfica y por dispositivo.
+> **Propósito:** Exponer Iztack-Finance (o cualquier servicio local) a internet de forma segura usando Cloudflare Tunnel, sin abrir puertos en el router, con protección geográfica y por dispositivo.
 
 ---
 
@@ -47,7 +47,7 @@ Mini PC (Proxmox) ──► cloudflared ──═════╝
 | **Dominio** | Un dominio (ej: `iztack.com`) administrado por Cloudflare |
 | **Cuenta Cloudflare** | Gratuita (https://dash.cloudflare.com) |
 | **Servidor local** | Mini PC con Proxmox (o cualquier Linux) |
-| **Iztack-Tomin** | Desplegado y funcionando en la red local |
+| **Iztack-Finance** | Desplegado y funcionando en la red local |
 
 ### 2.1 Configurar el dominio en Cloudflare
 
@@ -62,7 +62,7 @@ Mini PC (Proxmox) ──► cloudflared ──═════╝
 1. En Cloudflare Dashboard, ve a **Zero Trust** (menú izquierdo)
 2. Ve a **Access → Tunnels**
 3. Haz clic en **"Create a tunnel"**
-4. Ponle nombre: **`iztack-tomin`**
+4. Ponle nombre: **`iztack-finance`**
 5. Elige **"cloudflared"** como tipo
 6. Cloudflare te mostrará un **Token** (se ve así: `eyJhIjoi...`)
 7. **COPIA ESE TOKEN** — lo necesitarás después
@@ -189,7 +189,7 @@ Esto abrirá un link. Cópialo y pégalo en tu navegador. Autoriza el dominio qu
 
 ```bash
 # Crear el túnel (nómbralo como quieras)
-cloudflared tunnel create iztack-tomin
+cloudflared tunnel create iztack-finance
 ```
 
 Esto genera un archivo de certificado en `~/.cloudflared/` y te muestra un **UUID** (algo como `12345678-1234-1234-1234-123456789abc`).
@@ -209,7 +209,7 @@ nano /etc/cloudflared/config.yml
 Pega esto (ajusta los puertos según tu configuración):
 
 ```yaml
-# Configuración de Cloudflare Tunnel para Iztack-Tomin
+# Configuración de Cloudflare Tunnel para Iztack-Finance
 tunnel: TU-UUID-DEL-TUNNEL
 credentials-file: /etc/cloudflared/TU-UUID-DEL-TUNNEL.json
 
@@ -236,7 +236,7 @@ ingress:
 
 **Reemplaza:**
 - `TU-UUID-DEL-TUNNEL` → el UUID que te mostró el comando anterior
-- `IP_DEL_SERVIDOR` → la IP del servidor donde corre Iztack-Tomin
+- `IP_DEL_SERVIDOR` → la IP del servidor donde corre Iztack-Finance
 - `tudominio.com` → tu dominio (ej: `iztack.com`)
 
 **⚠️ Cómo saber la IP correcta del servidor:**
@@ -255,8 +255,8 @@ pct list
 pct enter NUMERO_DEL_CONTENEDOR -- ip a | grep eth0
 ```
 
-- Iztack-Tomin corre en el **host Proxmox** → usa la IP del host (ej: `192.168.0.2`)
-- Iztack-Tomin corre en un **contenedor separado** → usa la IP de ese contenedor
+- Iztack-Finance corre en el **host Proxmox** → usa la IP del host (ej: `192.168.0.2`)
+- Iztack-Finance corre en un **contenedor separado** → usa la IP de ese contenedor
 - **Nota:** El contenedor `cloudflare-tunnel` solo tiene cloudflared. No pongas su IP como destino de los servicios.
 
 **Nota sobre el health check:** No uses rutas como `http://IP:8000/api/health`. Cloudflare Tunnel **no permite** subdirectorios en el `service`. Usa solo la dirección base (`http://IP:8000`).
@@ -270,10 +270,10 @@ pct enter NUMERO_DEL_CONTENEDOR -- ip a | grep eth0
 pct enter 103
 
 # Ya dentro del contenedor (root@cloudflare-tunnel:~#), crear los subdominios:
-cloudflared tunnel route dns iztack-tomin app.tudominio.com
-cloudflared tunnel route dns iztack-tomin api.tudominio.com
-cloudflared tunnel route dns iztack-tomin db.tudominio.com
-cloudflared tunnel route dns iztack-tomin health.tudominio.com
+cloudflared tunnel route dns iztack-finance app.tudominio.com
+cloudflared tunnel route dns iztack-finance api.tudominio.com
+cloudflared tunnel route dns iztack-finance db.tudominio.com
+cloudflared tunnel route dns iztack-finance health.tudominio.com
 ```
 
 ### 6.4 Iniciar el túnel como servicio
@@ -329,13 +329,13 @@ journalctl -u cloudflared -f
 
 ---
 
-### 6.6 ⚠️ Requisito importante: Iztack-Tomin debe estar corriendo
+### 6.6 ⚠️ Requisito importante: Iztack-Finance debe estar corriendo
 
-Para que el túnel funcione correctamente, **Iztack-Tomin debe estar desplegado y funcionando** ANTES de continuar con los pasos siguientes. Si el servicio no está corriendo, el túnel se conectará a Cloudflare pero devolverá errores 502/503 al intentar acceder.
+Para que el túnel funcione correctamente, **Iztack-Finance debe estar desplegado y funcionando** ANTES de continuar con los pasos siguientes. Si el servicio no está corriendo, el túnel se conectará a Cloudflare pero devolverá errores 502/503 al intentar acceder.
 
-Verifica que Iztack-Tomin esté funcionando:
+Verifica que Iztack-Finance esté funcionando:
 ```bash
-# Desde el contenedor donde corre Iztack-Tomin o desde el host Proxmox
+# Desde el contenedor donde corre Iztack-Finance o desde el host Proxmox
 docker ps | grep iztack
 # o
 curl http://IP_DEL_SERVIDOR:8000/api/health
@@ -348,7 +348,7 @@ Deberías ver `{"status": "healthy"}`.
 
 > **⚠️ IMPORTANTE:** Las reglas WAF se pueden aplicar a:
 > - **Todo el dominio** (`iztack.com`) → Afecta también al sitio web principal y cualquier otro servicio
-> - **Subdominios específicos** (`app.iztack.com`, `api.iztack.com`) → Solo afecta al túnel de cloudflared
+> - **Subdominios específicos** (`finance.iztack.com`, `api.iztack.com`) → Solo afecta al túnel de cloudflared
 >
 > Para este proyecto, recomendamos aplicar las reglas **SOLO a los subdominios del túnel** para no afectar otros servicios que tengas en tu dominio principal.
 
@@ -363,7 +363,7 @@ Deberías ver `{"status": "healthy"}`.
 Rule name: Bloquear fuera de Mexico - Tunnel
 Field: Hostname
 Operator: equals
-Value: app.iztack.com
+Value: finance.iztack.com
 Value: api.iztack.com
 Value: db.iztack.com
 Value: health.iztack.com
@@ -452,7 +452,7 @@ Puedes requerir autenticación por email o Google para acceder al dashboard:
 3. Configura:
 
 ```
-Application name: Iztack-Tomin Dashboard
+Application name: Iztack-Finance Dashboard
 Domain: app.tudominio.com
 Session duration: 24h
 
@@ -500,7 +500,7 @@ journalctl -u cloudflared --no-pager | tail -20
 
 | Servicio | URL | Deberías ver |
 |----------|-----|--------------|
-| Frontend | `https://app.tudominio.com` | Dashboard de Iztack-Tomin |
+| Frontend | `https://app.tudominio.com` | Dashboard de Iztack-Finance |
 | API | `https://api.tudominio.com/docs` | Documentación Swagger |
 | Health | `https://health.tudominio.com` | `{"status": "healthy"}` |
 
@@ -546,7 +546,7 @@ systemctl restart cloudflared
 ### 10.4 Comprobar estado
 
 ```bash
-cloudflared tunnel info iztack-tomin
+cloudflared tunnel info iztack-finance
 ```
 
 ---

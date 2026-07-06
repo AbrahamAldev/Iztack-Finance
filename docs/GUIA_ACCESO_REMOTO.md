@@ -1,4 +1,4 @@
-# 🌐 Guía de Acceso Remoto — Iztack-Tomin
+# 🌐 Guía de Acceso Remoto — Iztack-Finance
 
 > **Controla tu Proxmox y tu app desde cualquier parte del mundo** (café, oficina, hotel, etc.)
 > Sin IP pública, sin VPN, sin Tailscale. Solo Cloudflare Tunnel.
@@ -12,8 +12,8 @@
 | URL | Qué hace |
 |---|---|
 | `https://proxmox.iztack.com` | Interfaz web de Proxmox (crear/editar CTs, ver métricas) |
-| `https://api.iztack.com` | Backend de Iztack-Tomin (FastAPI) |
-| `https://app.iztack.com` | Frontend (cuando se arregle el publish del puerto 3000) |
+| `https://api.iztack.com` | Backend de Iztack-Finance (FastAPI) |
+| `https://finance.iztack.com` | Frontend (cuando se arregle el publish del puerto 3000) |
 | `https://db.iztack.com` | Adminer (cuando se levante) |
 | `https://health.iztack.com` | Health check |
 | `ssh proxmox-remote` | Terminal SSH al Proxmox desde tu Mac |
@@ -47,7 +47,7 @@ ssh-copy-id -i ~/.ssh/id_ed25519_iztrack.pub root@192.168.0.2
 ### 4. Configurar alias SSH en `~/.ssh/config`
 
 ```sshconfig
-# Iztack-Tomin — acceso LAN (cuando estás en casa)
+# Iztack-Finance — acceso LAN (cuando estás en casa)
 Host proxmox
     HostName 192.168.0.2
     User root
@@ -56,7 +56,7 @@ Host proxmox
     StrictHostKeyChecking no
     ServerAliveInterval 60
 
-# Iztack-Tomin — acceso REMOTO (cuando estás fuera de casa)
+# Iztack-Finance — acceso REMOTO (cuando estás fuera de casa)
 Host proxmox-remote
     HostName ssh.iztack.com
     User root
@@ -78,7 +78,7 @@ Usa el alias `proxmox`:
 
 ```bash
 ssh proxmox "docker ps"
-ssh proxmox "cd /opt/iztack-tomin && git pull"
+ssh proxmox "cd /opt/iztack-finance && git pull"
 ```
 
 Velocidad: ~5-15ms (red local).
@@ -89,7 +89,7 @@ Usa el alias `proxmox-remote`:
 
 ```bash
 ssh proxmox-remote "docker ps"
-ssh proxmox-remote "cd /opt/iztack-tomin && git pull"
+ssh proxmox-remote "cd /opt/iztack-finance && git pull"
 ```
 
 Velocidad: ~50-200ms (viaja por internet hasta Cloudflare, baja por el túnel). Suficiente para editar archivos y correr comandos.
@@ -235,7 +235,7 @@ brew install cloudflared
                                                 │  cloudflared daemon          │
                                                 │                              │
                                                 │  Ingress routing:            │
-                                                │  • app.iztack.com  → :3000   │
+                                                │  • finance.iztack.com  → :3000   │
                                                 │  • api.iztack.com  → :8000   │
                                                 │  • proxmox.iztack.com → 8006│
                                                 │  • ssh.iztack.com   → :22    │

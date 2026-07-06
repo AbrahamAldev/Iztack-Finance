@@ -1,4 +1,4 @@
-# ✅ Task List — Proyecto Iztack-Tomin
+# ✅ Task List — Proyecto Iztack-Finance
 
 > **Propósito:** Saber exactamente en qué punto estamos y qué falta.
 > Última actualización: 19/06/2026
