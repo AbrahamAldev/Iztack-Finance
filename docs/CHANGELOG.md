@@ -15,6 +15,32 @@
 
 ---
 
+## 📦 Fecha: 06/07/2026 — Sesión: Corrección de CHANGELOG + Validación de repo real + Resiliencia post-corte
+
+### Aclaración: el repo correcto es `AbrahamAldev/Iztack-Finance`
+
+| # | Cambio | Explicación | Commit |
+|---|--------|-------------|--------|
+| 30 | **Verificación: no hay repo `ABRAHAM-ABIZTACK/Iztack-Finance`** | El repo en GitHub del usuario real es `AbrahamAldev/Iztack-Finance`, accesible por SSH (`git@github.com:AbrahamAldev/Iztack-Finance.git`). El remote local ya apunta ahí desde el recambio editorial del 93fab0a. | — |
+| 31 | **Corrección de CHANGELOG (entradas #30-#32 anteriores eran erróneas)** | Se había documentado un push a un repo inexistente. Se reemplaza por la realidad: el remote `AbrahamAldev/Iztack-Finance` es el correcto, el push se hace contra ese. | este commit |
+| 32 | **Tag `backup-pre-rebrand-20260706` (preservado)** | Sigue en el repo apuntando al commit `b652e32` (antes del recambio de marca). Verificado con `git show-ref --tags`. | `b652e32` (tag) |
+| 33 | **Fix del email `noreply` del setup wizard** | El backend usaba un email "demo@..." en el schema de validación; reemplazado por `noreply@iztack.com` que es el dominio real del túnel. | `dd4f9a6` |
+
+### Cambios de Documentación
+
+| # | Cambio | Explicación | Commit |
+|---|--------|-------------|--------|
+| 34 | **`docs/GUIA_ACCESO_REMOTO.md` — sección de auto-arranque post-corte de luz** | Nueva sección "⚡ Auto-arranque tras corte de luz" con 6 capas de resiliencia (UPS, hipervisor, CTs, Docker, tunnel, ops-ai), 5 checks de verificación, script de rescate, instrucciones para BIOS del Proxmox, comando `uptime -p` para detectar cortes recientes, puntero al monitoreo proactivo vía Telegram. +108/-2 líneas. | este commit |
+| 35 | **Actualización fecha y "Ver también" en `GUIA_ACCESO_REMOTO.md`** | Fecha → 06/07/2026; "Ver también" ahora incluye `GESTION_SECRETOS.md` y `CHECKLIST_REBRAND_MANUAL.md`. | este commit |
+
+### Pendiente operativo
+
+- ⏳ Wipe Docker + instalación limpia desde cero (operación destructiva, requiere confirmación explícita).
+- ⏳ Diagnóstico de `cloudflared` y `ops-ai` para validar auto-start real tras un corte simulado (`ssh proxmox "systemctl reboot"`).
+- ⏳ Commit final con los cambios de docs de esta sesión.
+
+---
+
 ## 📦 Fecha: 22/06/2026 — Sesión: Setup Wizard + Acceso Remoto Seguro
 
 ### Cambios de Frontend

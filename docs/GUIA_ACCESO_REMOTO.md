@@ -3,7 +3,103 @@
 > **Controla tu Proxmox y tu app desde cualquier parte del mundo** (café, oficina, hotel, etc.)
 > Sin IP pública, sin VPN, sin Tailscale. Solo Cloudflare Tunnel.
 
-**Última actualización**: 22/06/2026
+**Última actualización**: 06/07/2026
+
+---
+
+## ⚡ Auto-arranque tras corte de luz (resiliencia)
+
+> **Esta sección es la diferencia entre "el sistema vuelve solo" y "tienes que ir a prender la Mac a las 2 AM porque se fue la luz".**
+
+### Filosofía
+
+- **El Proxmox** se enciende solo cuando vuelve la energía (configurado en BIOS como "Restore on AC Power Loss" → Power On). El hipervisor está en un UPS si lo tienes, y el túnel se restablece sin intervención.
+- **Los contenedores (CT 101 app, CT 103 tunnel)** arrancan con el host vía `systemctl enable` y dependencias.
+- **El Mac (cliente)** NO está siempre encendido. Se conecta bajo demanda.
+- **Después de un corte largo** (varias horas), el sistema **se auto-recupera** y queda accesible vía `https://proxmox.iztack.com` y `ssh proxmox-remote` sin que toques nada.
+
+### Capas de auto-arranque
+
+```
+Capa 0 — UPS / Regulador
+    └─ aguantar 5-15 min sin red eléctrica (ideal; si no, ve a "Capa 0-bis")
+
+Capa 0-bis — Sin UPS
+    └─ configurar BIOS del Proxmox en "Power On after AC loss" (ver bloque siguiente)
+
+Capa 1 — Hipervisor Proxmox
+    └─ enciende solo → systemd levanta pveproxy y pvedaemon
+
+Capa 2 — Contenedores LXC (CT 101 app, CT 103 tunnel)
+    └─ /etc/pve/lxc/*.conf tiene "onboot: 1" → arrancan en orden de boot
+    └─ dentro de cada CT, los servicios tienen "systemctl enable ..."
+
+Capa 3 — Dentro de CT 101 (app)
+    └─ docker-compose con restart: unless-stopped
+    └─ healthchecks reinician contenedores caídos
+
+Capa 4 — Túnel Cloudflare (CT 103)
+    └─ cloudflared con "autoupdate: true" y restart=always
+    └─ si Cloudflare se cae, reintenta cada 5s; cuando vuelve, reconecta solo
+
+Capa 5 — Agente de IA / ops-ai
+    └─ habilitado en systemd con Restart=always y RestartSec=10
+    └─ escribe heartbeat en /var/log/ops-ai/heartbeat.log
+```
+
+### Verificación rápida después de un corte
+
+Conéctate desde tu Mac (o desde el celular con Termius) y corre:
+
+```bash
+# 1. ¿El Proxmox responde por SSH LAN?
+ssh proxmox "uptime && pct list"
+# Esperado: "up" reciente (minutos), y la lista de CTs con status "running"
+
+# 2. ¿El túnel está vivo?
+ssh proxmox "pct exec 103 -- systemctl is-active cloudflared"
+# Esperado: "active"
+
+# 3. ¿El backend responde público?
+curl -sI https://api.iztack.com/api/health | head -1
+# Esperado: "HTTP/2 200"
+
+# 4. ¿La BD arrancó bien?
+ssh proxmox "pct exec 101 -- docker logs --tail 5 sf-postgres 2>&1 | grep -i 'ready\|accept'"
+# Esperado: línea con "database system is ready to accept connections"
+
+# 5. ¿El bot de Telegram está despierto?
+ssh proxmox "pct exec 101 -- docker logs --tail 5 sf-bot 2>&1 | grep -i 'started\|polling'"
+# Esperado: "Started polling" o equivalente
+```
+
+Si los 5 checks pasan, **el sistema se recuperó solo**. No tienes que hacer nada más.
+
+### Si algo no levantó (script de rescate)
+
+```bash
+ssh proxmox "
+  pct exec 103 -- systemctl restart cloudflared
+  pct exec 101 -- cd /opt/iztack-finance && docker compose up -d
+  sleep 15
+  pct exec 101 -- docker ps
+"
+```
+
+### Configurar el Proxmox para auto-encender tras corte de luz
+
+1. Reinicia el Proxmox y entra a la BIOS (Del / F2 al arranque).
+2. Busca: **Power Management → After Power Loss** (o "Restore on AC Power Loss").
+3. Cambia a **Power On** (no "Last State", no "Stay Off").
+4. Guarda y sal.
+
+Si tu Proxmox es un MiniPC con BIOS distinta, busca: "AC Power Recovery" → "Always Power On".
+
+> 💡 **Tip**: Si quieres validar que está bien configurado SIN esperar un corte real, haz `ssh proxmox "systemctl reboot"` y comprueba que a los 2-3 minutos vuelve a estar accesible.
+
+### Monitoreo proactivo (opcional pero recomendado)
+
+Si quieres que el sistema te avise por Telegram cuando algo NO se recuperó, está el módulo de notificaciones del bot. Documentación detallada en `docs/manual/GESTION_SECRETOS.md` y la config de Telegram en el setup wizard (`/setup` en la web).
 
 ---
 
@@ -149,6 +245,14 @@ ssh proxmox "passwd"
 ssh proxmox-remote "systemctl status cloudflared --no-pager | head -5"
 ```
 
+### Saber cuánto lleva el Proxmox encendido (útil tras un corte)
+
+```bash
+ssh proxmox "uptime -p"
+# Ej: "up 3 minutes" → acaba de volver de un corte
+# Ej: "up 12 days" → lleva más de una semana estable
+```
+
 ### Ver logs del túnel (en tiempo real)
 
 ```bash
@@ -273,4 +377,6 @@ brew install cloudflared
 
 - `docs/GUIA_DEPLOY_PASO_A_PASO.md` — Setup inicial del Proxmox
 - `docs/GUIA_CLOUDFLARE_TUNNEL.md` — Detalles del túnel
-- `docs/CHANGELOG.md` — Cambios del 22/06/2026 sobre el setup de acceso remoto
+- `docs/CHANGELOG.md` — Cambios del 06/07/2026 (resiliencia post-corte de luz + rebrand Iztack-Finance)
+- `docs/manual/GESTION_SECRETOS.md` — Cómo recuperar secretos si el túnel no levanta
+- `docs/manual/CHECKLIST_REBRAND_MANUAL.md` — Cambios de marca Iztack-Tomin → Iztack-Finance 
