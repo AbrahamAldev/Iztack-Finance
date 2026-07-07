@@ -1,3 +1,5 @@
+name: iztack-finance
+
 services:
   # =============================================================================
   # PostgreSQL Database
