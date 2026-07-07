@@ -55,7 +55,7 @@ export default function RegisterPage() {
 
       const data = await res.json();
       localStorage.setItem("iztack_token", data.access_token);
-      router.push("/dashboard");
+      router.push("/app/dashboard");
     } catch (err: any) {
       setError(err.message);
     } finally {

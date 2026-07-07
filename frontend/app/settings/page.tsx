@@ -1,9 +1,6 @@
 /**
  * Página /settings
  * Configuración general del tenant (preferencias, cuenta, integraciones).
- *
- * Por ahora es un placeholder funcional mientras se construye el wizard
- * completo de configuración inicial (que vive en /setup).
  */
 "use client";
 
@@ -19,22 +16,17 @@ export default function SettingsPage() {
 
   function handleSave(e: React.FormEvent) {
     e.preventDefault();
-    // TODO: persistir en backend (POST /api/settings)
     setSavedAt(new Date().toLocaleString("es-MX"));
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
-          <h1 className="text-2xl font-bold text-gray-900">Configuración</h1>
-          <p className="mt-1 text-sm text-gray-500">
-            Ajustes generales de tu cuenta y del sistema
-          </p>
-        </div>
-      </header>
+    <div>
+      <h1 className="text-2xl font-bold text-gray-900 mb-1">Configuración</h1>
+      <p className="text-sm text-gray-500 mb-8">
+        Ajustes generales de tu cuenta y del sistema
+      </p>
 
-      <main className="max-w-3xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+      <div className="max-w-3xl">
         <form onSubmit={handleSave} className="space-y-6">
           {/* Cuenta */}
           <section className="bg-white rounded-lg shadow p-6">
@@ -126,7 +118,7 @@ export default function SettingsPage() {
             )}
           </div>
         </form>
-      </main>
+      </div>
     </div>
   );
 }

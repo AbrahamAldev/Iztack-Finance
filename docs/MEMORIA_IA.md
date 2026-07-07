@@ -63,11 +63,12 @@ Usuario → Cloudflare (Access @iztack.com) → Cloudflare Tunnel → CT 101 (Do
 
 ## 🔄 Tareas en Progreso / Pendientes
 
-- [x] **Login/Signup** — Autenticación con JWT (Fase 1) ✅ COMPLETADO
+- [x] **Login/Signup** — Autenticación con JWT (Fase 1) ✅ COMPLETADO Y DEPLOYADO
 - [ ] **Settings** — Vincular Telegram chat_id + Google Drive por usuario (Fase 2)
 - [ ] **Subida de tickets** — Cámara + archivos desde frontend (Fase 3)
 - [ ] **Chat en la app** — Reemplazo gradual de Telegram (Fase 4)
 - [ ] **Telegram multi-usuario** — Un solo bot para todos (Fase 5)
+- [ ] **CI/CD** — Reparar GitHub Actions (ssh-keyscan falla por secret faltante)
 
 ---
 
