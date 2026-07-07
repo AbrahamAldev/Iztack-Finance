@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 from typing import Optional, Tuple
 import secrets
 import string
+import hashlib
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
