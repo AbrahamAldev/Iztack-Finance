@@ -573,6 +573,49 @@ class AuditLog(Base):
 
 
 # =============================================================================
+# User model (authentication)
+# =============================================================================
+
+class User(Base):
+    """Registered user with login credentials."""
+    __tablename__ = "users"
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+    email = Column(String(255), unique=True, nullable=False, index=True)
+    name = Column(String(255), nullable=False)
+    password_hash = Column(String(255), nullable=False)
+    tenant_id = Column(String, ForeignKey("tenants.id", ondelete="SET NULL"), nullable=True, index=True)
+
+    # Telegram chat_id for this user (vinculación manual)
+    telegram_chat_id = Column(String(50), nullable=True, unique=True)
+
+    # Profile
+    avatar_url = Column(Text, nullable=True)
+    timezone = Column(String(64), default="America/Mexico_City")
+    currency = Column(String(10), default="MXN")
+
+    # Drive credentials (encrypted per user)
+    encrypted_google_refresh_token = Column(LargeBinary, nullable=True)
+    encrypted_google_drive_folder_id = Column(LargeBinary, nullable=True)
+    encryption_key_id = Column(String(100), nullable=True)
+
+    # Status
+    is_active = Column(Boolean, default=True)
+    is_verified = Column(Boolean, default=False)
+    last_login_at = Column(DateTime, nullable=True)
+
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    tenant = relationship("Tenant", backref="users")
+
+    def __repr__(self):
+        return f"<User {self.email} - tenant={self.tenant_id}>"
+
+
+# =============================================================================
 # Tenant tables (multi-tenancy + chat_id -> user mapping)
 # =============================================================================
 

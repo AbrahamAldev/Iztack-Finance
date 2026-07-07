@@ -1,8 +1,9 @@
 """
 Sistema Financiero - File Hashing Utilities
-SHA-256 hashing for file deduplication.
+SHA-256 hashing for file deduplication + password hashing.
 """
 import hashlib
+import bcrypt
 
 
 class FileHasher:
@@ -41,3 +42,24 @@ class FileHasher:
         """Verify a file's hash matches expected value."""
         actual_hash = FileHasher.hash_file(filepath)
         return actual_hash == expected_hash
+
+
+class PasswordHasher:
+    """Password hashing using bcrypt."""
+
+    @staticmethod
+    def hash_password(password: str) -> str:
+        """Hash a password with bcrypt."""
+        salt = bcrypt.gensalt()
+        return bcrypt.hashpw(password.encode("utf-8"), salt).decode("utf-8")
+
+    @staticmethod
+    def verify_password(password: str, hashed: str) -> bool:
+        """Verify a password against its hash."""
+        try:
+            return bcrypt.checkpw(
+                password.encode("utf-8"),
+                hashed.encode("utf-8")
+            )
+        except (ValueError, TypeError):
+            return False
