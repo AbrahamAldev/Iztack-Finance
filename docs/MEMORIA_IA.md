@@ -64,6 +64,8 @@ Usuario → Cloudflare (Access @iztack.com) → Cloudflare Tunnel → CT 101 (Do
 ## 🔄 Tareas en Progreso / Pendientes
 
 - [x] **Login/Signup** — Autenticación con JWT (Fase 1) ✅ COMPLETADO Y DEPLOYADO
+- [x] **Landing page SaaS** — Página informativa con features, pricing, CTA ✅
+- [x] **Rutas protegidas** — /app/* solo accesible con JWT válido ✅
 - [ ] **Settings** — Vincular Telegram chat_id + Google Drive por usuario (Fase 2)
 - [ ] **Subida de tickets** — Cámara + archivos desde frontend (Fase 3)
 - [ ] **Chat en la app** — Reemplazo gradual de Telegram (Fase 4)
