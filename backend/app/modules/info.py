@@ -29,9 +29,10 @@ async def get_info(db: AsyncSession = Depends(get_db)):
         logger.warning("DB health check failed: %s", exc)
 
     return {
-        "app": "Sistema Financiero",
-        "version": "1.1.0"  """
-Sistema Financiero - Info Endpoint
-Returns non-sensitive runtime info about the deployment.
-Useful for the  "server_time_utc": datetime.utcnow().isoformat() + "Z",
+        "app": "Iztack-Finance",
+        "version": "1.1.0",
+        "python_version": sys.version.split()[0],
+        "platform": platform.platform(),
+        "database": "ok" if db_ok else "error",
+        "server_time_utc": datetime.utcnow().isoformat() + "Z",
     }
