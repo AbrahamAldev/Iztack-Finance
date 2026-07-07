@@ -1,0 +1,36 @@
+name: Deploy to Proxmox
+
+on:
+  push:
+    branches:
+      - develop
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy via SSH to Proxmox CT
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.PROXMOX_CT_HOST }}
+          username: ${{ secrets.PROXMOX_CT_USER }}
+          key: ${{ secrets.PROXMOX_CT_SSH_KEY }}
+          port: 22
+          script: |
+            set -e
+            echo "=== Pulling latest code ==="
+            cd /opt/iztack-tomin
+            git fetch origin
+            git reset --hard origin/${{ github.ref_name }}
+            echo "=== Restarting stack ==="
+            docker compose pull
+            docker compose up -d --build
+            echo "=== Health check ==="
+            sleep 5
+            curl -sf http://localhost:8000/api/health || echo "WARNING: Health check failed, check logs"
+            echo "=== Done! ==="
