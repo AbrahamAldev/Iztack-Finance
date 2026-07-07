@@ -24,13 +24,12 @@ jobs:
           script: |
             set -e
             echo "=== Pulling latest code ==="
-            cd /opt/iztack-tomin
+            cd /opt/iztack-finance
             git fetch origin
             git reset --hard origin/${{ github.ref_name }}
             echo "=== Restarting stack ==="
-            docker compose pull
             docker compose up -d --build
             echo "=== Health check ==="
-            sleep 5
+            sleep 10
             curl -sf http://localhost:8000/api/health || echo "WARNING: Health check failed, check logs"
             echo "=== Done! ==="
