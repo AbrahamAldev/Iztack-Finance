@@ -1,13 +1,11 @@
-/**
- * Página /settings
- * Configuración general del tenant (preferencias, cuenta, integraciones).
- */
 "use client";
 
 import { useState } from "react";
 import { Save, Printer, User, Globe } from "lucide-react";
+import AuthGuard from "../components/AuthGuard";
+import AppNav from "../components/AppNav";
 
-export default function SettingsPage() {
+function SettingsContent() {
   const [tenantName, setTenantName] = useState("Familia Pérez");
   const [currency, setCurrency] = useState("MXN");
   const [timezone, setTimezone] = useState("America/Mexico_City");
@@ -120,6 +118,15 @@ export default function SettingsPage() {
         </form>
       </div>
     </div>
+  );
+}
+
+export default function SettingsPage() {
+  return (
+    <AuthGuard>
+      <AppNav />
+      <SettingsContent />
+    </AuthGuard>
   );
 }
 

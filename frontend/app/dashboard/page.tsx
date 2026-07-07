@@ -1,8 +1,16 @@
 "use client";
 
-export default function DashboardPage() {
+import AuthGuard from "../components/AuthGuard";
+import AppNav from "../components/AppNav";
+
+function DashboardContent() {
   return (
     <>
+      <h1 className="text-2xl font-bold text-gray-900 mb-1">Dashboard</h1>
+      <p className="text-sm text-gray-500 mb-8">
+        Resumen de tus finanzas y estado del sistema
+      </p>
+
       {/* KPIs */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         <div className="bg-white rounded-lg shadow p-6">
@@ -66,15 +74,24 @@ export default function DashboardPage() {
             <a href="/api/health" className="block text-sm text-blue-600 hover:underline">
               → Health Check API
             </a>
-            <a href="/app/settings" className="block text-sm text-blue-600 hover:underline">
+            <a href="/settings" className="block text-sm text-blue-600 hover:underline">
               → Configuración
             </a>
-            <a href="/app/shopping-list" className="block text-sm text-blue-600 hover:underline">
+            <a href="/shopping-list" className="block text-sm text-blue-600 hover:underline">
               → Lista de Compras
             </a>
           </div>
         </div>
       </div>
     </>
+  );
+}
+
+export default function DashboardPage() {
+  return (
+    <AuthGuard>
+      <AppNav />
+      <DashboardContent />
+    </AuthGuard>
   );
 }
