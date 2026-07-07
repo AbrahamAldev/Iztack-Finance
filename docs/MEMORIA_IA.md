@@ -63,7 +63,7 @@ Usuario → Cloudflare (Access @iztack.com) → Cloudflare Tunnel → CT 101 (Do
 
 ## 🔄 Tareas en Progreso / Pendientes
 
-- [ ] **Login/Signup** — Autenticación con JWT (Fase 1)
+- [x] **Login/Signup** — Autenticación con JWT (Fase 1) ✅ COMPLETADO
 - [ ] **Settings** — Vincular Telegram chat_id + Google Drive por usuario (Fase 2)
 - [ ] **Subida de tickets** — Cámara + archivos desde frontend (Fase 3)
 - [ ] **Chat en la app** — Reemplazo gradual de Telegram (Fase 4)
@@ -164,3 +164,4 @@ ssh proxmox pct exec 101 -- \
 | Fecha | IA | Cambio |
 |---|---|---|
 | 2026-07-07 | Cline | Creación del documento. Estado post-deploy con túnel funcional. |
+| 2026-07-07 | Cline | Fase 1 completada: Login/Signup con JWT. Modelo User, módulo auth, páginas /login /register, Navbar. |
