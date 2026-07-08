@@ -1,15 +1,32 @@
 "use client";
 
+import { useState } from "react";
 import AuthGuard from "../components/AuthGuard";
 import AppNav from "../components/AppNav";
+import TicketUpload from "../components/TicketUpload";
 
 function DashboardContent() {
+  const [showUpload, setShowUpload] = useState(false);
+
   return (
     <>
-      <h1 className="text-2xl font-bold text-gray-900 mb-1">Dashboard</h1>
-      <p className="text-sm text-gray-500 mb-8">
-        Resumen de tus finanzas y estado del sistema
-      </p>
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-1">Dashboard</h1>
+          <p className="text-sm text-gray-500">
+            Resumen de tus finanzas y estado del sistema
+          </p>
+        </div>
+        <button
+          onClick={() => setShowUpload(true)}
+          className="flex items-center gap-2 px-5 py-2.5 bg-sky-600 text-white rounded-lg font-medium hover:bg-sky-700 shadow-sm transition-all"
+        >
+          <span className="text-lg">📸</span>
+          Subir Ticket
+        </button>
+      </div>
+
+      {showUpload && <TicketUpload onClose={() => setShowUpload(false)} />}
 
       {/* KPIs */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">

@@ -65,12 +65,12 @@ Usuario → Cloudflare (Access @iztack.com) → Cloudflare Tunnel → CT 101 (Do
 
 - [x] **Login/Signup** — Autenticación con JWT (Fase 1) ✅ COMPLETADO Y DEPLOYADO
 - [x] **Landing page SaaS** — Página informativa con features, pricing, CTA ✅
-- [x] **Rutas protegidas** — /app/* solo accesible con JWT válido ✅
-- [ ] **Settings** — Vincular Telegram chat_id + Google Drive por usuario (Fase 2)
+- [x] **Rutas protegidas** — /dashboard, /settings, /shopping-list protegidas con AuthGuard ✅
+- [x] **CI/CD** — Todos los workflows usan appleboy/ssh-action (sin ssh-keysan) ✅
+- [x] **Settings** — Telegram chat_id + Google Drive por usuario (Fase 2) ✅ COMPLETADO Y DEPLOYADO
 - [ ] **Subida de tickets** — Cámara + archivos desde frontend (Fase 3)
 - [ ] **Chat en la app** — Reemplazo gradual de Telegram (Fase 4)
 - [ ] **Telegram multi-usuario** — Un solo bot para todos (Fase 5)
-- [ ] **CI/CD** — Reparar GitHub Actions (ssh-keyscan falla por secret faltante)
 
 ---
 

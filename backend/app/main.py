@@ -83,11 +83,15 @@ from app.modules.ocr.routes import router as ocr_router
 from app.modules.setup.routes import router as setup_router
 from app.modules.info import router as info_router
 from app.modules.auth.routes import router as auth_router
+from app.modules.settings.routes import router as settings_router
+from app.modules.tickets.routes import router as tickets_router
 
 app.include_router(ocr_router, prefix="/api/ocr", tags=["OCR"])
 app.include_router(setup_router, prefix="/api/setup", tags=["Setup"])
 app.include_router(info_router, prefix="/api", tags=["System"])
 app.include_router(auth_router, tags=["Auth"])
+app.include_router(settings_router, tags=["Settings"])
+app.include_router(tickets_router, tags=["Tickets"])
 
 # Future modules (to be activated in subsequent phases):
 # from app.modules.bots.routes import router as bots_router
