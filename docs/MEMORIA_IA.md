@@ -1,7 +1,7 @@
 # 🧠 Memoria Colectiva - Iztack-Finance
 
 > **Propósito:** Documento de contexto compartido para múltiples IAs trabajando en el proyecto.
-> **Última actualización:** 2026-07-07
+> **Última actualización:** 2026-07-08
 
 ---
 
@@ -10,10 +10,11 @@
 | Elemento | Valor |
 |---|---|
 | **Branch activo** | `develop` |
-| **Último commit** | `aa6f200` (fix info.py syntax) |
+| **Último commit** | `ac9c843` (feat(ai): chat con IA real via OpenRouter) |
 | **URL producción** | https://finance.iztack.com |
 | **URL API** | https://api.iztack.com |
 | **Proxmox** | CT 101 (app) + CT 103 (tunnel) |
+| **IA activa** | ✅ OpenRouter (DeepSeek free) configurado |
 
 ---
 
@@ -37,6 +38,7 @@ Usuario → Cloudflare (Access @iztack.com) → Cloudflare Tunnel → CT 101 (Do
 | Bot Telegram | python-telegram-bot (polling) | - |
 | Túnel | Cloudflare Tunnel (efímero, token) | - |
 | Almacenamiento | Google Drive (por usuario) | - |
+| IA Chat | OpenRouter (DeepSeek free) | - |
 
 ### Infraestructura Proxmox
 
@@ -58,19 +60,19 @@ Usuario → Cloudflare (Access @iztack.com) → Cloudflare Tunnel → CT 101 (Do
 - [x] **Google Drive** — Almacenamiento de PDF/XML de facturas
 - [x] **Setup wizard** — Configuración inicial del sistema
 - [x] **Telegram Bot** — Recepción de tickets y comandos (multi-tenant vía chat_id)
+- [x] **Login/Signup** — Autenticación con JWT (Fase 1)
+- [x] **Landing page SaaS** — Página informativa con features, pricing, CTA
+- [x] **Rutas protegidas** — /dashboard, /settings, /shopping-list protegidas con AuthGuard
+- [x] **Settings** — Telegram chat_id + Google Drive por usuario (Fase 2)
+- [x] **Subida de tickets** — Cámara con overlay guía + stitching multi-imagen (Fase 3)
+- [x] **Chat en la app** — Asistente IA flotante con OpenRouter (Fase 4)
+- [x] **IA con OpenRouter** — DeepSeek free, system prompt anti-prompt-injection, contexto real del usuario
 
 ---
 
-## 🔄 Tareas en Progreso / Pendientes
+## 🔄 Tareas Pendientes
 
-- [x] **Login/Signup** — Autenticación con JWT (Fase 1) ✅ COMPLETADO Y DEPLOYADO
-- [x] **Landing page SaaS** — Página informativa con features, pricing, CTA ✅
-- [x] **Rutas protegidas** — /dashboard, /settings, /shopping-list protegidas con AuthGuard ✅
-- [x] **CI/CD** — Todos los workflows usan appleboy/ssh-action (sin ssh-keysan) ✅
-- [x] **Settings** — Telegram chat_id + Google Drive por usuario (Fase 2) ✅ COMPLETADO Y DEPLOYADO
-- [ ] **Subida de tickets** — Cámara + archivos desde frontend (Fase 3)
-- [ ] **Chat en la app** — Reemplazo gradual de Telegram (Fase 4)
-- [ ] **Telegram multi-usuario** — Un solo bot para todos (Fase 5)
+- [ ] **Telegram multi-usuario** — Un solo bot @IztackFinance_Bot para todos los usuarios (Fase 5)
 
 ---
 
@@ -86,7 +88,9 @@ Usuario → Cloudflare (Access @iztack.com) → Cloudflare Tunnel → CT 101 (Do
 │   │   │   ├── connection.py    # SQLAlchemy async engine
 │   │   │   └── models.py        # All DB models
 │   │   ├── modules/
+│   │   │   ├── auth/            # Login/Signup JWT
 │   │   │   ├── bots/telegram_bot.py
+│   │   │   ├── chat/            # Chat IA con OpenRouter
 │   │   │   ├── ocr/             # OCR service
 │   │   │   ├── facturacion/     # Portal scraping
 │   │   │   ├── almacenamiento/  # Google Drive
@@ -94,11 +98,14 @@ Usuario → Cloudflare (Access @iztack.com) → Cloudflare Tunnel → CT 101 (Do
 │   │   │   ├── finanzas/        # Financial analysis
 │   │   │   ├── garantias/       # Warranty detection
 │   │   │   ├── shopping_list/   # Smart shopping lists
+│   │   │   ├── tickets/         # Upload + stitching
+│   │   │   ├── settings/        # User settings
 │   │   │   ├── setup/           # Setup wizard
 │   │   │   └── info.py          # Health endpoint
 │   │   └── utils/
 │   │       ├── crypto.py        # AES encryption
-│   │       └── hashing.py       # Password hashing
+│   │       ├── hashing.py       # Password hashing
+│   │       └── llm.py           # OpenRouter client
 │   ├── bot_main.py              # Telegram bot entry point
 │   └── requirements.txt
 ├── frontend/
@@ -116,38 +123,13 @@ Usuario → Cloudflare (Access @iztack.com) → Cloudflare Tunnel → CT 101 (Do
 └── docs/
     ├── MEMORIA_IA.md             ← Este documento
     ├── ARQUITECTURA_FINAL_v2.md
-    ├── GUIA_DEPLOY_PASO_A_PASO.md
-    ├── GUIA_CLOUDFLARE_TUNNEL.md
+    ├── CHANGELOG.md
     └── ...
 ```
 
 ---
 
-## 🧪 Cómo Ejecutar Tests
-
-```bash
-# Backend tests
-cd backend && python -m pytest tests/
-
-# Frontend build check
-cd frontend && npm run build
-```
-
----
-
-## 🚀 Cómo Hacer Deploy
-
-El deploy se hace automáticamente vía GitHub Actions (`.github/workflows/deploy.yml`).
-
-Manual:
-```bash
-ssh proxmox pct exec 101 -- \
-  "cd /opt/iztack-finance && git pull && docker compose up -d --build"
-```
-
----
-
-## 🤖 Reglas para IAs
+##  Reglas para IAs
 
 1. **NO modificar código de otro módulo sin preguntar** al usuario o documentarlo aquí
 2. **Actualizar este documento** al completar una tarea (fecha + cambios)
@@ -167,4 +149,8 @@ ssh proxmox pct exec 101 -- \
 | Fecha | IA | Cambio |
 |---|---|---|
 | 2026-07-07 | Cline | Creación del documento. Estado post-deploy con túnel funcional. |
-| 2026-07-07 | Cline | Fase 1 completada: Login/Signup con JWT. Modelo User, módulo auth, páginas /login /register, Navbar. |
+| 2026-07-07 | Cline | Fase 1: Login/Signup con JWT. |
+| 2026-07-07 | Cline | Landing page SaaS + rutas protegidas + CI/CD corregido. |
+| 2026-07-07 | Cline | Fase 2: Settings (Telegram + Google Drive). |
+| 2026-07-08 | Cline | Fase 3: Subida de tickets con cámara y stitching. |
+| 2026-07-08 | Cline | Fase 4: Chat en la app con IA real (OpenRouter DeepSeek free). |

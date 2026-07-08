@@ -3,11 +3,13 @@ Sistema Financiero - Database Connection Module
 Async SQLAlchemy session management with PostgreSQL.
 """
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
-from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
+from sqlalchemy import create_engine
 from app.config import get_settings
 
 settings = get_settings()
 
+# Async engine (for FastAPI)
 engine = create_async_engine(
     settings.database_url,
     echo=(settings.environment == "development"),
@@ -21,6 +23,25 @@ async_session = async_sessionmaker(
     class_=AsyncSession,
     expire_on_commit=False,
 )
+
+# Sync engine (for Telegram bot, scripts)
+_sync_db_url = settings.database_url.replace("+asyncpg", "+psycopg2").replace("postgresql+psycopg2://", "postgresql://")
+_sync_engine = create_engine(
+    _sync_db_url,
+    echo=False,
+    pool_pre_ping=True,
+)
+SyncSession = sessionmaker(bind=_sync_engine, class_=Session)
+
+
+def get_db_sync() -> Session:
+    """Get a sync database session (for Telegram bot)."""
+    db = SyncSession()
+    try:
+        return db
+    except Exception:
+        db.close()
+        raise
 
 
 class Base(DeclarativeBase):
