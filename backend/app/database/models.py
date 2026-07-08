@@ -649,6 +649,28 @@ class Tenant(Base):
         return f"<Tenant {self.name} - setup_done={self.setup_completed}>"
 
 
+class ChatMessage(Base):
+    """Store chat messages for the in-app chat."""
+    __tablename__ = "chat_messages"
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+    user_id = Column(String, nullable=False, index=True)
+
+    # Message content
+    role = Column(String(20), nullable=False, index=True)  # user, bot
+    content = Column(Text, nullable=False)
+    msg_type = Column(String(30), default="text")  # text, image, ticket_result, command, status, error, link, info
+
+    # Optional image
+    image_url = Column(Text, nullable=True)
+
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+
+    def __repr__(self):
+        return f"<ChatMessage {self.role} - {self.msg_type} - {self.created_at}>"
+
+
 class TelegramChatLink(Base):
     """Map a Telegram chat_id to a tenant (multi-tenant support)."""
     __tablename__ = "telegram_chat_links"
