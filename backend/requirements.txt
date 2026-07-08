@@ -51,6 +51,9 @@ prophet==1.1.6
 celery==5.4.0
 redis==5.1.0
 
+# AI / LLM
+openai==1.68.2
+
 # Validation
 pydantic==2.9.0
 pydantic-settings==2.5.0

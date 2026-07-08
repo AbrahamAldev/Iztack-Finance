@@ -1,57 +1,68 @@
 """
 Iztack-Finance - Chat Service
-In-app chat with AI responses for ticket processing, queries, and commands.
+In-app chat with AI responses via OpenRouter (DeepSeek).
+Security: prompt injection protection, data isolation per user.
 """
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import List, Optional, Tuple
 import json
 
 from sqlalchemy import select, desc
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database.models import User, ChatMessage
+from app.database.models import User, ChatMessage, Ticket, Product, Invoice, ShoppingList
 from app.modules.auth.service import AuthService
 from app.modules.ocr.service import OCRService
 from app.modules.ocr.schemas import OCRResponse
-from app.modules.tickets.service import TicketsService
+from app.utils.llm import LLMClient
 
 logger = logging.getLogger(__name__)
 
 
 class ChatService:
-    """Chat service that processes messages and returns AI responses."""
+    """Chat service with AI (OpenRouter) and security measures."""
 
     def __init__(self, db: AsyncSession):
         self.db = db
         self.ocr_service = OCRService()
-        self.tickets_service = TicketsService()
+        # LLM client will be initialized when a message needs AI
+        self._llm: Optional[LLMClient] = None
+
+    def _get_llm(self) -> Optional[LLMClient]:
+        """Get or initialize LLM client with the stored API key."""
+        if self._llm:
+            return self._llm
+        # Try to get API key from settings
+        import os
+        api_key = os.environ.get("OPENROUTER_API_KEY")
+        if api_key and LLMClient.validate_api_key(api_key):
+            self._llm = LLMClient(api_key)
+            return self._llm
+        return None
 
     async def process_message(
         self, user_id: str, text: str = None, image_bytes: bytes = None
     ) -> Tuple[str, dict]:
-        """
-        Process a chat message (text and/or image) and return a response.
-        Returns (response_text, metadata).
-        """
+        """Process a chat message with AI."""
         # Save user message
         if text:
             await self._save_message(user_id, "user", text, "text")
 
-        # If there's an image, process it as a ticket
+        # If there's an image, process as ticket first
         if image_bytes:
             return await self._handle_ticket_image(user_id, image_bytes)
 
-        # If only text, route to appropriate handler
+        # If only text, route to AI or commands
         if not text:
             return "Envía una foto de tu ticket o escribe un mensaje.", {}
 
-        return await self._handle_text_command(user_id, text.lower().strip())
+        return await self._handle_text_message(user_id, text)
 
     async def _handle_ticket_image(
         self, user_id: str, image_bytes: bytes
     ) -> Tuple[str, dict]:
-        """Process a ticket image and return formatted result."""
+        """Process a ticket image with OCR and return AI-formatted result."""
         await self._save_message(user_id, "bot", "📸 Procesando imagen...", "status")
 
         try:
@@ -59,33 +70,33 @@ class ChatService:
 
             if not result.success:
                 response = (
-                    "❌ *No se pudo leer el ticket*\n\n"
+                    "❌ No se pudo leer el ticket.\n\n"
                     f"{result.error}\n\n"
-                    "💡 *Sugerencias:*\n"
+                    "💡 Sugerencias:\n"
                     "• Asegúrate de buena iluminación\n"
                     "• Coloca el ticket sobre una superficie plana\n"
                     "• Evita sombras y reflejos\n"
-                    "• Si el ticket es muy largo, toma 2 fotos y úsalas como continuación"
+                    "• Si el ticket es muy largo, toma 2 fotos como continuación"
                 )
                 await self._save_message(user_id, "bot", response, "error")
-                return response, {"type": "error", "ocr_result": result.error}
+                return response, {"type": "error"}
 
             data = result.data
-            lines = [f"✅ *Ticket Identificado*", ""]
+            lines = [f"✅ Ticket identificado", ""]
 
             if data.store_name:
-                lines.append(f"🏪 *Tienda:* {data.store_name}")
+                lines.append(f"🏪 Tienda: **{data.store_name}**")
             if data.purchase_date:
-                lines.append(f"📅 *Fecha:* {data.purchase_date.strftime('%d/%m/%Y')}")
+                lines.append(f"📅 Fecha: {data.purchase_date.strftime('%d/%m/%Y')}")
             if data.total_amount:
-                lines.append(f"💰 *Total:* ${data.total_amount:,.2f}")
+                lines.append(f"💰 Total: **${data.total_amount:,.2f}**")
             if data.payment_method:
-                lines.append(f"💳 *Pago:* {data.payment_method}")
+                lines.append(f"💳 Pago: {data.payment_method}")
 
             lines.append("")
 
             if data.products:
-                lines.append("📦 *Productos:*")
+                lines.append("📦 Productos:")
                 for i, p in enumerate(data.products[:5], 1):
                     line = f"{i}. {p.name}"
                     if p.quantity and p.quantity > 1:
@@ -97,16 +108,12 @@ class ChatService:
                     lines.append(f"... y {len(data.products) - 5} más")
 
             lines.append("")
-            lines.append("🔄 *Iniciando facturación automática...*")
-            lines.append("Te notificaré cuando esté lista.")
+            lines.append("🔄 Iniciando facturación automática...")
 
             if data.has_warranty_items:
-                lines.append("")
-                lines.append("🔧 *¡Producto con garantía detectado!*")
-                lines.append("Se archivará en la carpeta de garantías.")
+                lines.append("🔧 ¡Producto con garantía detectado! Se archivará en garantías.")
 
             response = "\n".join(lines)
-
             metadata = {
                 "type": "ticket",
                 "store_name": data.store_name,
@@ -119,109 +126,113 @@ class ChatService:
             return response, metadata
 
         except Exception as e:
-            logger.error(f"Chat image processing error: {e}", exc_info=True)
+            logger.error(f"Chat image error: {e}", exc_info=True)
             error_msg = "❌ Error al procesar la imagen. Intenta de nuevo."
             await self._save_message(user_id, "bot", error_msg, "error")
             return error_msg, {"type": "error"}
 
-    async def _handle_text_command(
+    async def _handle_text_message(
         self, user_id: str, text: str
     ) -> Tuple[str, dict]:
-        """Route text messages to appropriate handlers."""
-        # Help
-        if text in ("/ayuda", "/help", "ayuda", "help", "comandos"):
+        """Route text to AI or handle simple commands locally."""
+        lower = text.lower().strip()
+
+        # Handle commands locally (no AI needed)
+        if lower in ("/start",):
             response = (
-                "🤖 *Comandos disponibles:*\n\n"
-                "📸 *Envía una foto* de tu ticket para procesarlo\n"
-                "📋 `/status` - Estado del último ticket\n"
-                "📊 `/dashboard` - Abrir dashboard\n"
-                "🛒 `/lista` - Generar lista de compras\n"
-                "📈 `/resumen` - Resumen del mes\n"
-                "❓ `/ayuda` - Mostrar esta ayuda"
+                "¡Hola! 👋 Soy tu asistente financiero Iztack.\n\n"
+                "Puedes:\n"
+                "📸 Enviarme fotos de tickets\n"
+                "📊 Preguntar sobre tus finanzas\n"
+                "🛒 Consultar tu lista de compras\n"
+                "🔧 Buscar garantías\n\n"
+                "Escribe /ayuda para ver todos los comandos."
             )
-            await self._save_message(user_id, "bot", response, "command")
-            return response, {"type": "command", "command": "help"}
+            await self._save_message(user_id, "bot", response, "text")
+            return response, {"type": "text"}
 
-        # Status
-        if text in ("/status", "status", "estado"):
-            response = (
-                "📋 *Estado del sistema*\n\n"
-                "✅ Backend: Activo\n"
-                "✅ Base de datos: Conectada\n"
-                "✅ OCR: Disponible\n"
-                "⚠️ Telegram: Pendiente de configurar\n\n"
-                "Pronto podrás ver el estado de tus tickets aquí."
+        # Try to use AI
+        llm = self._get_llm()
+        if llm:
+            # Get user context data for AI
+            context = await self._build_user_context(user_id)
+            ai_response = await llm.chat(
+                user_message=text,
+                context=context,
             )
-            await self._save_message(user_id, "bot", response, "status")
-            return response, {"type": "status"}
+            await self._save_message(user_id, "bot", ai_response, "text")
+            return ai_response, {"type": "ai_response"}
 
-        # Dashboard
-        if text in ("/dashboard", "dashboard", "tablero"):
-            response = "📊 Abre tu dashboard en: https://finance.iztack.com/dashboard"
-            await self._save_message(user_id, "bot", response, "link")
-            return response, {"type": "link"}
-
-        # Shopping list
-        if text in ("/lista", "lista", "compras"):
-            response = (
-                "🛒 *Lista de Compras*\n\n"
-                "Función en desarrollo. Pronto podrás generar y compartir "
-                "listas de compras inteligentes aquí y en la sección de Lista de Compras."
-            )
-            await self._save_message(user_id, "bot", response, "info")
-            return response, {"type": "info"}
-
-        # Summary
-        if text in ("/resumen", "resumen", "summary"):
-            response = (
-                "📈 *Resumen Financiero*\n\n"
-                "Aún no hay suficientes datos para generar un resumen.\n"
-                "Comienza subiendo tickets para ver tus estadísticas."
-            )
-            await self._save_message(user_id, "bot", response, "info")
-            return response, {"type": "info"}
-
-        # Unknown command
-        if text.startswith("/"):
-            response = (
-                f"❌ Comando *{text}* no reconocido.\n"
-                "Usa `/ayuda` para ver los comandos disponibles."
-            )
-            await self._save_message(user_id, "bot", response, "error")
-            return response, {"type": "error"}
-
-        # General text - answer with AI
-        response = self._generate_ai_response(text)
-        await self._save_message(user_id, "bot", response, "text")
-        return response, {"type": "text"}
-
-    def _generate_ai_response(self, text: str) -> str:
-        """Generate a simple AI response for general queries."""
-        responses = {
-            "hola": "¡Hola! 👋 ¿En qué puedo ayudarte?\n\nEnvía una foto de tu ticket para procesarlo o escribe `/ayuda` para ver los comandos.",
-            "buenos días": "¡Buenos días! ☀️ ¿Tienes algún ticket que procesar hoy?",
-            "buenas tardes": "¡Buenas tardes! 🌤️ ¿En qué puedo ayudarte?",
-            "gracias": "¡De nada! 😊 Estoy aquí para ayudarte con tus finanzas.",
-        }
-
-        # Check exact matches
-        for key, val in responses.items():
-            if key in text:
-                return val
-
-        # Default response
-        return (
-            "No entendí tu mensaje. 🤔\n\n"
-            "Puedes:\n"
-            "📸 *Enviar una foto* de tu ticket\n"
-            "📝 *Escribir un comando* como /ayuda, /status, /dashboard\n"
-            "💬 *Preguntar* sobre tus finanzas"
+        # Fallback if no AI key configured
+        response = (
+            "Hola, no tengo conexión con mi cerebro IA todavía. 🧠\n\n"
+            "Para activar la IA, ve a Configuración y agrega tu API Key de OpenRouter.\n\n"
+            "Mientras tanto, puedes enviarme fotos de tickets y las procesaré con OCR."
         )
+        await self._save_message(user_id, "bot", response, "text")
+        return response, {"type": "fallback"}
 
-    async def _save_message(
-        self, user_id: str, role: str, content: str, msg_type: str
-    ):
-        """Save a chat message to the database."""
+    async def _build_user_context(self, user_id: str) -> str:
+        """Build context string with user's real data for the AI."""
+        parts = []
+
+        # Get recent tickets
+        try:
+            tickets_result = await self.db.execute(
+                select(Ticket)
+                .where(Ticket.user_id == user_id)
+                .order_by(desc(Ticket.created_at))
+                .limit(10)
+            )
+            tickets = tickets_result.scalars().all()
+            if tickets:
+                parts.append("## TICKETS RECIENTES:")
+                for t in tickets:
+                    warranty = "🔧" if t.has_warranty_items else ""
+                    parts.append(
+                        f"- {warranty} {t.store_name}: ${t.total_amount:.2f} "
+                        f"({t.purchase_date})"
+                    )
+        except Exception as e:
+            logger.error(f"Error loading tickets for context: {e}")
+
+        # Get shopping lists
+        try:
+            lists_result = await self.db.execute(
+                select(ShoppingList)
+                .where(ShoppingList.user_id == user_id)
+                .order_by(desc(ShoppingList.created_at))
+                .limit(5)
+            )
+            lists = lists_result.scalars().all()
+            if lists:
+                parts.append("\n## LISTAS DE COMPRAS:")
+                for sl in lists:
+                    parts.append(f"- {sl.title}: ${sl.estimated_total or 0:.2f} ({sl.status})")
+        except Exception as e:
+            logger.error(f"Error loading shopping lists: {e}")
+
+        # Get user info
+        try:
+            user_result = await self.db.execute(
+                select(User).where(User.id == user_id)
+            )
+            user = user_result.scalar_one_or_none()
+            if user:
+                parts.append(f"\n## CONFIGURACIÓN:")
+                parts.append(f"- Moneda: {user.currency}")
+                parts.append(f"- Zona horaria: {user.timezone}")
+                parts.append(f"- Telegram: {'✅ Vinculado' if user.telegram_chat_id else '❌ No vinculado'}")
+                parts.append(f"- Google Drive: {'✅ Configurado' if user.encrypted_google_refresh_token else '❌ No configurado'}")
+        except Exception as e:
+            logger.error(f"Error loading user info: {e}")
+
+        if not parts:
+            return "El usuario no tiene datos registrados aún."
+
+        return "\n".join(parts)
+
+    async def _save_message(self, user_id: str, role: str, content: str, msg_type: str):
         message = ChatMessage(
             user_id=user_id,
             role=role,
@@ -231,10 +242,7 @@ class ChatService:
         self.db.add(message)
         await self.db.commit()
 
-    async def get_history(
-        self, user_id: str, limit: int = 50
-    ) -> List[dict]:
-        """Get chat history for a user."""
+    async def get_history(self, user_id: str, limit: int = 50) -> List[dict]:
         result = await self.db.execute(
             select(ChatMessage)
             .where(ChatMessage.user_id == user_id)
