@@ -10,15 +10,16 @@
 | Elemento | Valor |
 |---|---|
 | **Branch activo** | `develop` |
-| **Último commit** | `ac9c843` (feat(ai): chat con IA real via OpenRouter) |
+| **Último commit** | `ce2bca9` (feat(telegram): Fase 5 - Bot multi-usuario) |
 | **URL producción** | https://finance.iztack.com |
 | **URL API** | https://api.iztack.com |
 | **Proxmox** | CT 101 (app) + CT 103 (tunnel) |
 | **IA activa** | ✅ OpenRouter (DeepSeek free) configurado |
+| **Bot Telegram** | ✅ @IztackFinance_Bot activo y multi-usuario |
 
 ---
 
-## 🏗️ Arquitectura
+## 🏗️ Arquitectura Actual
 
 ```
 Usuario → Cloudflare (Access @iztack.com) → Cloudflare Tunnel → CT 101 (Docker)
@@ -39,6 +40,8 @@ Usuario → Cloudflare (Access @iztack.com) → Cloudflare Tunnel → CT 101 (Do
 | Túnel | Cloudflare Tunnel (efímero, token) | - |
 | Almacenamiento | Google Drive (por usuario) | - |
 | IA Chat | OpenRouter (DeepSeek free) | - |
+| OCR | Google Gemini 2.0 Flash | - |
+| CFDI | Playwright (9 portales) | - |
 
 ### Infraestructura Proxmox
 
@@ -49,30 +52,59 @@ Usuario → Cloudflare (Access @iztack.com) → Cloudflare Tunnel → CT 101 (Do
 
 ---
 
-## ✅ Módulos Implementados
+## ✅ Módulos Completados (Fases 1-5)
 
-- [x] **OCR** — Extracción de datos de tickets desde imágenes
-- [x] **Facturación** — Portales: Amazon, Walmart, Liverpool, IKEA, Home Depot, OXXO, Farmacias Similares, Pemex, BP
-- [x] **Clasificación** — Productos por categoría y tipo de gasto
-- [x] **Garantías** — Detección automática de productos con garantía
-- [x] **Lista de compras** — Inteligente con ciclo de consumo y aprobación familiar
-- [x] **Análisis financiero** — Dashboard con detección de fugas y recomendaciones
-- [x] **Google Drive** — Almacenamiento de PDF/XML de facturas
-- [x] **Setup wizard** — Configuración inicial del sistema
-- [x] **Telegram Bot** — Recepción de tickets y comandos (multi-tenant vía chat_id)
-- [x] **Login/Signup** — Autenticación con JWT (Fase 1)
-- [x] **Landing page SaaS** — Página informativa con features, pricing, CTA
-- [x] **Rutas protegidas** — /dashboard, /settings, /shopping-list protegidas con AuthGuard
+- [x] **Login/Signup** — JWT, /login, /register (Fase 1)
+- [x] **Landing page SaaS** — Features, pricing, CTA
+- [x] **Rutas protegidas** — AuthGuard en dashboard, settings, shopping-list
 - [x] **Settings** — Telegram chat_id + Google Drive por usuario (Fase 2)
 - [x] **Subida de tickets** — Cámara con overlay guía + stitching multi-imagen (Fase 3)
-- [x] **Chat en la app** — Asistente IA flotante con OpenRouter (Fase 4)
-- [x] **IA con OpenRouter** — DeepSeek free, system prompt anti-prompt-injection, contexto real del usuario
+- [x] **Chat IA** — OpenRouter DeepSeek free, anti-prompt-injection (Fase 4)
+- [x] **Telegram multi-usuario** — @IztackFinance_Bot para todos (Fase 5)
+- [x] **OCR** — Extracción de datos con Gemini
+- [x] **Facturación CFDI** — 9 portales (Liverpool, IKEA, Walmart, Amazon, etc.)
+- [x] **Clasificación** — Productos por categoría y tipo de gasto
+- [x] **Garantías** — Detección automática de productos con garantía
+- [x] **Lista de compras** — Modelos y lógica base
+- [x] **Análisis financiero** — Modelos y lógica base
+- [x] **Google Drive** — Almacenamiento de PDF/XML
+- [x] **Setup wizard** — Configuración inicial
+- [x] **CI/CD** — GitHub Actions con appleboy/ssh-action
+- [x] **Infraestructura** — Proxmox, Cloudflare Tunnel, dominio
 
 ---
 
-## 🔄 Tareas Pendientes
+## 🔄 Funcionalidades Pendientes (de la visión original)
 
-- [ ] **Telegram multi-usuario** — Un solo bot @IztackFinance_Bot para todos los usuarios (Fase 5)
+### Prioridad Alta
+
+| # | Funcionalidad | Docs relacionados | Descripción |
+|---|---|---|---|
+| 1 | **Dashboard con datos reales** | IDEA-ORIGINAL.md §4 | Hoy muestra $0 en todos los KPIs. Conectar con tickets reales de la DB |
+| 2 | **Lista de compras inteligente** | IDEA-ORIGINAL.md §5 | Detección de ciclos de consumo, aprobación familiar, impresión térmica |
+| 3 | **Análisis financiero** | IDEA-ORIGINAL.md §4 | Detección de fugas de dinero, proyecciones, recomendaciones de ahorro |
+| 4 | **Flujo completo de facturación** | IDEA-ORIGINAL.md §2 | Creación automática de cuentas, búsqueda en Gmail, manejo de errores |
+| 5 | **Workers ARQ + scheduler** | TASK-LIST.md | Tareas programadas (análisis diario, lista semanal, reporte mensual) |
+
+### Prioridad Media
+
+| # | Funcionalidad | Docs relacionados | Descripción |
+|---|---|---|---|
+| 6 | **Multi-negocio familiar** | IDEA-ORIGINAL.md §6 | CRUD de negocios, API para POS, dashboards por negocio |
+| 7 | **Más portales CFDI** | TASK-LIST.md Fase 3 | Costco, Chedraui, Sam's Club, Soriana |
+| 8 | **Mejora OCR** | TASK-LIST.md Fase 1 | Tesseract 5 como primario, mejor parser de tickets MX |
+| 9 | **Testing** | TASK-LIST.md Testing | Tests de OCR, API, E2E, cifrado |
+| 10 | **Scripts de backup/restore** | TASK-LIST.md Infra | Backup automático de DB, rotación de logs |
+
+### Prioridad Baja
+
+| # | Funcionalidad | Docs relacionados | Descripción |
+|---|---|---|---|
+| 11 | **Módulo Fiscal (México)** | IDEA-ORIGINAL.md §7 | Constancia fiscal, estados de cuenta, deducciones |
+| 12 | **Impresora térmica** | IDEA-ORIGINAL.md §5 | ESC/POS USB y Bluetooth para listas de compras |
+| 13 | **Pre-orden en línea** | IDEA-ORIGINAL.md §5 | Adapter de Amazon México, generar link de carrito |
+| 14 | **Modo oscuro/claro** | TASK-LIST.md Frontend | next-themes |
+| 15 | **PWA instalable** | TASK-LIST.md Frontend | Manifest + service worker |
 
 ---
 
@@ -85,14 +117,14 @@ Usuario → Cloudflare (Access @iztack.com) → Cloudflare Tunnel → CT 101 (Do
 │   │   ├── main.py              # FastAPI entry point
 │   │   ├── config.py            # Settings / env vars
 │   │   ├── database/
-│   │   │   ├── connection.py    # SQLAlchemy async engine
-│   │   │   └── models.py        # All DB models
+│   │   │   ├── connection.py    # SQLAlchemy async + sync engines
+│   │   │   └── models.py        # 20+ tablas
 │   │   ├── modules/
 │   │   │   ├── auth/            # Login/Signup JWT
-│   │   │   ├── bots/telegram_bot.py
+│   │   │   ├── bots/            # Telegram Bot multi-usuario
 │   │   │   ├── chat/            # Chat IA con OpenRouter
-│   │   │   ├── ocr/             # OCR service
-│   │   │   ├── facturacion/     # Portal scraping
+│   │   │   ├── ocr/             # OCR service (Gemini)
+│   │   │   ├── facturacion/     # 9 portales CFDI
 │   │   │   ├── almacenamiento/  # Google Drive
 │   │   │   ├── clasificacion/   # Product categorization
 │   │   │   ├── finanzas/        # Financial analysis
@@ -103,23 +135,31 @@ Usuario → Cloudflare (Access @iztack.com) → Cloudflare Tunnel → CT 101 (Do
 │   │   │   ├── setup/           # Setup wizard
 │   │   │   └── info.py          # Health endpoint
 │   │   └── utils/
-│   │       ├── crypto.py        # AES encryption
-│   │       ├── hashing.py       # Password hashing
+│   │       ├── crypto.py        # AES-256-GCM
+│   │       ├── hashing.py       # bcrypt
 │   │       └── llm.py           # OpenRouter client
 │   ├── bot_main.py              # Telegram bot entry point
 │   └── requirements.txt
 ├── frontend/
 │   ├── app/
 │   │   ├── layout.tsx           # Root layout
-│   │   ├── page.tsx             # Landing page
-│   │   ├── dashboard/           # Dashboard page
-│   │   ├── settings/            # Settings page
+│   │   ├── page.tsx             # Landing page SaaS
+│   │   ├── login/               # Login
+│   │   ├── register/            # Register
+│   │   ├── dashboard/           # Dashboard (protegido)
+│   │   ├── settings/            # Settings (Telegram + Drive)
 │   │   ├── setup/               # Setup wizard
 │   │   └── shopping-list/       # Shopping lists
-│   └── Dockerfile
+│   └── components/
+│       ├── AuthGuard.tsx        # Route protection
+│       ├── AppNav.tsx           # App navigation
+│       ├── ChatWidget.tsx       # AI chat bubble
+│       └── TicketUpload.tsx     # Camera + upload
 ├── docker-compose.yml
-├── infrastructure/
-├── packages/
+├── .github/workflows/
+│   ├── ci.yml
+│   ├── deploy-staging.yml
+│   └── deploy-production.yml
 └── docs/
     ├── MEMORIA_IA.md             ← Este documento
     ├── ARQUITECTURA_FINAL_v2.md
@@ -129,7 +169,7 @@ Usuario → Cloudflare (Access @iztack.com) → Cloudflare Tunnel → CT 101 (Do
 
 ---
 
-##  Reglas para IAs
+## 🤖 Reglas para IAs
 
 1. **NO modificar código de otro módulo sin preguntar** al usuario o documentarlo aquí
 2. **Actualizar este documento** al completar una tarea (fecha + cambios)
@@ -154,3 +194,5 @@ Usuario → Cloudflare (Access @iztack.com) → Cloudflare Tunnel → CT 101 (Do
 | 2026-07-07 | Cline | Fase 2: Settings (Telegram + Google Drive). |
 | 2026-07-08 | Cline | Fase 3: Subida de tickets con cámara y stitching. |
 | 2026-07-08 | Cline | Fase 4: Chat en la app con IA real (OpenRouter DeepSeek free). |
+| 2026-07-08 | Cline | Fase 5: Telegram multi-usuario (@IztackFinance_Bot). |
+| 2026-07-08 | Cline | Documentación actualizada con estado real del proyecto. |
