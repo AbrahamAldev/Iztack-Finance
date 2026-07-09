@@ -545,6 +545,27 @@ class ProcessingError(Base):
         return f"<ProcessingError {self.error_type} - {self.error_code}>"
 
 
+class FiscalData(Base):
+    """Fiscal data for Mexican CFDI billing."""
+    __tablename__ = "fiscal_data"
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+    user_id = Column(String, nullable=False, index=True)
+
+    rfc = Column(String(13), nullable=True)
+    razon_social = Column(String(255), nullable=True)
+    codigo_postal = Column(String(10), nullable=True)
+    regimen_fiscal = Column(String(100), nullable=True)
+    direccion = Column(Text, nullable=True)
+
+    # Constancia de Situación Fiscal (encrypted)
+    csd_pdf_base64 = Column(Text, nullable=True)
+    csd_uploaded_at = Column(DateTime, nullable=True)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
 class AuditLog(Base):
     """Audit log for all system actions."""
     __tablename__ = "audit_logs"
