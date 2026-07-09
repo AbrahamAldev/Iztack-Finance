@@ -1,10 +1,6 @@
 name: Deploy to Proxmox
 
 on:
-  push:
-    branches:
-      - develop
-      - main
   workflow_dispatch:
 
 jobs:
