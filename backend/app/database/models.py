@@ -649,6 +649,34 @@ class Tenant(Base):
         return f"<Tenant {self.name} - setup_done={self.setup_completed}>"
 
 
+class StaffUser(Base):
+    """Staff users for admin portal (admfinance.iztack.com)."""
+    __tablename__ = "staff_users"
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+    email = Column(String(255), unique=True, nullable=False, index=True)
+    name = Column(String(255), nullable=False)
+    password_hash = Column(String(255), nullable=False)
+
+    # Role: super_admin (100), admin (80), support (50), monitor (30), auditor (20)
+    role = Column(String(20), nullable=False, default="monitor")
+    role_level = Column(Integer, nullable=False, default=30)
+
+    # Permissions bitmask (for fine-grained control)
+    permissions = Column(BigInteger, default=0)
+
+    # Status
+    is_active = Column(Boolean, default=True)
+    last_login_at = Column(DateTime, nullable=True)
+
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def __repr__(self):
+        return f"<StaffUser {self.email} - role={self.role}>"
+
+
 class ChatMessage(Base):
     """Store chat messages for the in-app chat."""
     __tablename__ = "chat_messages"
