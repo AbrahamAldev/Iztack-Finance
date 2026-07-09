@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="es-MX">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Iztack-Finance Admin</title>
+<script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-gray-100 min-h-screen">
+  <div id="app" class="hidden">
+    <nav class="bg-gray-800 border-b border-gray-700 px-6 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <span class="text-2xl">🏦</span>
+        <span class="text-lg font-bold text-sky-400">Iztack-Finance Admin</span>
+      </div>
+      <div class="flex items-center gap-4">
+        <span id="userInfo" class="text-sm text-gray-400"></span>
+        <button onclick="logout()" class="text-sm text-red-400 hover:text-red-300">Cerrar Sesión</button>
+      </div>
+    </nav>
+    <div class="flex">
+      <aside class="w-56 bg-gray-800 min-h-screen p-4 space-y-2">
+        <button onclick="showSection('dashboard')" class="w-full text-left px-3 py-2 rounded hover:bg-gray-700 text-sm section-btn" data-section="dashboard">📊 Dashboard</button>
+        <button onclick="showSection('clients')" class="w-full text-left px-3 py-2 rounded hover:bg-gray-700 text-sm section-btn" data-section="clients">👥 Clientes</button>
+        <button onclick="showSection('staff')" class="w-full text-left px-3 py-2 rounded hover:bg-gray-700 text-sm section-btn" data-section="staff">🔐 Staff</button>
+      </aside>
+      <main class="flex-1 p-6">
+        <div id="section-dashboard" class="section-content">
+          <h2 class="text-xl font-bold mb-4">📊 Dashboard del Sistema</h2>
+          <div id="healthContent" class="space-y-4"></div>
+        </div>
+        <div id="section-clients" class="section-content hidden">
+          <h2 class="text-xl font-bold mb-4">👥 Clientes Registrados</h2>
+          <div id="clientsContent"></div>
+        </div>
+        <div id="section-staff" class="section-content hidden">
+          <h2 class="text-xl font-bold mb-4">🔐 Equipo Staff</h2>
+          <div id="staffContent"></div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <div id="loginScreen" class="min-h-screen flex items-center justify-center">
+    <div class="bg-gray-800 p-8 rounded-xl shadow-2xl w-96">
+      <div class="text-center mb-6">
+        <div class="text-5xl mb-3">🏦</div>
+        <h1 class="text-xl font-bold text-sky-400">Admin Iztack-Finance</h1>
+        <p class="text-sm text-gray-400 mt-1">Solo personal autorizado @iztack.com</p>
+      </div>
+      <div id="loginError" class="bg-red-900/50 text-red-300 px-4 py-2 rounded-lg text-sm mb-4 hidden"></div>
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm text-gray-400 mb-1">Email</label>
+          <input id="loginEmail" type="email" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-sm focus:border-sky-500 focus:outline-none" placeholder="admin@iztack.com">
+        </div>
+        <div>
+          <label class="block text-sm text-gray-400 mb-1">Contraseña</label>
+          <input id="loginPassword" type="password" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-sm focus:border-sky-500 focus:outline-none" placeholder="••••••••">
+        </div>
+        <button onclick="login()" class="w-full bg-sky-600 text-white py-2.5 rounded-lg font-medium hover:bg-sky-700">Iniciar Sesión</button>
+        <p class="text-center text-xs text-gray-500 mt-2">
+          ¿Primer acceso? <button onclick="showRegister()" class="text-sky-400 hover:underline">Registrar admin</button>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div id="registerScreen" class="min-h-screen flex items-center justify-center hidden">
+    <div class="bg-gray-800 p-8 rounded-xl shadow-2xl w-96">
+      <div class="text-center mb-6">
+        <div class="text-5xl mb-3">🏦</div>
+        <h1 class="text-xl font-bold text-sky-400">Registrar Admin</h1>
+        <p class="text-sm text-gray-400 mt-1">Solo admin@iztack.com</p>
+      </div>
+      <div id="registerError" class="bg-red-900/50 text-red-300 px-4 py-2 rounded-lg text-sm mb-4 hidden"></div>
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm text-gray-400 mb-1">Email</label>
+          <input id="regEmail" type="email" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-sm focus:border-sky-500 focus:outline-none" value="admin@iztack.com" readonly>
+        </div>
+        <div>
+          <label class="block text-sm text-gray-400 mb-1">Nombre</label>
+          <input id="regName" type="text" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-sm focus:border-sky-500 focus:outline-none" placeholder="Admin Iztack">
+        </div>
+        <div>
+          <label class="block text-sm text-gray-400 mb-1">Contraseña</label>
+          <input id="regPassword" type="password" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-sm focus:border-sky-500 focus:outline-none" placeholder="Mínimo 8 caracteres">
+        </div>
+        <button onclick="register()" class="w-full bg-sky-600 text-white py-2.5 rounded-lg font-medium hover:bg-sky-700">Crear Admin</button>
+        <p class="text-center text-xs text-gray-500 mt-2">
+          <button onclick="showLogin()" class="text-sky-400 hover:underline">Volver a inicio</button>
+        </p>
+      </div>
+    </div>
+  </div>
+
+<script>
+const API = '/api/admin';
+let token = localStorage.getItem('iztack_admin_token');
+
+function showLogin() { document.getElementById('registerScreen').classList.add('hidden'); document.getElementById('loginScreen').classList.remove('hidden'); }
+function showRegister() { document.getElementById('loginScreen').classList.add('hidden'); document.getElementById('registerScreen').classList.remove('hidden'); }
+
+async function login() {
+  const email = document.getElementById('loginEmail').value;
+  const password = document.getElementById('loginPassword').value;
+  const err = document.getElementById('loginError');
+  err.classList.add('hidden');
+  try {
+    const res = await fetch(API + '/login', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({email, password}) });
+    const data = await res.json();
+    if (!res.ok) { err.textContent = data.detail; err.classList.remove('hidden'); return; }
+    token = data.access_token;
+    localStorage.setItem('iztack_admin_token', token);
+    showApp(data.user);
+  } catch(e) { err.textContent = 'Error de conexión'; err.classList.remove('hidden'); }
+}
+
+async function register() {
+  const name = document.getElementById('regName').value;
+  const password = document.getElementById('regPassword').value;
+  const err = document.getElementById('registerError');
+  err.classList.add('hidden');
+  try {
+    const res = await fetch(API + '/register', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({email:'admin@iztack.com', name, password}) });
+    const data = await res.json();
+    if (!res.ok) { err.textContent = data.detail; err.classList.remove('hidden'); return; }
+    token = data.access_token;
+    localStorage.setItem('iztack_admin_token', token);
+    showApp(data.user);
+  } catch(e) { err.textContent = 'Error de conexión'; err.classList.remove('hidden'); }
+}
+
+function logout() { localStorage.removeItem('iztack_admin_token'); token = null; location.reload(); }
+
+function showApp(user) {
+  document.getElementById('loginScreen').classList.add('hidden');
+  document.getElementById('registerScreen').classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
+  document.getElementById('userInfo').textContent = user.email + ' (' + user.role + ')';
+  loadDashboard();
+}
+
+function showSection(section) {
+  document.querySelectorAll('.section-content').forEach(el => el.classList.add('hidden'));
+  document.getElementById('section-' + section).classList.remove('hidden');
+  document.querySelectorAll('.section-btn').forEach(b => b.classList.remove('bg-gray-700'));
+  document.querySelector(`[data-section="${section}"]`).classList.add('bg-gray-700');
+  if (section === 'dashboard') loadDashboard();
+  if (section === 'clients') loadClients();
+  if (section === 'staff') loadStaff();
+}
+
+async function loadDashboard() {
+  const el = document.getElementById('healthContent');
+  el.innerHTML = '<p class="text-gray-400">Cargando...</p>';
+  try {
+    const res = await fetch(API + '/health', { headers: {Authorization: 'Bearer ' + token} });
+    const data = await res.json();
+    el.innerHTML = `
+      <div class="grid grid-cols-2 gap-4">
+        <div class="bg-gray-800 rounded-lg p-4 border border-gray-700">
+          <p class="text-sm text-gray-400">Estado</p>
+          <p class="text-lg font-bold text-green-400">🟢 ${data.status}</p>
+        </div>
+        <div class="bg-gray-800 rounded-lg p-4 border border-gray-700">
+          <p class="text-sm text-gray-400">Timestamp</p>
+          <p class="text-sm">${data.timestamp}</p>
+        </div>
+      </div>
+      <div class="bg-gray-800 rounded-lg p-4 border border-gray-700 mt-4">
+        <h3 class="font-semibold mb-3">Servicios</h3>
+        ${Object.entries(data.services || {}).map(([k,v]) => `
+          <div class="flex justify-between py-1">
+            <span class="text-sm">${k}</span>
+            <span class="text-sm text-green-400">🟢 ${v.status}</span>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  } catch(e) { el.innerHTML = '<p class="text-red-400">Error al cargar</p>'; }
+}
+
+async function loadClients() {
+  const el = document.getElementById('clientsContent');
+  el.innerHTML = '<p class="text-gray-400">Cargando...</p>';
+  try {
+    const res = await fetch(API + '/clients', { headers: {Authorization: 'Bearer ' + token} });
+    const data = await res.json();
+    if (!data.clients || data.clients.length === 0) { el.innerHTML = '<p class="text-gray-500">No hay clientes registrados</p>'; return; }
+    el.innerHTML = `<div class="overflow-x-auto"><table class="w-full text-sm"><thead><tr class="text-left text-gray-400 border-b border-gray-700">
+      <th class="pb-2 px-2">Email</th><th class="pb-2 px-2">Nombre</th><th class="pb-2 px-2">Telegram</th><th class="pb-2 px-2">Drive</th><th class="pb-2 px-2">Activo</th>
+    </tr></thead><tbody>${data.clients.map(c => `<tr class="border-b border-gray-800 hover:bg-gray-800/50">
+      <td class="py-2 px-2">${c.email}</td><td class="py-2 px-2">${c.name}</td>
+      <td class="py-2 px-2">${c.telegram_linked ? '✅' : '❌'}</td>
+      <td class="py-2 px-2">${c.drive_configured ? '✅' : '❌'}</td>
+      <td class="py-2 px-2">${c.is_active ? '🟢' : '🔴'}</td>
+    </tr>`).join('')}</tbody></table></div>`;
+  } catch(e) { el.innerHTML = '<p class="text-red-400">Error al cargar</p>'; }
+}
+
+async function loadStaff() {
+  const el = document.getElementById('staffContent');
+  el.innerHTML = '<p class="text-gray-400">Cargando...</p>';
+  try {
+    const res = await fetch(API + '/staff', { headers: {Authorization: 'Bearer ' + token} });
+    const data = await res.json();
+    if (!data.staff || data.staff.length === 0) { el.innerHTML = '<p class="text-gray-500">No hay staff</p>'; return; }
+    el.innerHTML = `<div class="overflow-x-auto"><table class="w-full text-sm"><thead><tr class="text-left text-gray-400 border-b border-gray-700">
+      <th class="pb-2 px-2">Email</th><th class="pb-2 px-2">Nombre</th><th class="pb-2 px-2">Rol</th><th class="pb-2 px-2">Nivel</th><th class="pb-2 px-2">Activo</th>
+    </tr></thead><tbody>${data.staff.map(s => `<tr class="border-b border-gray-800 hover:bg-gray-800/50">
+      <td class="py-2 px-2">${s.email}</td><td class="py-2 px-2">${s.name}</td>
+      <td class="py-2 px-2"><span class="text-xs px-2 py-0.5 rounded ${s.role === 'super_admin' ? 'bg-purple-900 text-purple-300' : s.role === 'admin' ? 'bg-blue-900 text-blue-300' : 'bg-gray-700 text-gray-300'}">${s.role}</span></td>
+      <td class="py-2 px-2">${s.role_level}</td>
+      <td class="py-2 px-2">${s.is_active ? '🟢' : '🔴'}</td>
+    </tr>`).join('')}</tbody></table></div>`;
+  } catch(e) { el.innerHTML = '<p class="text-red-400">Error al cargar</p>'; }
+}
+
+// Auto-login if token exists
+if (token) { showApp({email: 'Cargando...', role: '...'}); }
+</script>
+</body>
+</html>

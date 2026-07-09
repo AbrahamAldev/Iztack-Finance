@@ -124,6 +124,20 @@ services:
     command: python bot_main.py
     # El bot sólo necesita salida HTTPS a api.telegram.org (no expone puertos)
 
+  # =============================================================================
+  # Admin Portal (admfinance.iztack.com)
+  # =============================================================================
+  admin:
+    image: nginx:alpine
+    container_name: sf-admin
+    restart: unless-stopped
+    ports:
+      - "3001:80"
+    volumes:
+      - ./frontend/admin:/usr/share/nginx/html:ro
+    depends_on:
+      - backend
+
 volumes:
   postgres_data:
   redis_data:
