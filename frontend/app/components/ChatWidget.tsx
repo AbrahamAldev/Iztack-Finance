@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { MessageCircle, X, Send, Camera, Paperclip } from "lucide-react";
+import { MessageCircle, X, Send, Camera } from "lucide-react";
 
 interface Message {
   id: string;
@@ -20,17 +20,20 @@ export default function ChatWidget() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Load history when opened
   useEffect(() => {
     if (isOpen && !hasHistory) {
       loadHistory();
     }
   }, [isOpen]);
 
-  // Scroll to bottom on new messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  function redirectLogin() {
+    localStorage.removeItem("iztack_token");
+    window.location.href = "/login";
+  }
 
   async function loadHistory() {
     const token = localStorage.getItem("iztack_token");
@@ -44,14 +47,7 @@ export default function ChatWidget() {
         setMessages(data.messages || []);
         setHasHistory(true);
       } else if (res.status === 401) {
-        setMessages([{
-          id: "auth-error",
-          role: "bot",
-          content: "🔐 Sesión expirada. Por favor cierra sesión y vuelve a iniciarla para usar el chat.",
-          msg_type: "error",
-          created_at: new Date().toISOString(),
-        }]);
-        setHasHistory(true);
+        redirectLogin();
       }
     } catch (e) {
       console.error("Error loading chat history:", e);
@@ -91,20 +87,13 @@ export default function ChatWidget() {
       if (res.ok) {
         await loadHistory();
       } else if (res.status === 401) {
-        const errMsg: Message = {
-          id: (Date.now() + 1).toString(),
-          role: "bot",
-          content: "🔐 Tu sesión expiró. Cierra sesión y vuelve a iniciar para usar el chat.",
-          msg_type: "error",
-          created_at: new Date().toISOString(),
-        };
-        setMessages((prev) => [...prev, errMsg]);
+        redirectLogin();
       } else {
         const errData = await res.json().catch(() => ({}));
         const errMsg: Message = {
           id: (Date.now() + 1).toString(),
           role: "bot",
-          content: errData.detail || "❌ Error al procesar el mensaje. Intenta de nuevo.",
+          content: errData.detail || "❌ Error al procesar el mensaje.",
           msg_type: "error",
           created_at: new Date().toISOString(),
         };
@@ -114,7 +103,7 @@ export default function ChatWidget() {
       const errMsg: Message = {
         id: (Date.now() + 1).toString(),
         role: "bot",
-        content: "❌ Error de conexión. Verifica tu internet.",
+        content: "❌ Error de conexión.",
         msg_type: "error",
         created_at: new Date().toISOString(),
       };
@@ -139,7 +128,6 @@ export default function ChatWidget() {
 
   return (
     <>
-      {/* Toggle button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="fixed bottom-6 right-6 z-40 w-14 h-14 bg-sky-600 text-white rounded-full shadow-lg hover:bg-sky-700 flex items-center justify-center transition-all"
@@ -147,25 +135,18 @@ export default function ChatWidget() {
         {isOpen ? <X className="h-6 w-6" /> : <MessageCircle className="h-6 w-6" />}
       </button>
 
-      {/* Chat window */}
       {isOpen && (
         <div className="fixed bottom-24 right-6 z-40 w-80 sm:w-96 h-[500px] bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden border">
-          {/* Header */}
           <div className="bg-sky-600 text-white px-4 py-3 flex items-center gap-2">
             <MessageCircle className="h-5 w-5" />
             <span className="font-semibold">Asistente Iztack</span>
           </div>
 
-          {/* Messages */}
           <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50">
             {messages.length === 0 && (
               <div className="text-center text-gray-400 text-sm mt-8">
                 <p className="text-3xl mb-2">🤖</p>
                 <p>¡Hola! Soy tu asistente financiero.</p>
-                <p className="mt-1">Puedes enviarme fotos de tickets o escribirme comandos.</p>
-                <p className="mt-3 text-xs">
-                  Ej: "hola", "/ayuda", "/status"
-                </p>
               </div>
             )}
 
@@ -196,7 +177,6 @@ export default function ChatWidget() {
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Input */}
           <div className="border-t p-3 bg-white">
             <div className="flex gap-2">
               <button

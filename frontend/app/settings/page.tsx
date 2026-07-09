@@ -90,8 +90,12 @@ function SettingsContent() {
       if (res.ok) {
         setTelegramConfigured(true);
         alert("✅ Chat ID de Telegram guardado");
+      } else if (res.status === 401) {
+        localStorage.removeItem("iztack_token");
+        window.location.href = "/login";
       } else {
-        alert("❌ Error al guardar");
+        const err = await res.json().catch(() => ({}));
+        alert("❌ " + (err.detail || "Error al guardar"));
       }
     } catch (e) {
       alert("❌ Error de conexión");
