@@ -60,8 +60,8 @@ class TelegramBot:
         # We need async session, but telegram bot is sync
         # Use sync session for now
         from sqlalchemy.orm import Session
-        from app.database.connection import SessionLocal
-        session = SessionLocal()
+        from app.database.connection import SyncSession
+        session = SyncSession()
         return ChatService(session), session
 
     async def start_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -301,8 +301,8 @@ class TelegramBot:
 
         try:
             # Use ChatService with AI
-            from app.database.connection import SessionLocal
-            db = SessionLocal()
+            from app.database.connection import SyncSession
+            db = SyncSession()
             chat_service = ChatService(db)
             response_text, metadata = await chat_service.process_message(
                 user_id=user.id,
