@@ -158,8 +158,8 @@ export default function TicketUpload({ onClose }: Props) {
         )}
 
         {mode === "camera" && (
-          <div className="relative bg-black" style={{ minHeight: "70vh" }}>
-            <video ref={videoRef} autoPlay playsInline muted className="w-full h-full min-h-[70vh] object-cover" />
+          <div className="relative bg-black" style={{ height: "75vh" }}>
+            <video ref={videoRef} autoPlay playsInline muted className="absolute inset-0 w-full h-full object-cover" />
             <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
               <div className="w-[85%] h-[70%] border-2 border-white/50 rounded-lg relative">
                 <div className="absolute top-2 left-4 text-xs text-white/70">Coloca el ticket dentro del marco</div>
