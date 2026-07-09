@@ -53,20 +53,36 @@ export default function TicketUpload({ onClose }: Props) {
   }, []);
 
   const capturePhoto = useCallback(() => {
-    if (!videoRef.current || !canvasRef.current) return;
     const video = videoRef.current;
     const canvas = canvasRef.current;
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
+    if (!video || !canvas) return;
+    
+    const w = video.videoWidth || 1920;
+    const h = video.videoHeight || 1080;
+    canvas.width = w;
+    canvas.height = h;
+    
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-    ctx.drawImage(video, 0, 0);
-    canvas.toBlob((blob) => {
-      if (!blob) return;
-      const file = new File([blob], `ticket_${Date.now()}.jpg`, { type: "image/jpeg" });
-      const dataUrl = canvas.toDataURL("image/jpeg", 0.9);
-      setImages((prev) => [...prev, { dataUrl, file }]);
-    }, "image/jpeg", 0.9);
+    
+    // Flip horizontally for selfie cam, but environment cam doesn't need it
+    ctx.drawImage(video, 0, 0, w, h);
+    
+    // Use toDataURL as fallback (Safari has issues with toBlob)
+    const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
+    
+    // Convert dataURL to Blob
+    const byteString = atob(dataUrl.split(",")[1]);
+    const mimeString = "image/jpeg";
+    const ab = new ArrayBuffer(byteString.length);
+    const ia = new Uint8Array(ab);
+    for (let i = 0; i < byteString.length; i++) {
+      ia[i] = byteString.charCodeAt(i);
+    }
+    const blob = new Blob([ab], { type: mimeString });
+    const file = new File([blob], `ticket_${Date.now()}.jpg`, { type: mimeString });
+    
+    setImages((prev) => [...prev, { dataUrl, file }]);
   }, []);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
