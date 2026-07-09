@@ -36,7 +36,7 @@ export default function ChatWidget() {
     const token = localStorage.getItem("iztack_token");
     if (!token) return;
     try {
-      const res = await fetch("https://api.iztack.com/api/chat/history?limit=30", {
+      const res = await fetch("/api/chat/history?limit=30", {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
@@ -74,7 +74,7 @@ export default function ChatWidget() {
       setMessages((prev) => [...prev, userMsg]);
       setInput("");
 
-      const res = await fetch("https://api.iztack.com/api/chat/message", {
+      const res = await fetch("/api/chat/message", {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
         body: formData,

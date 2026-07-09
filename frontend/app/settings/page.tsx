@@ -35,7 +35,7 @@ function SettingsContent() {
 
   async function fetchSettings(t: string) {
     try {
-      const res = await fetch("https://api.iztack.com/api/settings", {
+      const res = await fetch("/api/settings", {
         headers: { Authorization: `Bearer ${t}` },
       });
       if (res.ok) {
@@ -53,7 +53,7 @@ function SettingsContent() {
 
   async function fetchDriveStatus(t: string) {
     try {
-      const res = await fetch("https://api.iztack.com/api/settings/google-drive/status", {
+      const res = await fetch("/api/settings/google-drive/status", {
         headers: { Authorization: `Bearer ${t}` },
       });
       if (res.ok) {
@@ -78,7 +78,7 @@ function SettingsContent() {
   async function saveTelegram() {
     if (!token || !telegramChatId.trim()) return;
     try {
-      const res = await fetch("https://api.iztack.com/api/settings/telegram", {
+      const res = await fetch("/api/settings/telegram", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -100,7 +100,7 @@ function SettingsContent() {
   async function saveDrive() {
     if (!token || !driveRefreshToken.trim() || !driveFolderId.trim()) return;
     try {
-      const res = await fetch("https://api.iztack.com/api/settings/google-drive", {
+      const res = await fetch("/api/settings/google-drive", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

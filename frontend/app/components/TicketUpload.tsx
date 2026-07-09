@@ -115,7 +115,7 @@ export default function TicketUpload({ onClose }: Props) {
       images.forEach((img) => formData.append("files", img.file));
       formData.append("is_continuation", String(isContinuation));
 
-      const res = await fetch("https://api.iztack.com/api/tickets/upload", {
+      const res = await fetch("/api/tickets/upload", {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
         body: formData,
