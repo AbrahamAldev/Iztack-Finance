@@ -154,20 +154,31 @@ class ChatService:
         # Try to use AI
         llm = self._get_llm()
         if llm:
-            # Get user context data for AI
-            context = await self._build_user_context(user_id)
-            ai_response = await llm.chat(
-                user_message=text,
-                context=context,
-            )
-            await self._save_message(user_id, "bot", ai_response, "text")
-            return ai_response, {"type": "ai_response"}
+            try:
+                # Get user context data for AI
+                context = await self._build_user_context(user_id)
+                ai_response = await llm.chat(
+                    user_message=text,
+                    context=context,
+                )
+                # Check if the LLM returned an error message
+                if ai_response and "tuve un problema al procesar" in ai_response:
+                    logger.warning("LLM returned error, falling back to local response")
+                    raise Exception("LLM API error")
+                await self._save_message(user_id, "bot", ai_response, "text")
+                return ai_response, {"type": "ai_response"}
+            except Exception as e:
+                logger.error(f"LLM chat failed: {e}", exc_info=True)
+                # Fall through to local fallback
 
-        # Fallback if no AI key configured
+        # Fallback if no AI key configured or AI failed
         response = (
-            "Hola, no tengo conexión con mi cerebro IA todavía. 🧠\n\n"
-            "Para activar la IA, ve a Configuración y agrega tu API Key de OpenRouter.\n\n"
-            "Mientras tanto, puedes enviarme fotos de tickets y las procesaré con OCR."
+            "Hola, actualmente no tengo conexión con mi servicio de IA. 🧠\n\n"
+            "Pero aún puedo ayudarte:\n"
+            "📸 Envíame fotos de tickets para procesarlos con OCR\n"
+            "📊 Consulta tu Dashboard para ver tus finanzas\n"
+            "🛒 Revisa tu lista de compras inteligente\n\n"
+            "Si necesitas asistencia personalizada, contacta a soporte."
         )
         await self._save_message(user_id, "bot", response, "text")
         return response, {"type": "fallback"}
