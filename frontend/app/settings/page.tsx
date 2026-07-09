@@ -21,6 +21,7 @@ function SettingsContent() {
   const [driveRefreshToken, setDriveRefreshToken] = useState("");
   const [driveFolderId, setDriveFolderId] = useState("");
   const [driveConfigured, setDriveConfigured] = useState(false);
+  const [showDriveHelp, setShowDriveHelp] = useState(false);
   const [driveStatus, setDriveStatus] = useState<{ percentage: number; warning: boolean } | null>(null);
 
   const [token, setToken] = useState<string | null>(null);
@@ -131,17 +132,18 @@ function SettingsContent() {
       </p>
 
       <div className="max-w-3xl space-y-6">
-        {/* Telegram */}
+        {/* ===== TELEGRAM ===== */}
         <section className="bg-white rounded-lg shadow p-6">
           <div className="flex items-center gap-2 mb-4">
             <Send className="h-5 w-5 text-sky-600" />
             <h2 className="text-lg font-semibold text-gray-900">Telegram</h2>
             {telegramConfigured && (
-              <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
-                Configurado
-              </span>
+              <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">Configurado</span>
             )}
           </div>
+          <p className="text-sm text-gray-500 mb-3">
+            Introduce tu Chat ID de Telegram para vincular tu cuenta con @IztackFinance_Bot
+          </p>
           <div className="flex gap-2">
             <input
               type="text"
@@ -150,42 +152,33 @@ function SettingsContent() {
               placeholder="Ej: 123456789"
               className="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
             />
-            <button
-              onClick={saveTelegram}
-              className="px-4 py-2 bg-sky-600 text-white text-sm rounded-md hover:bg-sky-700"
-            >
-              Guardar
-            </button>
-            <button
-              onClick={() => setShowTelegramHelp(!showTelegramHelp)}
-              className="p-2 text-gray-400 hover:text-gray-600"
-              title="Ayuda"
-            >
+            <button onClick={saveTelegram} className="px-4 py-2 bg-sky-600 text-white text-sm rounded-md hover:bg-sky-700">Guardar</button>
+            <button onClick={() => setShowTelegramHelp(!showTelegramHelp)} className="p-2 text-gray-400 hover:text-gray-600" title="Ayuda">
               <HelpCircle className="h-5 w-5" />
             </button>
           </div>
           {showTelegramHelp && (
             <div className="mt-3 p-3 bg-sky-50 rounded-md text-sm text-sky-800">
-              <p className="font-semibold mb-1">¿Cómo obtener tu Chat ID?</p>
+              <p className="font-semibold mb-1">¿Cómo vincular tu cuenta de Telegram?</p>
               <ol className="list-decimal list-inside space-y-1">
-                <li>Abre Telegram y busca <code>@userinfobot</code></li>
-                <li>Envíale cualquier mensaje (ej: "hola")</li>
-                <li>El bot te responderá con tu ID numérico</li>
-                <li>Copia ese número y pégalo arriba</li>
+                <li>Abre Telegram y busca <strong>@IztackFinance_Bot</strong></li>
+                <li>Envía el comando <code>/start</code></li>
+                <li>El bot te responderá con tu <strong>Chat ID</strong> numérico</li>
+                <li>Copia ese número y pégalo en el campo de arriba</li>
+                <li>Haz clic en <strong>Guardar</strong></li>
+                <li>Vuelve al bot y escribe <code>/start</code> para verificar</li>
               </ol>
             </div>
           )}
         </section>
 
-        {/* Google Drive */}
+        {/* ===== GOOGLE DRIVE ===== */}
         <section className="bg-white rounded-lg shadow p-6">
           <div className="flex items-center gap-2 mb-4">
             <HardDrive className="h-5 w-5 text-green-600" />
             <h2 className="text-lg font-semibold text-gray-900">Google Drive</h2>
             {driveConfigured && (
-              <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
-                Configurado
-              </span>
+              <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">Configurado</span>
             )}
           </div>
 
@@ -196,44 +189,50 @@ function SettingsContent() {
                 <span>{driveStatus.percentage.toFixed(1)}%</span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">
-                <div
-                  className={`h-2 rounded-full ${
-                    driveStatus.warning ? "bg-red-500" : "bg-green-500"
-                  }`}
-                  style={{ width: `${Math.min(driveStatus.percentage, 100)}%` }}
-                />
+                <div className={`h-2 rounded-full ${driveStatus.warning ? "bg-red-500" : "bg-green-500"}`}
+                  style={{ width: `${Math.min(driveStatus.percentage, 100)}%` }} />
               </div>
-              {driveStatus.warning && (
-                <p className="text-xs text-red-600 mt-1">
-                  ⚠️ Alcanzando límite. Libera espacio o actualiza tu plan.
-                </p>
-              )}
+              {driveStatus.warning && <p className="text-xs text-red-600 mt-1">⚠️ Alcanzando límite. Libera espacio.</p>}
+            </div>
+          )}
+
+          <div className="flex items-center gap-2 mb-3">
+            <p className="text-sm text-gray-600">Configura tu almacenamiento en la nube</p>
+            <button onClick={() => setShowDriveHelp(!showDriveHelp)} className="p-1 text-gray-400 hover:text-gray-600" title="Ayuda">
+              <HelpCircle className="h-4 w-4" />
+            </button>
+          </div>
+
+          {showDriveHelp && (
+            <div className="mb-4 p-3 bg-green-50 rounded-md text-sm text-green-800">
+              <p className="font-semibold mb-1">🔑 ¿Cómo obtener tus credenciales de Google Drive?</p>
+              <ol className="list-decimal list-inside space-y-1.5">
+                <li>Ve a <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener noreferrer" className="text-green-700 underline font-medium">Google Cloud Console</a></li>
+                <li>Crea un proyecto nuevo o selecciona uno existente</li>
+                <li>Habilita <strong>Google Drive API</strong> desde "Biblioteca"</li>
+                <li>Ve a "Credenciales" → "Crear credenciales" → "ID de cliente de OAuth"</li>
+                <li>Tipo: <strong>Aplicación de escritorio</strong></li>
+                <li>Copia el <strong>Client ID</strong> y <strong>Client Secret</strong> que aparecen</li>
+                <li>Genera un <strong>Refresh Token</strong> usando la herramienta de OAuth</li>
+                <li>Crea una carpeta en Google Drive</li>
+                <li>El <strong>ID de carpeta</strong> está en la URL: <code className="text-xs">drive.google.com/drive/folders/ABC123</code> (copia solo el código de la carpeta)</li>
+              </ol>
+              <p className="mt-2 text-xs">🔒 Tus credenciales se cifrarán con AES-256-GCM antes de guardarse</p>
             </div>
           )}
 
           <div className="space-y-3">
             <Field label="Refresh Token de Google">
-              <input
-                type="password"
-                value={driveRefreshToken}
-                onChange={(e) => setDriveRefreshToken(e.target.value)}
+              <input type="password" value={driveRefreshToken} onChange={(e) => setDriveRefreshToken(e.target.value)}
                 placeholder="Token de actualización de OAuth"
-                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500"
-              />
+                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500" />
             </Field>
             <Field label="ID de Carpeta de Drive">
-              <input
-                type="text"
-                value={driveFolderId}
-                onChange={(e) => setDriveFolderId(e.target.value)}
+              <input type="text" value={driveFolderId} onChange={(e) => setDriveFolderId(e.target.value)}
                 placeholder="Ej: 1AbCdEfGhIjKlMnOpQrStUvWxYz"
-                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500"
-              />
+                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500" />
             </Field>
-            <button
-              onClick={saveDrive}
-              className="px-4 py-2 bg-green-600 text-white text-sm rounded-md hover:bg-green-700"
-            >
+            <button onClick={saveDrive} className="px-4 py-2 bg-green-600 text-white text-sm rounded-md hover:bg-green-700">
               Guardar Google Drive
             </button>
           </div>
@@ -247,19 +246,12 @@ function SettingsContent() {
           </div>
           <div className="space-y-4">
             <Field label="Nombre del tenant (familia u organización)">
-              <input
-                type="text"
-                value={tenantName}
-                onChange={(e) => setTenantName(e.target.value)}
-                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-              />
+              <input type="text" value={tenantName} onChange={(e) => setTenantName(e.target.value)}
+                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500" />
             </Field>
             <Field label="Moneda">
-              <select
-                value={currency}
-                onChange={(e) => setCurrency(e.target.value)}
-                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-              >
+              <select value={currency} onChange={(e) => setCurrency(e.target.value)}
+                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500">
                 <option value="MXN">MXN — Peso mexicano</option>
                 <option value="USD">USD — Dólar</option>
                 <option value="EUR">EUR — Euro</option>
@@ -275,11 +267,8 @@ function SettingsContent() {
             <h2 className="text-lg font-semibold text-gray-900">Regional</h2>
           </div>
           <Field label="Zona horaria">
-            <select
-              value={timezone}
-              onChange={(e) => setTimezone(e.target.value)}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-            >
+            <select value={timezone} onChange={(e) => setTimezone(e.target.value)}
+              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500">
               <option value="America/Mexico_City">Ciudad de México (UTC-6)</option>
               <option value="America/Tijuana">Tijuana (UTC-8)</option>
               <option value="America/Monterrey">Monterrey (UTC-6)</option>
@@ -295,39 +284,24 @@ function SettingsContent() {
             <h2 className="text-lg font-semibold text-gray-900">Hardware</h2>
           </div>
           <label className="flex items-center gap-3">
-            <input
-              type="checkbox"
-              checked={printerEnabled}
-              onChange={(e) => setPrinterEnabled(e.target.checked)}
-              className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-            />
-            <span className="text-sm text-gray-700">
-              Habilitar impresora de tickets local (USB/Bluetooth)
-            </span>
+            <input type="checkbox" checked={printerEnabled} onChange={(e) => setPrinterEnabled(e.target.checked)}
+              className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
+            <span className="text-sm text-gray-700">Habilitar impresora de tickets local (USB/Bluetooth)</span>
           </label>
           {printerEnabled && (
             <p className="mt-3 text-xs text-gray-500">
-              💡 Para configurar el puerto USB o la MAC Bluetooth, edita{" "}
-              <code className="bg-gray-100 px-1 rounded">.env</code> y reinicia el contenedor del backend.
+              💡 Para configurar el puerto USB o la MAC Bluetooth, edita <code className="bg-gray-100 px-1 rounded">.env</code>
             </p>
           )}
         </section>
 
         {/* Save bar */}
         <div className="flex items-center justify-between bg-white rounded-lg shadow p-4">
-          <button
-            type="button"
-            onClick={handleSave}
-            className="inline-flex items-center gap-2 bg-indigo-600 px-4 py-2 text-sm font-medium text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-          >
-            <Save className="h-4 w-4" />
-            Guardar cambios
+          <button type="button" onClick={handleSave}
+            className="inline-flex items-center gap-2 bg-indigo-600 px-4 py-2 text-sm font-medium text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+            <Save className="h-4 w-4" /> Guardar cambios
           </button>
-          {savedAt && (
-            <span className="text-sm text-emerald-600">
-              ✓ Guardado a las {savedAt}
-            </span>
-          )}
+          {savedAt && <span className="text-sm text-emerald-600">✓ Guardado a las {savedAt}</span>}
         </div>
       </div>
     </div>
@@ -343,13 +317,7 @@ export default function SettingsPage() {
   );
 }
 
-function Field({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block">
       <span className="mb-1 block text-sm font-medium text-gray-700">{label}</span>
