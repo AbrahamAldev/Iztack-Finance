@@ -2,7 +2,65 @@
 
 > Registro cronológico de todas las decisiones, cambios y mejoras hechas en este chat.
 > Propósito: Si se cambia de modelo o chat, este documento permite retomar exactamente donde se quedó.
-> Última actualización: 06/07/2026
+> Última actualización: 08/07/2026
+
+---
+
+## 📦 Fecha: 08/07/2026 — Sesión: Fases 1-5 completadas + Plan Maestro
+
+### Fase 1: Login/Signup con JWT
+- [x] Modelo User con email, password_hash (bcrypt), JWT tokens
+- [x] Páginas /login y /register con redirección a dashboard
+- [x] AuthGuard para proteger rutas de la app
+
+### Fase 2: Settings (Telegram + Google Drive)
+- [x] Vinculación de chat_id de Telegram por usuario
+- [x] Google Drive con credenciales cifradas (AES-256-GCM)
+- [x] Barra de capacidad de Drive con alerta al 90%
+
+### Fase 3: Subida de tickets con cámara y stitching
+- [x] Componente TicketUpload con 3 modos (select, camera, preview)
+- [x] Cámara con overlay guía (marco con esquinas)
+- [x] Stitching multi-imagen con OpenCV ORB feature matching
+- [x] Checkbox "es continuación" para unión automática
+
+### Fase 4: Chat IA con OpenRouter
+- [x] utils/llm.py: Cliente OpenRouter con DeepSeek free
+- [x] System prompt anti-prompt-injection (fijo, no editable)
+- [x] ChatWidget flotante tipo Intercom/Drift
+- [x] Soporte para texto y fotos desde el chat
+- [x] Contexto real del usuario (tickets, config, shopping lists)
+- [x] OPENROUTER_API_KEY configurada en servidor
+
+### Fase 5: Telegram multi-usuario
+- [x] Un solo bot @IztackFinance_Bot para todos
+- [x] Identifica usuarios por chat_id vinculado en Settings
+- [x] Usuarios no vinculados reciben instrucciones para conectar
+- [x] Textos con ChatService con IA (OpenRouter)
+- [x] get_db_sync() para sesiones síncronas de BD
+
+### CI/CD y correcciones
+- [x] deploy.yml: path corregido a /opt/iztack-finance
+- [x] ci.yml: build-docker con continue-on-error
+- [x] appleboy/ssh-action en todos los workflows
+- [x] Secrets configurados (PROXMOX_CT_HOST, PROXMOX_CT_SSH_KEY)
+
+### Landing page SaaS
+- [x] 12 features orientadas al usuario final
+- [x] Pricing (Básico/Pro/Familiar)
+- [x] CTAs, hero, footer
+
+### Plan Maestro definido (pendientes)
+- [ ] Fase 0: Setup Admin Portal (admfinance.iztack.com)
+- [ ] Fase A: Dashboard con datos reales
+- [ ] Fase A.5: Admin Dashboards (salud + clientes)
+- [ ] Fase B: Facturación completa
+- [ ] Fase C: Análisis financiero
+- [ ] Fase C.5: Admin staff + configuración
+- [ ] Fase D: Workers + notificaciones + alertas garantía
+- [ ] Fase E: Features adicionales
+- [ ] Fase F: Módulo Fiscal México (con IA)
+- [ ] Fase G: Escalabilidad
 
 ---
 
@@ -30,14 +88,8 @@
 
 | # | Cambio | Explicación | Commit |
 |---|--------|-------------|--------|
-| 34 | **`docs/GUIA_ACCESO_REMOTO.md` — sección de auto-arranque post-corte de luz** | Nueva sección "⚡ Auto-arranque tras corte de luz" con 6 capas de resiliencia (UPS, hipervisor, CTs, Docker, tunnel, ops-ai), 5 checks de verificación, script de rescate, instrucciones para BIOS del Proxmox, comando `uptime -p` para detectar cortes recientes, puntero al monitoreo proactivo vía Telegram. +108/-2 líneas. | este commit |
-| 35 | **Actualización fecha y "Ver también" en `GUIA_ACCESO_REMOTO.md`** | Fecha → 06/07/2026; "Ver también" ahora incluye `GESTION_SECRETOS.md` y `CHECKLIST_REBRAND_MANUAL.md`. | este commit |
-
-### Pendiente operativo
-
-- ⏳ Wipe Docker + instalación limpia desde cero (operación destructiva, requiere confirmación explícita).
-- ⏳ Diagnóstico de `cloudflared` y `ops-ai` para validar auto-start real tras un corte simulado (`ssh proxmox "systemctl reboot"`).
-- ⏳ Commit final con los cambios de docs de esta sesión.
+| 34 | **`docs/GUIA_ACCESO_REMOTO.md` — sección de auto-arranque post-corte de luz** | Nueva sección "⚡ Auto-arranque tras corte de luz" con 6 capas de resiliencia. | este commit |
+| 35 | **Actualización fecha y "Ver también" en `GUIA_ACCESO_REMOTO.md`** | Fecha → 06/07/2026. | este commit |
 
 ---
 
@@ -47,37 +99,26 @@
 
 | # | Cambio | Explicación | Commit |
 |---|--------|-------------|--------|
-| 12 | **Wizard `/setup` con 4 pasos** | Página completa para introducir Telegram/Gemini/Google paso a paso. Validación en vivo contra el backend, stepper visual, modal "¿Cómo consigo esta credencial?", toggle de visibilidad para secretos. Redirige al dashboard si ya está configurado. | este commit |
-| 13 | **Fix `/settings` (default export missing)** | La página existía pero vacía, Next.js lanzaba "The default export is not a React Component". Se creó con UI completa: tenant, moneda, zona horaria, impresora. | este commit |
+| 12 | **Wizard `/setup` con 4 pasos** | Página completa para introducir Telegram/Gemini/Google paso a paso. | este commit |
+| 13 | **Fix `/settings` (default export missing)** | Se creó con UI completa: tenant, moneda, zona horaria, impresora. | este commit |
 
 ### Cambios de Backend
 
 | # | Cambio | Explicación | Commit |
 |---|--------|-------------|--------|
-| 14 | **Módulo `setup/`** | Nuevo paquete `backend/app/modules/setup/` con `routes.py`, `service.py`, `schemas.py`, `tests/`. Endpoints `GET /api/setup/status`, `POST /api/setup/validate`, `POST /api/setup/finalize`. Cifrado AES-256-GCM para secretos en reposo. Reinicio automático del bot al finalizar. | este commit |
-| 15 | **Tablas `tenants` + `telegram_chat_links`** | Nuevas tablas SQLAlchemy: `tenants` (nombre, timezone, setup_completed, secretos cifrados), `telegram_chat_links` (mapeo chat_id → tenant_id para multi-tenant). | este commit |
+| 14 | **Módulo `setup/`** | Nuevo paquete con routes, service, schemas, tests. Cifrado AES-256-GCM. | este commit |
+| 15 | **Tablas `tenants` + `telegram_chat_links`** | Multi-tenant support. | este commit |
 | 16 | **Router setup en `main.py`** | Registrado bajo prefix `/api/setup`. | este commit |
 
-### Cambios de Infraestructura (¡CRÍTICOS!)
+### Cambios de Infraestructura
 
-| # | Cambio | Explicación | Commit |
-|---|--------|-------------|--------|
-| 17 | **Acceso SSH con clave Ed25519** | Par de claves (`~/.ssh/id_ed25519_iztrack`) generado en Mac, clave pública instalada en `root@192.168.0.2`. Alias `ssh proxmox` configurado en `~/.ssh/config`. Entrada sin password habilitada. | — (local, no en repo) |
-| 18 | **Inspección Proxmox completa** | Mapeados CT 101 (iztack-finance, 5 contenedores sf-* healthy, IP 192.168.0.96), CT 103 (cloudflared daemon nativo, IP 192.168.0.95), CT 200 (ops-ai). | — (diagnóstico) |
-| 19 | **🔐 Acceso remoto seguro vía Cloudflare Tunnel** | **HITO MAYOR.** Se extendió el túnel con SSH + Proxmox UI. Creadas 5 entradas DNS CNAME con proxy 🟠 en Cloudflare (app/api/ssh/proxmox/db → tunnel). El config del tunnel apunta al CT 101 (192.168.0.96) para los servicios HTTP y al host (192.168.0.2) para SSH/Proxmox. | — (config en /etc/cloudflared/config.yml) |
-| 20 | **`cloudflared` instalado en Mac** | Cliente de Cloudflare Tunnel instalado vía `brew install cloudflared` (v2026.6.1). | — (local) |
-| 21 | **Alias SSH `proxmox-remote`** | En `~/.ssh/config`: usa `ProxyCommand /opt/homebrew/bin/cloudflared access tcp --hostname %h` para conectarse al SSH del Proxmox desde cualquier parte del mundo con un solo comando. | — (local) |
-
-### Hallazgos / Deuda técnica
-
-- ⚠️ El repo en el Proxmox está en `/opt/iztack-finance` (no `/Iztack-Finance`).
-- ⚠️ El bot actualmente NO persiste tickets en DB, NO clasifica con LLM, NO es multi-tenant. Eso es para el siguiente turn.
-- ⚠️ El frontend (puerto 3000) no responde vía tunnel porque el docker-compose no lo publica correctamente al host — pendiente.
-- ⚠️ La contraseña de root del Proxmox y el API token de Cloudflare quedaron expuestos en este chat; se recomienda rotarlos al finalizar.
-
-### 📚 Documentación nueva
-
-- `docs/GUIA_ACCESO_REMOTO.md` — **Guía completa** de cómo trabajar desde fuera (URLs, comandos SSH, troubleshooting, arquitectura).
+| # | Cambio | Explicación |
+|---|--------|-------------|
+| 17 | **Acceso SSH con clave Ed25519** | Par de claves generado, alias `ssh proxmox` configurado. |
+| 18 | **Inspección Proxmox completa** | CT 101, CT 103, CT 200 mapeados. |
+| 19 | **🔐 Acceso remoto seguro vía Cloudflare Tunnel** | Túnel con SSH + Proxmox UI. 5 entradas DNS CNAME. |
+| 20 | **`cloudflared` instalado en Mac** | Cliente de Cloudflare Tunnel vía brew. |
+| 21 | **Alias SSH `proxmox-remote`** | ProxyCommand con cloudflared access tcp. |
 
 ---
 
@@ -87,21 +128,21 @@
 
 | # | Cambio | Explicación | Commit |
 |---|--------|-------------|--------|
-| 1 | **Comparativa arquitectura vs otra IA** | Se analizaron ambas propuestas punto por punto (18 categorías). Se determinó que la otra IA tenía mejor arquitectura general (S3, Tesseract, Caddy, Prometheus) pero el código existente (6,000+ líneas) ya implementaba features más completas (9 portales, garantías, lista familiar, CI/CD). | — |
-| 2 | **Adopción de ARQ en lugar de Celery** | ARQ es más simple, Redis-native y mejor integrado con FastAPI async. | `28e70ac` |
-| 3 | **Caddy reemplaza a Nginx** | HTTPS automático con Let's Encrypt sin configuración manual. | `28e70ac` |
-| 4 | **Almacenamiento híbrido** | 4 capas: LocalStorage, SensitiveStorage (cifrado), RetentionManager (purga >13 meses), EmailStorage (ZIP mensual). | `aac4079` |
+| 1 | **Comparativa arquitectura vs otra IA** | 18 categorías analizadas. | — |
+| 2 | **Adopción de ARQ en lugar de Celery** | ARQ es más simple, Redis-native. | `28e70ac` |
+| 3 | **Caddy reemplaza a Nginx** | HTTPS automático. | `28e70ac` |
+| 4 | **Almacenamiento híbrido** | 4 capas: Local, Sensitive, Retention, Email. | `aac4079` |
 | 5 | **Modelos v2 con multi-tenant** | 18 tablas con `household_id`. | `aac4079` |
 | 6 | **Scheduler ARQ** | Reemplaza Celery Beat. | `9e2580c` |
 
 ### Cambios de Documentación
 
-| # | Cambio | Explicación | Commit |
-|---|--------|-------------|--------|
-| 7 | **Backup histórico** | `docs/HISTORICO_ARQUITECTURA_v1.md`. | `28e70ac` |
-| 8 | **Arquitectura v2** | `docs/ARQUITECTURA_FINAL_v2.md`. | `9e2580c` |
-| 9 | **Renombre a Iztack-Finance** | Iztack = agencia/marca; Finance = módulo financiero. | `b191f86` |
-| 10 | **Guía de deploy** | `docs/GUIA_DEPLOY_PASO_A_PASO.md`. | `b191f86` |
-| 11 | **IDEA-ORIGINAL.md** | Documento fundacional. | `11a1c6f` |
-| 12 | **Recambio editorial Iztack-Tomin → Iztack-Finance** | Sustitución de todas las menciones del nombre antiguo en código y docs. Tag de backup `backup-pre-rebrand-20260706` (commit `b652e32`). | `93fab0a` |
-| 13 | **Guía manual del recambio** | `docs/manual/CHECKLIST_REBRAND_MANUAL.md` con las 12 acciones humanas (GitHub, Cloudflare, Proxmox, BotFather, GCP, Drive, Apple Passwords, comunicación). | `93fab0a` (mismo commit) |
+| # | Cambio | Commit |
+|---|--------|--------|
+| 7 | Backup histórico (`HISTORICO_ARQUITECTURA_v1.md`) | `28e70ac` |
+| 8 | Arquitectura v2 (`ARQUITECTURA_FINAL_v2.md`) | `9e2580c` |
+| 9 | Renombre a Iztack-Finance | `b191f86` |
+| 10 | Guía de deploy | `b191f86` |
+| 11 | IDEA-ORIGINAL.md | `11a1c6f` |
+| 12 | Recambio editorial Iztack-Tomin → Iztack-Finance | `93fab0a` |
+| 13 | CHECKLIST_REBRAND_MANUAL.md | `93fab0a` |

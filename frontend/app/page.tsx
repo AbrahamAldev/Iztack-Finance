@@ -158,47 +158,62 @@ const features = [
   {
     icon: "📸",
     title: "Captura Inteligente",
-    desc: "Toma una foto de tu ticket y el sistema extrae automáticamente todos los datos: tienda, fecha, productos, total.",
+    desc: "Toma una foto de tu ticket y el sistema extrae automáticamente todos los datos: tienda, fecha, productos, total. Sin escribir nada.",
   },
   {
     icon: "🤖",
     title: "Facturación Automática",
-    desc: "El bot accede al portal de cada tienda con tus credenciales y solicita la factura por ti. Sin hacer nada.",
+    desc: "El bot accede al portal de cada tienda con tus credenciales y solicita la factura CFDI por ti. Tú solo tomas la foto, nosotros hacemos el resto.",
   },
   {
     icon: "📊",
-    title: "Dashboard Financiero",
-    desc: "Visualiza tus gastos por categoría, detecta fugas de dinero y recibe recomendaciones personalizadas.",
+    title: "Dashboard Inteligente",
+    desc: "Visualiza todos tus gastos en tiempo real con gráficos interactivos. Detecta fugas de dinero y recibe recomendaciones personalizadas de ahorro.",
   },
   {
     icon: "🛒",
-    title: "Lista de Compras Inteligente",
-    desc: "El sistema detecta tus ciclos de consumo y genera listas de compras automáticas. Comparte y aprueba en familia.",
+    title: "Lista de Compras Automática",
+    desc: "El sistema detecta tus ciclos de consumo y genera listas inteligentes. Comparte con tu familia, voten los cambios y aprueben juntos.",
   },
   {
     icon: "🔧",
-    title: "Gestión de Garantías",
-    desc: "Los productos con garantía se almacenan en una carpeta especial. Encuentra tu ticket de garantía en segundos.",
+    title: "Alertas de Garantía",
+    desc: "Te avisamos automáticamente cuando un producto está por vencer su garantía. Nunca más pierdas la oportunidad de reclamar.",
   },
   {
     icon: "☁️",
     title: "Almacenamiento en la Nube",
-    desc: "Todas tus facturas en PDF y XML se guardan automáticamente en Google Drive, organizadas por tienda y tipo.",
+    desc: "Todas tus facturas en PDF y XML se guardan automáticamente en Google Drive, organizadas por tienda, tipo de gasto y año.",
   },
   {
     icon: "📱",
     title: "Multi-plataforma",
-    desc: "Accede desde la web o envía tus tickets por Telegram. El bot te responde al instante.",
+    desc: "Accede desde la web o envía tus tickets por Telegram. El bot con IA te responde al instante y resuelve tus dudas financieras.",
   },
   {
     icon: "🔒",
     title: "Privacidad Total",
-    desc: "Tus datos están cifrados y aislados por usuario. Nadie más puede ver tu información financiera.",
+    desc: "Tus datos están cifrados con AES-256-GCM y aislados por usuario. Nadie más puede ver tu información financiera. Tú tienes el control.",
   },
   {
     icon: "📈",
-    title: "Análisis Predictivo",
-    desc: "Recibe alertas de fugas de dinero, sugerencias de ahorro y predicciones de gastos futuros.",
+    title: "Análisis Financiero con IA",
+    desc: "Nuestra inteligencia artificial analiza tus gastos, detecta fugas de dinero, proyecta tus gastos futuros y te da recomendaciones para ahorrar más.",
+  },
+  {
+    icon: "🏛️",
+    title: "Optimización Fiscal",
+    desc: "Sube tu constancia fiscal y estados de cuenta. La IA calcula tus deducciones personales, identifica gastos deducibles y te ayuda a pagar menos impuestos.",
+  },
+  {
+    icon: "🔔",
+    title: "Notificaciones Inteligentes",
+    desc: "¿Compraste algo y olvidaste el ticket? El sistema te lo recuerda. Recibe alertas cuando sea momento de reabastecer productos de consumo frecuente.",
+  },
+  {
+    icon: "🏪",
+    title: "Multi-negocio Familiar",
+    desc: "Administra las finanzas de tu hogar y las de tu negocio por separado. Dashboards independientes con análisis específicos para cada uno.",
   },
 ];
 
