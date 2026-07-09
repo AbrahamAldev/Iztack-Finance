@@ -52,7 +52,7 @@
       <div class="space-y-4">
         <div>
           <label class="block text-sm text-gray-400 mb-1">Email</label>
-          <input id="loginEmail" type="email" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-sm focus:border-sky-500 focus:outline-none" placeholder="admin@iztack.com">
+          <input id="loginEmail" type="email" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-sm focus:border-sky-500 focus:outline-none" placeholder="usuario@iztack.com">
         </div>
         <div>
           <label class="block text-sm text-gray-400 mb-1">Contraseña</label>
@@ -60,7 +60,7 @@
         </div>
         <button onclick="login()" class="w-full bg-sky-600 text-white py-2.5 rounded-lg font-medium hover:bg-sky-700">Iniciar Sesión</button>
         <p class="text-center text-xs text-gray-500 mt-2">
-          ¿Primer acceso? <button onclick="showRegister()" class="text-sky-400 hover:underline">Registrar admin</button>
+          ¿Primer acceso? <button onclick="showRegister()" class="text-sky-400 hover:underline">Regístrate</button>
         </p>
       </div>
     </div>
@@ -68,21 +68,24 @@
 
   <div id="registerScreen" class="min-h-screen flex items-center justify-center hidden">
     <div class="bg-gray-800 p-8 rounded-xl shadow-2xl w-96">
-      <div class="text-center mb-6">
-        <div class="text-5xl mb-3">🏦</div>
-        <h1 class="text-xl font-bold text-sky-400">Registrar Admin</h1>
-        <p class="text-sm text-gray-400 mt-1">Solo admin@iztack.com</p>
-      </div>
-      <div id="registerError" class="bg-red-900/50 text-red-300 px-4 py-2 rounded-lg text-sm mb-4 hidden"></div>
-      <div class="space-y-4">
-        <div>
-          <label class="block text-sm text-gray-400 mb-1">Email</label>
-          <input id="regEmail" type="email" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-sm focus:border-sky-500 focus:outline-none" value="admin@iztack.com" readonly>
-        </div>
-        <div>
-          <label class="block text-sm text-gray-400 mb-1">Nombre</label>
-          <input id="regName" type="text" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-sm focus:border-sky-500 focus:outline-none" placeholder="Admin Iztack">
-        </div>
+              <div class="text-center mb-6">
+                <div class="text-5xl mb-3">🏦</div>
+                <h1 class="text-xl font-bold text-sky-400">Registrar Admin</h1>
+                <p class="text-sm text-gray-400 mt-1">Crea tu cuenta @iztack.com</p>
+              </div>
+              <div id="registerError" class="bg-red-900/50 text-red-300 px-4 py-2 rounded-lg text-sm mb-4 hidden"></div>
+              <div class="space-y-4">
+                <div>
+                  <label class="block text-sm text-gray-400 mb-1">Correo @iztack.com</label>
+                  <div class="flex items-center bg-gray-700 border border-gray-600 rounded-lg focus-within:border-sky-500">
+                    <input id="regUser" type="text" class="flex-1 bg-transparent border-0 rounded-l-lg px-3 py-2 text-sm focus:outline-none" placeholder="usuario">
+                    <span class="px-3 py-2 text-sm text-gray-400 bg-gray-600 rounded-r-lg select-none">@iztack.com</span>
+                  </div>
+                </div>
+                <div>
+                  <label class="block text-sm text-gray-400 mb-1">Nombre</label>
+                  <input id="regName" type="text" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-sm focus:border-sky-500 focus:outline-none" placeholder="Juan Pérez">
+                </div>
         <div>
           <label class="block text-sm text-gray-400 mb-1">Contraseña</label>
           <input id="regPassword" type="password" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-sm focus:border-sky-500 focus:outline-none" placeholder="Mínimo 8 caracteres">
@@ -118,12 +121,17 @@ async function login() {
 }
 
 async function register() {
-  const name = document.getElementById('regName').value;
+  const user = document.getElementById('regUser').value.trim();
+  const name = document.getElementById('regName').value.trim();
   const password = document.getElementById('regPassword').value;
   const err = document.getElementById('registerError');
   err.classList.add('hidden');
+  if (!user) { err.textContent = 'Ingresa tu nombre de usuario'; err.classList.remove('hidden'); return; }
+  if (!name) { err.textContent = 'Ingresa tu nombre'; err.classList.remove('hidden'); return; }
+  if (!password || password.length < 8) { err.textContent = 'La contraseña debe tener al menos 8 caracteres'; err.classList.remove('hidden'); return; }
+  const email = user + '@iztack.com';
   try {
-    const res = await fetch(API + '/register', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({email:'admin@iztack.com', name, password}) });
+    const res = await fetch(API + '/register', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({email, name, password}) });
     const data = await res.json();
     if (!res.ok) { err.textContent = data.detail; err.classList.remove('hidden'); return; }
     token = data.access_token;
