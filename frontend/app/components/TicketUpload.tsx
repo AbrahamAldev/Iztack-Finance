@@ -111,6 +111,16 @@ export default function TicketUpload({ onClose }: Props) {
         </div>
 
         <div className="p-6">
+          {/* Instructions */}
+          <div className="bg-sky-50 rounded-lg p-4 mb-4 text-sm text-sky-800">
+            <p className="font-medium mb-2">📋 ¿Cómo subir tickets?</p>
+            <ul className="space-y-1.5">
+              <li>• Puedes subir <strong>varios tickets diferentes</strong> al mismo tiempo (aunque sean de distintas tiendas).</li>
+              <li>• Si necesitas subir <strong>un ticket muy largo</strong>, marca la casilla <em>"Son continuaciones del mismo ticket"</em> y sube solo fotos de ESE ticket.</li>
+              <li className="text-xs text-sky-600 mt-1">⚠️ No mezcles tickets diferentes con la opción de continuaciones — sube cada ticket por separado.</li>
+            </ul>
+          </div>
+
           {/* Upload button */}
           <button
             onClick={() => fileInputRef.current?.click()}
@@ -120,8 +130,8 @@ export default function TicketUpload({ onClose }: Props) {
             <ImageIcon className="h-10 w-10 text-sky-600 shrink-0" />
             <div className="text-left">
               <p className="font-medium text-gray-900 text-lg">Seleccionar imágenes</p>
-              <p className="text-sm text-gray-500 mt-1">JPEG, PNG o WEBP (máx. 5MB c/u)</p>
-              <p className="text-xs text-gray-400 mt-0.5">En iOS: elige "Tomar Foto" para usar la cámara nativa</p>
+              <p className="text-sm text-gray-500 mt-1">Tomar foto, elegir de galería o seleccionar archivos</p>
+              <p className="text-xs text-gray-400 mt-0.5">JPEG, PNG o WEBP (máx. 5MB cada imagen)</p>
             </div>
           </button>
 
@@ -132,7 +142,6 @@ export default function TicketUpload({ onClose }: Props) {
             multiple
             className="hidden"
             onChange={handleFileSelect}
-            capture="environment"
           />
 
           {/* Selected images preview */}

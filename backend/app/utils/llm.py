@@ -58,7 +58,7 @@ class LLMClient:
         self,
         user_message: str,
         context: Optional[str] = None,
-        model: str = "free",
+        model: str = "openai/gpt-4o-mini",
         max_tokens: int = 1024,
         temperature: float = 0.7,
     ) -> str:
@@ -95,13 +95,6 @@ class LLMClient:
                 messages=messages,
                 max_tokens=max_tokens,
                 temperature=temperature,
-                extra_body={
-                    "models": [
-                        "deepseek/deepseek-chat:free",
-                        "meta-llama/llama-3.2-3b-instruct:free",
-                        "google/gemini-2.0-flash-exp:free",
-                    ],
-                },
             )
 
             result = response.choices[0].message.content
