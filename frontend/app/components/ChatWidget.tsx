@@ -43,6 +43,15 @@ export default function ChatWidget() {
         const data = await res.json();
         setMessages(data.messages || []);
         setHasHistory(true);
+      } else if (res.status === 401) {
+        setMessages([{
+          id: "auth-error",
+          role: "bot",
+          content: "🔐 Sesión expirada. Por favor cierra sesión y vuelve a iniciarla para usar el chat.",
+          msg_type: "error",
+          created_at: new Date().toISOString(),
+        }]);
+        setHasHistory(true);
       }
     } catch (e) {
       console.error("Error loading chat history:", e);
@@ -63,7 +72,6 @@ export default function ChatWidget() {
       if (msgText.trim()) formData.append("text", msgText.trim());
       if (file) formData.append("file", file);
 
-      // Optimistically add user message
       const userMsg: Message = {
         id: Date.now().toString(),
         role: "user",
@@ -81,14 +89,22 @@ export default function ChatWidget() {
       });
 
       if (res.ok) {
-        const data = await res.json();
-        // Reload full history to get proper message IDs
         await loadHistory();
-      } else {
+      } else if (res.status === 401) {
         const errMsg: Message = {
           id: (Date.now() + 1).toString(),
           role: "bot",
-          content: "❌ Error al enviar mensaje. Intenta de nuevo.",
+          content: "🔐 Tu sesión expiró. Cierra sesión y vuelve a iniciar para usar el chat.",
+          msg_type: "error",
+          created_at: new Date().toISOString(),
+        };
+        setMessages((prev) => [...prev, errMsg]);
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        const errMsg: Message = {
+          id: (Date.now() + 1).toString(),
+          role: "bot",
+          content: errData.detail || "❌ Error al procesar el mensaje. Intenta de nuevo.",
           msg_type: "error",
           created_at: new Date().toISOString(),
         };
@@ -98,7 +114,7 @@ export default function ChatWidget() {
       const errMsg: Message = {
         id: (Date.now() + 1).toString(),
         role: "bot",
-        content: "❌ Error de conexión.",
+        content: "❌ Error de conexión. Verifica tu internet.",
         msg_type: "error",
         created_at: new Date().toISOString(),
       };
@@ -116,7 +132,6 @@ export default function ChatWidget() {
   }
 
   function formatContent(content: string): string {
-    // Convert markdown-like syntax to simple HTML for display
     return content
       .replace(/\*([^*]+)\*/g, "<strong>$1</strong>")
       .replace(/\n/g, "<br />");
