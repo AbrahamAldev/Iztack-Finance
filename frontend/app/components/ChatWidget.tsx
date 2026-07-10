@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { MessageCircle, X, Send, Camera } from "lucide-react";
+import { MessageCircle, X, Send, Camera, AlertTriangle } from "lucide-react";
 
 interface Message {
   id: string;
@@ -21,19 +21,11 @@ export default function ChatWidget() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (isOpen && !hasHistory) {
-      loadHistory();
-    }
+    if (isOpen && !hasHistory) loadHistory();
   }, [isOpen]);
-
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
-
-  function redirectLogin() {
-    localStorage.removeItem("iztack_token");
-    window.location.href = "/login";
-  }
 
   async function loadHistory() {
     const token = localStorage.getItem("iztack_token");
@@ -46,168 +38,123 @@ export default function ChatWidget() {
         const data = await res.json();
         setMessages(data.messages || []);
         setHasHistory(true);
-      } else if (res.status === 401) {
-        redirectLogin();
       }
-    } catch (e) {
-      console.error("Error loading chat history:", e);
-    }
+    } catch (e) { console.error(e); }
   }
 
   async function sendMessage(text?: string, file?: File) {
     const token = localStorage.getItem("iztack_token");
     if (!token) return;
-
     const msgText = text || input;
     if (!msgText.trim() && !file) return;
-
     setLoading(true);
-
     try {
       const formData = new FormData();
       if (msgText.trim()) formData.append("text", msgText.trim());
       if (file) formData.append("file", file);
-
       const userMsg: Message = {
-        id: Date.now().toString(),
-        role: "user",
+        id: Date.now().toString(), role: "user",
         content: file ? "📸 Imagen enviada" : msgText.trim(),
-        msg_type: "text",
-        created_at: new Date().toISOString(),
+        msg_type: "text", created_at: new Date().toISOString(),
       };
       setMessages((prev) => [...prev, userMsg]);
       setInput("");
-
       const res = await fetch("/api/chat/message", {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
         body: formData,
       });
-
-      if (res.ok) {
-        await loadHistory();
-      } else if (res.status === 401) {
-        redirectLogin();
+      if (res.ok) await loadHistory();
+      else if (res.status === 401) {
+        localStorage.removeItem("iztack_token");
+        window.location.href = "/login";
       } else {
         const errData = await res.json().catch(() => ({}));
-        const errMsg: Message = {
-          id: (Date.now() + 1).toString(),
-          role: "bot",
+        setMessages((prev) => [...prev, {
+          id: (Date.now() + 1).toString(), role: "bot",
           content: errData.detail || "❌ Error al procesar el mensaje.",
-          msg_type: "error",
-          created_at: new Date().toISOString(),
-        };
-        setMessages((prev) => [...prev, errMsg]);
+          msg_type: "error", created_at: new Date().toISOString(),
+        }]);
       }
     } catch (e) {
-      const errMsg: Message = {
-        id: (Date.now() + 1).toString(),
-        role: "bot",
-        content: "❌ Error de conexión.",
-        msg_type: "error",
+      setMessages((prev) => [...prev, {
+        id: (Date.now() + 1).toString(), role: "bot",
+        content: "❌ Error de conexión.", msg_type: "error",
         created_at: new Date().toISOString(),
-      };
-      setMessages((prev) => [...prev, errMsg]);
-    } finally {
-      setLoading(false);
+      }]);
+    } finally { setLoading(false); }
+  }
+
+  async function sendReport() {
+    const token = localStorage.getItem("iztack_token");
+    if (!token) return;
+    try {
+      await fetch("/api/chat/report", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ message: "Reporte desde chat web" }),
+      });
+      setMessages((prev) => [...prev, {
+        id: (Date.now() + 1).toString(), role: "bot",
+        content: "✅ Reporte enviado al equipo de soporte. Gracias por ayudar a mejorar.",
+        msg_type: "info", created_at: new Date().toISOString(),
+      }]);
+    } catch (e) {
+      setMessages((prev) => [...prev, {
+        id: (Date.now() + 1).toString(), role: "bot",
+        content: "❌ No se pudo enviar el reporte.", msg_type: "error",
+        created_at: new Date().toISOString(),
+      }]);
     }
   }
 
   function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
-    if (file) {
-      sendMessage(undefined, file);
-    }
+    if (file) sendMessage(undefined, file);
   }
 
   function formatContent(content: string): string {
-    return content
-      .replace(/\*([^*]+)\*/g, "<strong>$1</strong>")
-      .replace(/\n/g, "<br />");
+    return content.replace(/\*([^*]+)\*/g, "<strong>$1</strong>").replace(/\n/g, "<br />");
   }
 
   return (
     <>
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-6 right-6 z-40 w-14 h-14 bg-sky-600 text-white rounded-full shadow-lg hover:bg-sky-700 flex items-center justify-center transition-all"
-      >
+      <button onClick={() => setIsOpen(!isOpen)} className="fixed bottom-6 right-6 z-40 w-14 h-14 bg-sky-600 text-white rounded-full shadow-lg hover:bg-sky-700 flex items-center justify-center transition-all">
         {isOpen ? <X className="h-6 w-6" /> : <MessageCircle className="h-6 w-6" />}
       </button>
-
       {isOpen && (
         <div className="fixed bottom-24 right-6 z-40 w-80 sm:w-96 h-[500px] bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden border">
-          <div className="bg-sky-600 text-white px-4 py-3 flex items-center gap-2">
-            <MessageCircle className="h-5 w-5" />
-            <span className="font-semibold">Asistente Iztack</span>
+          <div className="bg-sky-600 text-white px-4 py-3 flex items-center gap-2 justify-between">
+            <div className="flex items-center gap-2">
+              <MessageCircle className="h-5 w-5" />
+              <span className="font-semibold">Asistente Iztack</span>
+            </div>
+            <button onClick={sendReport} className="p-1 hover:bg-sky-700 rounded" title="Reportar error">
+              <AlertTriangle className="h-4 w-4" />
+            </button>
           </div>
-
           <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50">
             {messages.length === 0 && (
               <div className="text-center text-gray-400 text-sm mt-8">
                 <p className="text-3xl mb-2">🤖</p>
                 <p>¡Hola! Soy tu asistente financiero.</p>
+                <p className="text-xs mt-2">Puedo ver tus tickets, gastos y más.</p>
               </div>
             )}
-
             {messages.map((msg) => (
-              <div
-                key={msg.id}
-                className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
-              >
-                <div
-                  className={`max-w-[85%] px-3 py-2 rounded-xl text-sm ${
-                    msg.role === "user"
-                      ? "bg-sky-600 text-white rounded-br-sm"
-                      : "bg-white text-gray-800 rounded-bl-sm shadow-sm border"
-                  }`}
-                  dangerouslySetInnerHTML={{ __html: formatContent(msg.content) }}
-                />
+              <div key={msg.id} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+                <div className={`max-w-[85%] px-3 py-2 rounded-xl text-sm ${msg.role === "user" ? "bg-sky-600 text-white rounded-br-sm" : "bg-white text-gray-800 rounded-bl-sm shadow-sm border"}`} dangerouslySetInnerHTML={{ __html: formatContent(msg.content) }} />
               </div>
             ))}
-
-            {loading && (
-              <div className="flex justify-start">
-                <div className="bg-white px-3 py-2 rounded-xl text-sm shadow-sm border">
-                  <span className="animate-pulse">Escribiendo...</span>
-                </div>
-              </div>
-            )}
-
+            {loading && <div className="flex justify-start"><div className="bg-white px-3 py-2 rounded-xl text-sm shadow-sm border"><span className="animate-pulse">Escribiendo...</span></div></div>}
             <div ref={messagesEndRef} />
           </div>
-
           <div className="border-t p-3 bg-white">
             <div className="flex gap-2">
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                className="p-2 text-gray-400 hover:text-gray-600"
-              >
-                <Camera className="h-5 w-5" />
-              </button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                className="hidden"
-                onChange={handleFileSelect}
-              />
-              <input
-                type="text"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-                placeholder="Escribe un mensaje..."
-                className="flex-1 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-sky-500"
-                disabled={loading}
-              />
-              <button
-                onClick={() => sendMessage()}
-                disabled={loading || !input.trim()}
-                className="p-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700 disabled:opacity-50"
-              >
-                <Send className="h-4 w-4" />
-              </button>
+              <button onClick={() => fileInputRef.current?.click()} className="p-2 text-gray-400 hover:text-gray-600"><Camera className="h-5 w-5" /></button>
+              <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleFileSelect} />
+              <input type="text" value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => e.key === "Enter" && sendMessage()} placeholder="Escribe un mensaje..." className="flex-1 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-sky-500" disabled={loading} />
+              <button onClick={() => sendMessage()} disabled={loading || !input.trim()} className="p-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700 disabled:opacity-50"><Send className="h-4 w-4" /></button>
             </div>
           </div>
         </div>

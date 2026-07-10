@@ -9,9 +9,33 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database.connection import get_db
 from app.modules.auth.deps import get_current_user
 from app.modules.chat.service import ChatService
-from app.database.models import User
+from app.database.models import User, ProcessingError
 
 router = APIRouter(prefix="/api/chat", tags=["Chat"])
+
+
+@router.post("/report")
+async def submit_report(
+    data: dict,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Submit a bug report from the chat widget."""
+    try:
+        error = ProcessingError(
+            user_id=current_user.id,
+            error_type="user_report",
+            error_message=f"Reporte de {current_user.name} ({current_user.email}): {data.get('message', 'Sin mensaje')}",
+            error_details=data,
+            suggested_action="Revisar en admin portal",
+        )
+        db.add(error)
+        await db.commit()
+        return {"success": True, "message": "Reporte enviado"}
+    except Exception as e:
+        logger.error(f"Error saving report: {e}")
+        raise HTTPException(status_code=500, detail="No se pudo guardar el reporte")
+
 
 
 @router.post("/message")
