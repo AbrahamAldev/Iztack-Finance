@@ -47,24 +47,42 @@ class TelegramBot:
             logger.error(f"Error looking up user by chat_id {chat_id}: {e}")
             return None
 
-    async def _build_user_context(self, user_id: str) -> str:
+    async def _build_uer_context(self, user_id: str) -> str:
+        """Build rich context with user data, tickets, and products."""
         db = get_db_sync()
         try:
-            tickets = db.query(Ticket).filter(
-                Ticket.user_id == user_id
-            ).order_by(Ticket.created_at.desc()).limit(5).all()
+            from app.database.models import Product
+            user = db.query(User).filter(User.id == user_id).first()
+            tickets = db.query(Ticket).filter(Ticket.user_id == user_id)\
+                .order_by(Ticket.created_at.desc()).limit(10).all()
             if not tickets:
-                return "El usuario no tiene tickets registrados aún."
-            lines = ["Tickets recientes:"]
+                return "El usuario no tiene tickets registrados aun."
+            lines = []
+            if user:
+                lines.append(f"Usuario: {user.name} ({user.email})")
+                lines.append(f"Moneda: {user.currency} | Telegram: {'Si' if user.telegram_chat_id else 'No'} | Drive: {'Si' if user.encrypted_google_refresh_token else 'No'}")
+            total = 0
+            stores = set()
+            lines.append(f"TICKETS RECIENTES ({len(tickets)}):")
             for t in tickets:
-                lines.append(f"- {t.store_name}: ${t.total_amount:.2f} ({t.purchase_date}) status={t.status}")
+                w = "GARANTIA " if t.has_warranty_items else ""
+                lines.append(f"- {w}[{t.purchase_date}] {t.store_name}: ${t.total_amount:.2f} (status={t.status})")
+                total += t.total_amount or 0
+                stores.add(t.store_name)
+            lines.append(f"Total gastado: ${total:,.2f} en {len(stores)} tiendas: {', '.join(list(stores)[:5])}")
+            products = db.query(Product).join(Ticket).filter(Ticket.user_id == user_id)\
+                .order_by(Product.created_at.desc()).limit(15).all()
+            if products:
+                lines.append(f"PRODUCTOS RECIENTES:")
+                for p in products[:10]:
+                    lines.append(f"- {p.name} ${p.total_price:.2f} [{p.category or 'sin cat'}]")
+            db.close()
             return "\n".join(lines)
         except Exception as e:
             logger.error(f"Error building context: {e}")
-            return "No se pudo cargar contexto del usuario."
-        finally:
             try: db.close()
             except: pass
+            return "No se pudo cargar contexto del usuario."
 
     # =========================================================================
     # COMMANDS
