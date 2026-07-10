@@ -11,16 +11,22 @@ logger = logging.getLogger(__name__)
 
 
 async def trigger_billing(
-    ocr_data: OCRTicketData, user: User, db_session
+    ocr_data: OCRTicketData, user_id: str, db_session
 ) -> Optional[InvoiceContext]:
     """Trigger automatic billing after successful OCR."""
     if not ocr_data.store_name:
         logger.warning("No store name in OCR data, skipping billing")
         return None
 
+    # Fetch user
+    user = db_session.query(User).filter(User.id == user_id).first()
+    if not user:
+        logger.warning(f"User {user_id} not found, skipping billing")
+        return None
+
     # Create or update ticket record
     ticket = Ticket(
-        user_id=user.id,
+        user_id=user_id,
         store_name=ocr_data.store_name,
         store_category=ocr_data.store_category,
         purchase_date=ocr_data.purchase_date,
@@ -42,6 +48,7 @@ async def trigger_billing(
     orchestrator = FacturacionOrchestrator(llm_client)
     
     ctx = await orchestrator.start_invoicing(ticket, user)
+    logger.info(f"Billing started for ticket {ticket.id}: step={ctx.step.value}")
     
     if ctx.needs_user_input and ctx.user_message:
         logger.info(f"Billing needs user input: {ctx.step.value}")
