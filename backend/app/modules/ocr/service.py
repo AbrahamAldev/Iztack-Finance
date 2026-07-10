@@ -64,16 +64,28 @@ class OCRService:
             return image_bytes
 
     def _build_ocr_prompt(self) -> str:
-        return """Eres un experto en leer tickets de compra mexicanos. Analiza la imagen y extrae TODA la información en formato JSON.
+        return """Eres un EXPERTO en lectura de tickets de compra mexicanos. Tu ÚNICA tarea es extraer datos precisos.
 
-IMPORTANTE: Responde **SOLO** con el JSON, sin markdown, sin explicaciones.
+⚠️ REGLAS CRÍTICAS:
+1. Responde **SOLO** con JSON válido, sin texto antes ni después, sin markdown.
+2. Las fechas DEBEN ser exactamente como aparecen en el ticket. Formato: YYYY-MM-DD.
+   - Si ves "10/07/2026" → "2026-07-10"
+   - Si NO ves la fecha claramente → null
+   - NO INVENTES fechas. Si no se lee bien, usa null.
+3. Los totales DEBEN coincidir exactamente con el ticket.
+   - Busca la palabra "TOTAL" o el número más grande al final
+   - NO sumes productos para calcular el total
+   - Si no se lee bien, usa null
+4. Si NO estás 100% seguro de un dato, usa null. Es mejor no dar dato que dar uno falso.
+5. El campo "confidence" debe reflejar qué tan legible está el ticket: 0.0-0.3 = borroso/dañado, 0.4-0.7 = legible pero con dudas, 0.8-1.0 = perfectamente claro.
 
-El JSON debe tener esta estructura EXACTA:
+⚠️ FORMATO EXACTO DEL JSON (no cambies los nombres de las claves):
 {
-  "store_name": "Nombre exacto de la tienda",
+  "store_name": "Nombre EXACTO de la tienda (ej: Chedraui, Walmart, Oxxo, Liverpool)",
   "store_category": "liverpool|ikea|walmart|amazon|home_depot|oxxo|farmacias_similares|pemex|bp|costco|sams_club|soriana|chedraui|other",
-  "receipt_number": "folio o null",
-  "purchase_date": "YYYY-MM-DD",
+  "receipt_number": "número de ticket/folio o null",
+  "purchase_date": "YYYY-MM-DD o null",
+  "purchase_time": "HH:MM o null",
   "subtotal": 123.45,
   "taxes": 12.34,
   "total_amount": 135.79,
@@ -81,24 +93,22 @@ El JSON debe tener esta estructura EXACTA:
   "currency": "MXN",
   "products": [
     {
-      "name": "Nombre del producto",
-      "brand": "Marca o null",
+      "name": "Nombre del producto como aparece en el ticket",
+      "brand": "Marca si se detecta, o null",
       "quantity": 1,
       "unit": "pza|kg|lt|etc",
       "unit_price": 99.90,
       "total_price": 99.90,
       "discount": null,
-      "sku": "código o null",
+      "sku": "código de barras o null",
       "has_warranty": false,
-      "warranty_info": "info de garantía o null",
+      "warranty_info": "info de garantía si aparece, o null",
       "category": "alimentos|bebidas|hogar|electronicos|muebles|ropa|salud|higiene|limpieza|herramientas|automotriz|combustible|entretenimiento|servicios|otros"
     }
   ],
   "has_warranty_items": false,
-  "confidence": 0.95
-}
-
-Si no puedes leer algo, pon null. Si es un ticket largo y la tienda no tiene categoría exacta, usa "other"."""
+  "confidence": 0.0
+}"""
 
     def extract_from_image(self, image_bytes: bytes) -> OCRResponse:
         """Process an image with OpenRouter GPT-4o-mini and extract structured data."""
