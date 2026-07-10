@@ -152,16 +152,38 @@ class TelegramBot:
         chat_id = update.effective_chat.id
         user = await self._get_user_by_chat_id(chat_id)
         if not user: return await self.start_command(update, context)
+
+        # Check if a description was included
+        text = update.message.text.strip()
+        description = text.replace("/reporte", "").strip() if text.startswith("/reporte") else ""
+
+        if not description:
+            await update.message.reply_text(
+                "🐛 *Reportar un error*\n\n"
+                "Para ayudarnos a solucionarlo, describe brevemente:\n"
+                "• ¿Qué estabas haciendo?\n"
+                "• ¿Qué error viste?\n\n"
+                "Ejemplo: `/reporte Al subir un ticket de Chedraui el OCR dio fecha equivocada`\n\n"
+                "El reporte se enviará al equipo de soporte. ¡Gracias!",
+                parse_mode="Markdown"
+            )
+            return
+
         db = get_db_sync()
         try:
             error = ProcessingError(
                 user_id=user.id, error_type="user_report",
-                error_message=f"Reporte del usuario {user.name} ({user.email}) desde Telegram",
-                error_details={"chat_id": str(chat_id)},
+                error_message=f"Reporte: {description}\n\nUsuario: {user.name} ({user.email}) desde Telegram",
+                error_details={"chat_id": str(chat_id), "description": description},
                 suggested_action="Revisar en admin portal"
             )
             db.add(error); db.commit()
-            await update.message.reply_text("✅ *Reporte enviado*\n\nEl equipo lo revisará pronto. Gracias por ayudar.", parse_mode="Markdown")
+            await update.message.reply_text(
+                "✅ *Reporte enviado*\n\n"
+                f"📝 \"{description[:200]}\"\n\n"
+                "El equipo lo revisará pronto. Gracias por ayudar a mejorar Iztack-Finance.",
+                parse_mode="Markdown"
+            )
         except Exception as e:
             logger.error(f"Error saving report: {e}")
             await update.message.reply_text("❌ No se pudo enviar el reporte.")

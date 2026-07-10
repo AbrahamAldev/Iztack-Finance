@@ -86,13 +86,15 @@ export default function ChatWidget() {
   }
 
   async function sendReport() {
+    const description = prompt("Describe brevemente el error:\n• ¿Qué estabas haciendo?\n• ¿Qué error viste?");
+    if (!description) return;
     const token = localStorage.getItem("iztack_token");
     if (!token) return;
     try {
       await fetch("/api/chat/report", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ message: "Reporte desde chat web" }),
+        body: JSON.stringify({ message: description }),
       });
       setMessages((prev) => [...prev, {
         id: (Date.now() + 1).toString(), role: "bot",
