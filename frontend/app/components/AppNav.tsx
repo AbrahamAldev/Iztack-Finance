@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
 import ChatWidget from "./ChatWidget";
+import ThemeToggle from "./ThemeToggle";
 
 export default function AppNav() {
   const router = useRouter();
@@ -45,6 +46,7 @@ export default function AppNav() {
                 {l.label}
               </Link>
             ))}
+            <ThemeToggle />
             <button
               onClick={handleLogout}
               className="text-sm text-red-600 hover:text-red-700 font-medium"
