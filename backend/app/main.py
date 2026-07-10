@@ -95,6 +95,7 @@ from app.modules.chat.routes import router as chat_router
 from app.modules.dashboard.routes import router as dashboard_router
 from app.modules.admin_staff.routes import router as admin_router
 from app.modules.business.routes import router as business_router
+from app.modules.fiscal.routes import router as fiscal_router
 
 app.include_router(ocr_router, prefix="/api/ocr", tags=["OCR"])
 app.include_router(setup_router, prefix="/api/setup", tags=["Setup"])
