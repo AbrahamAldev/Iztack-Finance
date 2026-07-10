@@ -1,38 +1,97 @@
-"""
-Sistema Financiero - Info Endpoint
-Returns non-sensitive runtime info about the deployment.
-Useful for the dashboard "Connections" widget.
-"""
-import logging
-import platform
-import sys
+"""Iztack-Finance - System Info & Pipeline Diagnostics."""
+from fastapi import APIRouter
 from datetime import datetime
+import os
 
-from fastapi import APIRouter, Depends
-from sqlalchemy import text
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.database.connection import get_db
-
-logger = logging.getLogger(__name__)
-router = APIRouter()
+router = APIRouter(tags=["System"])
 
 
-@router.get("/info", tags=["System"])
-async def get_info(db: AsyncSession = Depends(get_db)):
-    """Deployment info — exposed through Cloudflare Access (safe)."""
-    db_ok = False
-    try:
-        result = await db.execute(text("SELECT 1"))
-        db_ok = result.scalar() == 1
-    except Exception as exc:
-        logger.warning("DB health check failed: %s", exc)
+@router.get("/health/pipeline")
+async def pipeline_health():
+    """Check the health of the entire processing pipeline."""
+    import requests
 
-    return {
-        "app": "Iztack-Finance",
-        "version": "1.1.0",
-        "python_version": sys.version.split()[0],
-        "platform": platform.platform(),
-        "database": "ok" if db_ok else "error",
-        "server_time_utc": datetime.utcnow().isoformat() + "Z",
+    results = {
+        "timestamp": datetime.utcnow().isoformat(),
     }
+
+    # 1. Backend
+    results["backend"] = "up"
+
+    # 2. DB
+    try:
+        from app.database.connection import SyncSession
+        db = SyncSession()
+        db.execute("SELECT 1")
+        db.close()
+        results["database"] = "connected"
+    except Exception as e:
+        results["database"] = f"error: {str(e)[:100]}"
+
+    # 3. OpenRouter
+    api_key = os.environ.get("OPENROUTER_API_KEY", "")
+    if api_key and api_key.startswith("sk-or-v1-"):
+        results["openrouter"] = "configured"
+    else:
+        results["openrouter"] = "not_configured"
+
+    # 4. Telegram
+    bot_token = os.environ.get("TELEGRAM_BOT_TOKEN", "")
+    if bot_token:
+        try:
+            r = requests.get(f"https://api.telegram.org/bot{bot_token}/getMe", timeout=5)
+            if r.status_code == 200:
+                results["telegram"] = f"connected ({r.json().get('result', {}).get('username', 'unknown')})"
+            else:
+                results["telegram"] = f"error: {r.status_code}"
+        except Exception as e:
+            results["telegram"] = f"error: {str(e)[:50]}"
+    else:
+        results["telegram"] = "not_configured"
+
+    # 5. Tickets in DB
+    try:
+        from app.database.connection import SyncSession
+        from app.database.models import Ticket, ProcessingError
+        db = SyncSession()
+        ticket_count = db.query(Ticket).count()
+        error_count = db.query(ProcessingError).count()
+        recent_tickets = db.query(Ticket).order_by(Ticket.created_at.desc()).limit(3).all()
+        db.close()
+
+        results["tickets"] = {
+            "count": ticket_count,
+            "errors_logged": error_count,
+            "recent": [
+                {
+                    "store": t.store_name,
+                    "date": str(t.purchase_date),
+                    "total": t.total_amount,
+                    "status": t.status,
+                }
+                for t in recent_tickets
+            ],
+        }
+    except Exception as e:
+        results["tickets"] = f"error: {str(e)[:100]}"
+
+    # 6. Scheduler
+    try:
+        from app.scheduler import scheduler
+        jobs = scheduler.get_jobs()
+        results["scheduler"] = {
+            "running": scheduler.running,
+            "jobs": [j.id for j in jobs],
+        }
+    except Exception as e:
+        results["scheduler"] = f"error: {str(e)[:50]}"
+
+    # Overall status
+    has_errors = any(
+        isinstance(v, str) and v.startswith("error:")
+        for v in results.values()
+        if isinstance(v, str)
+    )
+    results["status"] = "degraded" if has_errors else "healthy"
+
+    return results
