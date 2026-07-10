@@ -1,31 +1,36 @@
 """
-Sistema Financiero - Financial Analysis Service
-Generates spending analysis, detects money leaks, and provides savings recommendations.
+Iztack-Finance - Financial Analysis Service v2
+Generates spending analysis, detects money leaks from real DB data.
 """
 import logging
 from datetime import date, datetime, timedelta
 from typing import Optional, List, Dict
 from dataclasses import dataclass, asdict
+from collections import Counter, defaultdict
+
+from sqlalchemy import select, func, desc
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.database.models import Ticket, Product, User
 
 logger = logging.getLogger(__name__)
 
 
 @dataclass
 class CategorySpending:
-    """Spending breakdown by category."""
     category: str
     amount: float
     percentage: float
-    trend: str  # up, down, stable
+    trend: str
     previous_amount: float
 
 
 @dataclass
 class MoneyLeak:
-    """Detected money leak."""
     product: str
     store: str
-    current_cost: float
+    frequency_per_month: int
+    avg_price: float
     optimized_cost: float
     monthly_savings: float
     yearly_savings: float
@@ -34,7 +39,6 @@ class MoneyLeak:
 
 @dataclass
 class MonthlyReport:
-    """Complete monthly financial report."""
     period: str
     total_spent: float
     by_category: List[CategorySpending]
@@ -46,163 +50,124 @@ class MonthlyReport:
 
 
 class FinancialAnalysisService:
-    """Analyzes spending patterns and generates financial insights."""
 
-    def __init__(self):
-        self.essential_categories = {
-            "alimentos", "bebidas", "higiene", "limpieza",
-            "salud", "combustible", "hogar"
-        }
+    def __init__(self, db: AsyncSession):
+        self.db = db
 
     async def generate_monthly_report(self, user_id: str, year: int, month: int) -> MonthlyReport:
-        """
-        Generate a complete monthly financial report.
-        In production, this queries the database. For now, returns structure.
-        """
-        # TODO: Query from tickets table in database
+        start_date = date(year, month, 1)
+        end_date = date(year, month + 1, 1) if month < 12 else date(year + 1, 1, 1)
+        prev_start = (start_date.replace(day=1) - timedelta(days=1)).replace(day=1)
+
+        tickets = await self._get_tickets_in_range(user_id, start_date, end_date)
+        prev_tickets = await self._get_tickets_in_range(user_id, prev_start, start_date)
+
+        total_spent = sum(t.total_amount for t in tickets if t.total_amount)
+        prev_total = sum(t.total_amount for t in prev_tickets if t.total_amount)
+
+        by_category = await self._calculate_category_spending(user_id, start_date, end_date, prev_start)
+        by_store = self._calculate_store_spending(tickets)
+        leaks = await self._detect_leaks(user_id, start_date, end_date)
+        top_products = await self._get_top_products(user_id, start_date, end_date)
+        savings_goal = self._calculate_savings_goal(total_spent)
+        summary = self._generate_summary(total_spent, prev_total, by_category, leaks)
+
         return MonthlyReport(
-            period=f"{year}-{month:02d}",
-            total_spent=0,
-            by_category=[],
-            by_store={},
-            leaks=[],
-            savings_goal=self._calculate_savings_goal({}),
-            top_products=[],
-            summary="Aún no hay datos suficientes. Sigue enviando tickets para obtener análisis."
+            period=f"{year}-{month:02d}", total_spent=total_spent,
+            by_category=by_category, by_store=by_store,
+            leaks=leaks, savings_goal=savings_goal,
+            top_products=top_products, summary=summary,
         )
 
-    def _calculate_savings_goal(self, expenses: Dict[str, float], 
-                                  target_percent: float = 15) -> Dict:
-        """Calculate weekly savings goal."""
-        total = sum(expenses.values())
-        if total == 0:
-            return {
-                "target_savings": 0,
-                "weekly_goal": 0,
-                "monthly_goal": 0,
-                "recommendation": "Comienza a capturar tickets para recibir recomendaciones personalizadas."
-            }
-        
-        monthly_target = total * (target_percent / 100)
-        weekly_goal = monthly_target / 4.33
-        
-        return {
-            "target_savings": round(monthly_target, 2),
-            "weekly_goal": round(weekly_goal, 2),
-            "monthly_goal": round(monthly_target, 2),
-            "recommendation": (
-                f"Ahorra ${weekly_goal:.0f}/semana para tener ${monthly_target:.0f} al mes "
-                f"para compras planeadas sin esfuerzo."
-            ),
-        }
+    async def _get_tickets_in_range(self, user_id: str, start: date, end: date) -> list:
+        result = await self.db.execute(
+            select(Ticket).where(Ticket.user_id == user_id, Ticket.purchase_date >= start, Ticket.purchase_date < end)
+        )
+        return result.scalars().all()
 
-    def detect_leaks(self, products: List[Dict]) -> List[MoneyLeak]:
-        """
-        Analyze purchase history to detect money leaks.
-        
-        Example: Buying small packs vs bulk, frequent small purchases, etc.
-        """
+    async def _calculate_category_spending(self, user_id, start, end, prev_start) -> List[CategorySpending]:
+        result = await self.db.execute(
+            select(Product).join(Ticket).where(
+                Ticket.user_id == user_id, Ticket.purchase_date >= start, Ticket.purchase_date < end, Product.category.isnot(None)
+            )
+        )
+        products = result.scalars().all()
+        prev_result = await self.db.execute(
+            select(Product).join(Ticket).where(
+                Ticket.user_id == user_id, Ticket.purchase_date >= prev_start, Ticket.purchase_date < start, Product.category.isnot(None)
+            )
+        )
+        prev_products = prev_result.scalars().all()
+
+        current, previous = defaultdict(float), defaultdict(float)
+        for p in products: current[p.category or "otros"] += p.total_price or 0
+        for p in prev_products: previous[p.category or "otros"] += p.total_price or 0
+
+        total = sum(current.values()) or 1
+        result_list = []
+        for cat, amount in sorted(current.items(), key=lambda x: x[1], reverse=True):
+            prev_amount = previous.get(cat, 0)
+            trend = "up" if prev_amount and amount > prev_amount * 1.05 else "down" if prev_amount and amount < prev_amount * 0.95 else "stable"
+            result_list.append(CategorySpending(category=cat, amount=amount, percentage=round(amount / total * 100, 1), trend=trend, previous_amount=prev_amount))
+        return result_list
+
+    def _calculate_store_spending(self, tickets: list) -> Dict[str, float]:
+        by_store = defaultdict(float)
+        for t in tickets: by_store[t.store_name or "Desconocido"] += t.total_amount or 0
+        return dict(sorted(by_store.items(), key=lambda x: x[1], reverse=True))
+
+    async def _detect_leaks(self, user_id, start, end) -> List[MoneyLeak]:
+        result = await self.db.execute(
+            select(Product).join(Ticket).where(
+                Ticket.user_id == user_id, Ticket.purchase_date >= start, Ticket.purchase_date < end,
+                Product.category.in_(["alimentos", "bebidas", "higiene", "limpieza"]),
+                Product.total_price < 200,
+            )
+        )
+        products = result.scalars().all()
+        counter, prices = Counter(), defaultdict(list)
+        for p in products:
+            name = p.name.lower().strip()
+            counter[name] += 1
+            prices[name].append(p.total_price or 0)
+
         leaks = []
-        
-        # Group products by name to find recurring purchases
-        from collections import Counter
-        product_counts = Counter(p["name"] for p in products if p.get("name"))
-        
-        for product_name, count in product_counts.items():
-            if count < 3:  # Need at least 3 purchases to detect pattern
-                continue
-            
-            product_prices = [
-                p for p in products 
-                if p.get("name") == product_name and p.get("total_price")
-            ]
-            
-            if not product_prices:
-                continue
-            
-            avg_price = sum(p["total_price"] for p in product_prices) / len(product_prices)
-            
-            # Detect if buying in small quantities (potential leak)
-            if count >= 4 and avg_price < 50:
-                monthly_cost = avg_price * count
-                leaks.append(MoneyLeak(
-                    product=product_name,
-                    store=product_prices[0].get("store", ""),
-                    current_cost=monthly_cost,
-                    optimized_cost=monthly_cost * 0.6,  # 40% savings buying bulk
-                    monthly_savings=monthly_cost * 0.4,
-                    yearly_savings=monthly_cost * 0.4 * 12,
-                    recommendation=(
-                        f"Estás comprando {product_name} {count} veces/mes "
-                        f"a un promedio de ${avg_price:.0f} c/u. "
-                        f"Comprando en mayoreo podrías ahorrar hasta "
-                        f"${monthly_cost * 0.4:.0f}/mes."
-                    )
-                ))
-        
-        return leaks
+        for name, freq in counter.most_common(10):
+            if freq < 3: continue
+            avg_price = sum(prices[name]) / len(prices[name])
+            optimized = avg_price * 0.65
+            monthly = avg_price * freq
+            savings = monthly * 0.35
+            leaks.append(MoneyLeak(
+                product=name.title(), store="varias", frequency_per_month=freq,
+                avg_price=round(avg_price, 2), optimized_cost=round(optimized, 2),
+                monthly_savings=round(savings, 2), yearly_savings=round(savings * 12, 2),
+                recommendation=f"Comprar {name} en presentación grande ahorra ~${savings:.0f}/mes",
+            ))
+        return leaks[:5]
 
-    def analyze_spending_trend(self, current: float, previous: float) -> str:
-        """Analyze if spending is trending up, down, or stable."""
-        if previous == 0:
-            return "stable"
-        change = ((current - previous) / previous) * 100
-        if change > 10:
-            return "up"
-        elif change < -10:
-            return "down"
-        return "stable"
-
-    def get_spending_summary(self, expenses: Dict[str, float]) -> str:
-        """Generate a human-readable spending summary."""
-        if not expenses:
-            return "No hay datos de gastos todavía."
-        
-        total = sum(expenses.values())
-        essentials = sum(
-            v for k, v in expenses.items() 
-            if k in self.essential_categories
+    async def _get_top_products(self, user_id, start, end) -> List[Dict]:
+        result = await self.db.execute(
+            select(Product).join(Ticket).where(Ticket.user_id == user_id, Ticket.purchase_date >= start, Ticket.purchase_date < end)
+            .order_by(desc(Product.total_price)).limit(10)
         )
-        discretionary = total - essentials
-        essentials_pct = (essentials / total * 100) if total > 0 else 0
-        
-        top_category = max(expenses, key=expenses.get)
-        
-        return (
-            f"📊 *Resumen Mensual*\n\n"
-            f"💰 Total gastado: **${total:,.2f}**\n"
-            f"🛒 Gastos esenciales: ${essentials:,.2f} ({essentials_pct:.0f}%)\n"
-            f"🎮 Gastos discrecionales: ${discretionary:,.2f}\n"
-            f"📈 Mayor gasto: {top_category.title()}: ${expenses[top_category]:,.2f}\n\n"
-            f"💡 *Recomendación:* "
-            f"{'Tus gastos esenciales son altos. Revisa oportunidades de ahorro en '
-              f'alimentos y servicios.' if essentials_pct > 70 else "
-              f'Tienes un buen balance. Sigue así!'}"
-        )
+        return [{"name": p.name, "store": p.ticket.store_name if p.ticket else "N/A", "price": p.total_price, "category": p.category} for p in result.scalars().all()]
 
-    def predict_next_month(self, historical: List[Dict]) -> Dict:
-        """
-        Simple prediction for next month's spending based on historical data.
-        Uses average of last 3 months.
-        """
-        if len(historical) < 2:
-            return {"prediction": 0, "confidence": "low"}
-        
-        recent = historical[-3:] if len(historical) >= 3 else historical
-        avg_spending = sum(m.get("total", 0) for m in recent) / len(recent)
-        
-        # Simple trend-based adjustment
-        if len(recent) >= 2:
-            last_two = recent[-2:]
-            change = last_two[1].get("total", 0) - last_two[0].get("total", 0)
-            prediction = avg_spending + (change * 0.5)  # Partial trend continuation
-        else:
-            prediction = avg_spending
-        
-        return {
-            "prediction": round(prediction, 2),
-            "based_on_months": len(recent),
-            "confidence": "high" if len(recent) >= 3 else "medium",
-        }
-</output>
-</write_to_file>
+    def _calculate_savings_goal(self, monthly_spent: float, target_percent: float = 15) -> Dict:
+        if monthly_spent == 0:
+            return {"weekly_target": 0, "monthly_target": 0, "message": "Sin datos aún"}
+        target = monthly_spent * (1 + target_percent / 100)
+        weekly = target / 4
+        return {"weekly_target": round(weekly, 2), "monthly_target": round(target, 2), "current_spent": round(monthly_spent, 2), "message": f"Ahorra ${weekly:.0f}/semana para tener ${target:.0f} al mes"}
+
+    def _generate_summary(self, total, prev_total, categories, leaks) -> str:
+        if total == 0: return "Aún no hay datos. Envía tickets para obtener análisis."
+        parts = [f"Total del mes: ${total:,.2f}"]
+        if prev_total > 0:
+            change = ((total - prev_total) / prev_total) * 100
+            parts.append(f"vs mes anterior: {'subió' if change > 0 else 'bajó'} {abs(change):.1f}%")
+        if categories: parts.append(f"Principal: {categories[0].category} ({categories[0].percentage}%)")
+        if leaks:
+            total_sav = sum(l.monthly_savings for l in leaks)
+            parts.append(f"🔍 {len(leaks)} fugas — ahorro potencial: ${total_sav:.0f}/mes")
+        return " | ".join(parts)
