@@ -11,6 +11,7 @@ from app.database.connection import get_db
 from app.modules.auth.deps import get_current_user
 from app.database.models import User
 from app.modules.almacenamiento.drive_service import DriveStorageService
+from app.modules.tickets.tracer import trace_step
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/almacenamiento", tags=["Almacenamiento"])
@@ -76,9 +77,23 @@ async def store_invoice(
             has_warranty=data.get("has_warranty", False),
             expense_type=data.get("expense_type", ""),
         )
+        trace_step(
+            user_id=current_user.id,
+            step="storage_invoice_save",
+            status="ok",
+            ticket_id=ticket_id,
+            details={"store_name": store_name, "drive_urls": result},
+        )
         return {"success": True, "drive_urls": result}
     except Exception as exc:
         logger.error(f"Error storing invoice: {exc}", exc_info=True)
+        trace_step(
+            user_id=current_user.id,
+            step="storage_invoice_save",
+            status="error",
+            ticket_id=ticket_id,
+            details={"error": str(exc)[:500]},
+        )
         raise HTTPException(status_code=500, detail="No se pudo guardar en Drive")
 
 
@@ -94,7 +109,19 @@ async def list_invoices(
     try:
         drive = DriveStorageService()
         files = await drive.list_invoices(folder_key=folder, store_name=store, year=year)
+        trace_step(
+            user_id=current_user.id,
+            step="storage_invoice_list",
+            status="ok",
+            details={"folder": folder, "count": len(files)},
+        )
         return {"folder": folder, "files": files, "count": len(files)}
     except Exception as exc:
         logger.error(f"Error listing invoices: {exc}", exc_info=True)
+        trace_step(
+            user_id=current_user.id,
+            step="storage_invoice_list",
+            status="error",
+            details={"error": str(exc)[:500]},
+        )
         raise HTTPException(status_code=500, detail="No se pudo listar archivos de Drive")

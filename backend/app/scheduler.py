@@ -8,7 +8,7 @@ from datetime import date, timedelta
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from sqlalchemy import func, desc
-from app.database.connection import SyncSession
+from app.database.connection import SyncSession, async_session
 from app.database.models import Ticket, Product, User
 
 logger = logging.getLogger(__name__)
@@ -115,6 +115,24 @@ async def run_weekly_shopping_list():
         db.close()
 
 
+async def run_sensor_checks():
+    """Run every 15 minutes — health checks, metrics, and email alerts."""
+    logger.info("Scheduler: running sensor checks...")
+    db = async_session()
+    try:
+        from app.modules.monitoring.service import SensorsService
+        svc = SensorsService(db)
+        result = await svc.run_all_checks()
+        logger.info(
+            f"Sensor checks completed: {result['readings_count']} readings, "
+            f"{result['errors_count']} errors, {result['warnings_count']} warnings"
+        )
+    except Exception as e:
+        logger.error(f"Sensor checks error: {e}", exc_info=True)
+    finally:
+        await db.close()
+
+
 async def run_warranty_alerts():
     """Run daily at 09:00 — alert on warranties expiring in ≤30 days."""
     logger.info("Scheduler: warranty alerts checking...")
@@ -173,8 +191,10 @@ def start_scheduler():
     scheduler.add_job(run_weekly_shopping_list, CronTrigger(day_of_week="sun", hour=8, minute=0), id="weekly_list")
     # Warranty alerts at 09:00
     scheduler.add_job(run_warranty_alerts, CronTrigger(hour=9, minute=0), id="warranty_alerts")
+    # Sensor / monitoring checks every 15 minutes
+    scheduler.add_job(run_sensor_checks, "interval", minutes=15, id="sensor_checks")
     scheduler.start()
-    logger.info("✅ Scheduler started: daily(23:00), weekly(Sun 08:00), warranties(09:00)")
+    logger.info("✅ Scheduler started: daily(23:00), weekly(Sun 08:00), warranties(09:00), sensors(15m)")
 
 
 def stop_scheduler():

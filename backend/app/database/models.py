@@ -611,6 +611,39 @@ class AuditLog(Base):
         return f"<AuditLog {self.action} - {self.entity_type}:{self.entity_id}>"
 
 
+class SensorReading(Base):
+    """Periodic health/readings from system sensors and pipeline checks."""
+    __tablename__ = "sensor_readings"
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+    check_name = Column(String(100), nullable=False, index=True)
+    component = Column(String(50), nullable=False, index=True)
+    status = Column(String(20), nullable=False, default="ok")  # ok, warning, error
+    message = Column(Text, nullable=True)
+    details = Column(JSON, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+
+    def __repr__(self):
+        return f"<SensorReading {self.component}/{self.check_name} = {self.status}>"
+
+
+class EmailAlert(Base):
+    """Tracks email alerts sent to admins to avoid spamming."""
+    __tablename__ = "email_alerts"
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+    alert_key = Column(String(255), nullable=False, index=True)
+    component = Column(String(50), nullable=False, index=True)
+    status = Column(String(20), nullable=False)  # error, resolved
+    message = Column(Text, nullable=False)
+    recipients = Column(Text, nullable=False)
+    sent_at = Column(DateTime, default=datetime.utcnow)
+    resolved_at = Column(DateTime, nullable=True)
+
+    def __repr__(self):
+        return f"<EmailAlert {self.component}/{self.alert_key} = {self.status}>"
+
+
 # =============================================================================
 # User model (authentication)
 # =============================================================================

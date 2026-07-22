@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.modules.auth.deps import get_current_user
 from app.modules.tickets.service import TicketsService
 from app.modules.tickets.repository import TicketRepository
+from app.modules.tickets.tracer import trace_step
 from app.database.connection import get_db
 from app.database.models import User
 
@@ -62,19 +63,35 @@ async def upload_ticket(
     )
 
     if result.success and result.data:
-        ticket = await TicketRepository.save_ocr_result(
-            db=db,
-            ocr_data=result.data,
-            user_id=current_user.id,
-        )
-        return {
-            "success": True,
-            "ticket_id": ticket.id,
-            "data": result.data.dict(),
-            "message": "Ticket procesado y guardado correctamente"
-            if len(image_bytes_list) == 1
-            else f"{len(image_bytes_list)} imágenes combinadas y guardadas correctamente",
-        }
+        try:
+            ticket = await TicketRepository.save_ocr_result(
+                db=db,
+                ocr_data=result.data,
+                user_id=current_user.id,
+            )
+            trace_step(
+                user_id=current_user.id,
+                step="db_save",
+                status="ok",
+                ticket_id=ticket.id,
+                details={"store_name": result.data.store_name, "total_amount": result.data.total_amount},
+            )
+            return {
+                "success": True,
+                "ticket_id": ticket.id,
+                "data": result.data.dict(),
+                "message": "Ticket procesado y guardado correctamente"
+                if len(image_bytes_list) == 1
+                else f"{len(image_bytes_list)} imágenes combinadas y guardadas correctamente",
+            }
+        except Exception as exc:
+            trace_step(
+                user_id=current_user.id,
+                step="db_save",
+                status="error",
+                details={"error": str(exc)[:500]},
+            )
+            raise
     elif result.success:
         return {
             "success": True,
@@ -139,17 +156,33 @@ async def upload_ticket_base64(
     )
 
     if result.success and result.data:
-        ticket = await TicketRepository.save_ocr_result(
-            db=db,
-            ocr_data=result.data,
-            user_id=current_user.id,
-        )
-        return {
-            "success": True,
-            "ticket_id": ticket.id,
-            "data": result.data.dict(),
-            "message": "Ticket procesado y guardado correctamente",
-        }
+        try:
+            ticket = await TicketRepository.save_ocr_result(
+                db=db,
+                ocr_data=result.data,
+                user_id=current_user.id,
+            )
+            trace_step(
+                user_id=current_user.id,
+                step="db_save",
+                status="ok",
+                ticket_id=ticket.id,
+                details={"store_name": result.data.store_name, "total_amount": result.data.total_amount},
+            )
+            return {
+                "success": True,
+                "ticket_id": ticket.id,
+                "data": result.data.dict(),
+                "message": "Ticket procesado y guardado correctamente",
+            }
+        except Exception as exc:
+            trace_step(
+                user_id=current_user.id,
+                step="db_save",
+                status="error",
+                details={"error": str(exc)[:500]},
+            )
+            raise
     elif result.success:
         return {
             "success": True,

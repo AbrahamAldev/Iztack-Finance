@@ -10,6 +10,7 @@ from app.database.connection import get_db
 from app.modules.auth.deps import get_current_user
 from app.database.models import User
 from app.modules.shopping_list.service import ShoppingListService
+from app.modules.tickets.tracer import trace_step
 
 router = APIRouter(prefix="/api/shopping-list", tags=["Lista de Compras"])
 
@@ -23,6 +24,12 @@ async def get_shopping_list(
     service = ShoppingListService(db)
     current = await service.get_current_list(current_user.id)
     if current:
+        trace_step(
+            user_id=current_user.id,
+            step="shopping_list_get",
+            status="ok",
+            details={"list_id": current.id, "items_count": len(current.items)},
+        )
         return {
             "id": current.id,
             "title": current.title,
@@ -51,6 +58,12 @@ async def get_shopping_list(
 
     # Generate a new list if none active
     generated = await service.generate_weekly_list(current_user.id)
+    trace_step(
+        user_id=current_user.id,
+        step="shopping_list_generate",
+        status="ok",
+        details={"list_id": generated.id, "items_count": len(generated.items)},
+    )
     return {
         "id": generated.id,
         "title": generated.title,
@@ -87,6 +100,12 @@ async def generate_shopping_list(
     """Generate a new weekly shopping list for the current user."""
     service = ShoppingListService(db)
     generated = await service.generate_weekly_list(current_user.id, title=title)
+    trace_step(
+        user_id=current_user.id,
+        step="shopping_list_generate",
+        status="ok",
+        details={"list_id": generated.id, "items_count": len(generated.items), "title": title},
+    )
     return {
         "id": generated.id,
         "title": generated.title,

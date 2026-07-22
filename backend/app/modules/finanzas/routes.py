@@ -11,6 +11,7 @@ from app.database.connection import get_db
 from app.modules.auth.deps import get_current_user
 from app.database.models import User
 from app.modules.finanzas.service import FinancialAnalysisService
+from app.modules.tickets.tracer import trace_step
 
 router = APIRouter(prefix="/api/finanzas", tags=["Finanzas"])
 
@@ -31,11 +32,26 @@ async def get_monthly_report(
         raise HTTPException(status_code=400, detail="Mes inválido. Usa 1-12.")
 
     service = FinancialAnalysisService(db)
-    report = await service.generate_monthly_report(
-        user_id=current_user.id,
-        year=year,
-        month=month,
-    )
+    try:
+        report = await service.generate_monthly_report(
+            user_id=current_user.id,
+            year=year,
+            month=month,
+        )
+        trace_step(
+            user_id=current_user.id,
+            step="finance_report",
+            status="ok",
+            details={"period": f"{year}-{month:02d}", "total_spent": report.total_spent},
+        )
+    except Exception as exc:
+        trace_step(
+            user_id=current_user.id,
+            step="finance_report",
+            status="error",
+            details={"error": str(exc)[:500]},
+        )
+        raise
 
     return {
         "period": report.period,
@@ -78,11 +94,26 @@ async def get_financial_summary(
     """Get a quick financial summary for the current month."""
     today = date.today()
     service = FinancialAnalysisService(db)
-    report = await service.generate_monthly_report(
-        user_id=current_user.id,
-        year=today.year,
-        month=today.month,
-    )
+    try:
+        report = await service.generate_monthly_report(
+            user_id=current_user.id,
+            year=today.year,
+            month=today.month,
+        )
+        trace_step(
+            user_id=current_user.id,
+            step="finance_summary",
+            status="ok",
+            details={"period": report.period, "total_spent": report.total_spent},
+        )
+    except Exception as exc:
+        trace_step(
+            user_id=current_user.id,
+            step="finance_summary",
+            status="error",
+            details={"error": str(exc)[:500]},
+        )
+        raise
     return {
         "period": report.period,
         "total_spent": report.total_spent,

@@ -11,6 +11,7 @@ from app.database.connection import get_db
 from app.modules.auth.deps import get_current_user
 from app.database.models import User, Product
 from app.modules.garantias.service import WarrantyService
+from app.modules.tickets.tracer import trace_step
 
 router = APIRouter(prefix="/api/garantias", tags=["Garantías"])
 
@@ -36,6 +37,12 @@ async def list_warranties(
 
     items = []
     today = __import__("datetime").date.today()
+    trace_step(
+        user_id=current_user.id,
+        step="warranty_list",
+        status="ok",
+        details={"count": len(products)},
+    )
     for product in products:
         if not product.ticket or not product.ticket.purchase_date:
             continue
@@ -98,4 +105,10 @@ async def warranty_alerts(
                 ),
             })
 
+    trace_step(
+        user_id=current_user.id,
+        step="warranty_alerts",
+        status="ok",
+        details={"count": len(alerts), "days": days},
+    )
     return {"alerts": alerts, "count": len(alerts)}

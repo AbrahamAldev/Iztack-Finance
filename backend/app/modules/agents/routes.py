@@ -9,6 +9,7 @@ from app.database.connection import get_db
 from app.modules.auth.deps import get_current_user
 from app.database.models import User
 from app.agents.orchestrator import OrchestratorAgent
+from app.modules.tickets.tracer import trace_step
 
 logger = logging.getLogger(__name__)
 
@@ -34,6 +35,13 @@ async def agent_chat(
         message=message,
         user_id=current_user.id,
         db_session=db,
+    )
+
+    trace_step(
+        user_id=current_user.id,
+        step="agent_chat",
+        status="ok" if result.success else "error",
+        details={"intent": result.output.get("intent") if result.success else None, "error": result.error},
     )
 
     if not result.success:
@@ -84,6 +92,13 @@ async def agent_process_ticket(
     result = await orchestrator.process_ticket_image(
         image_bytes=image_bytes,
         user_id=current_user.id,
+    )
+
+    trace_step(
+        user_id=current_user.id,
+        step="agent_ticket",
+        status="ok" if result.success else "error",
+        details={"error": result.error},
     )
 
     if not result.success:

@@ -9,6 +9,7 @@ from PIL import Image
 
 from app.modules.ocr.service import OCRService
 from app.modules.ocr.schemas import OCRResponse
+from app.modules.tickets.tracer import trace_step
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +22,23 @@ class TicketsService:
 
     async def process_single(self, image_bytes: bytes, user_id: str) -> OCRResponse:
         """Process a single ticket image."""
+        trace_id = trace_step(
+            user_id=user_id,
+            step="preprocess",
+            status="ok",
+            details={"image_bytes": len(image_bytes)},
+        )
         result = self.ocr_service.extract_from_image(image_bytes)
+        trace_step(
+            user_id=user_id,
+            step="ocr",
+            status="ok" if result.success else "error",
+            details={
+                "success": result.success,
+                "error": result.error,
+                "has_data": result.data is not None,
+            },
+        )
         return result
 
     async def process_multi(
@@ -225,6 +242,12 @@ class TicketsService:
         If is_continuation is True, stitch images together.
         Otherwise process each independently.
         """
+        trace_step(
+            user_id=user_id,
+            step="reception",
+            status="ok",
+            details={"image_count": len(images), "is_continuation": is_continuation},
+        )
         if is_continuation and len(images) > 1:
             return await self.process_multi(images, user_id)
 

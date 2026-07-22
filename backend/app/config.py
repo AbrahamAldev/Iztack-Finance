@@ -44,6 +44,14 @@ class Settings(BaseSettings):
     # --- Gmail ---
     gmail_sender_email: Optional[str] = None
 
+    # --- SMTP / Alert emails ---
+    smtp_host: Optional[str] = None
+    smtp_port: int = 587
+    smtp_user: Optional[str] = None
+    smtp_password: Optional[str] = None
+    smtp_use_tls: bool = True
+    admin_alert_emails: str = "admin@iztack.com,abraham@iztack.com"
+
     # --- Redis (Celery) ---
     redis_url: str = "redis://localhost:6379/0"
 
