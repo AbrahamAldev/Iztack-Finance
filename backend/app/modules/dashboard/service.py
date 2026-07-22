@@ -3,13 +3,12 @@ Iztack-Finance - Dashboard Service
 Real-time dashboard data from user's tickets, products, and invoices.
 """
 import logging
-from datetime import datetime, timedelta
-from typing import Optional
+from datetime import datetime
 
 from sqlalchemy import select, func, desc
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database.models import Ticket, Product, Invoice, User
+from app.database.models import Ticket, Product
 
 logger = logging.getLogger(__name__)
 
@@ -124,7 +123,6 @@ class DashboardService:
         ]
 
     async def _get_spending_by_category(self, user_id: str, since: datetime) -> list:
-        from sqlalchemy import case
         result = await self.db.execute(
             select(
                 Product.category,

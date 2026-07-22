@@ -88,7 +88,8 @@ Si todo está bien, issues debe ser una lista vacía."""
                 temperature=0.0,
                 max_tokens=512,
             )
-            import json, re
+            import json
+            import re
             match = re.search(r"\{.*\}", response, re.DOTALL)
             if match:
                 return json.loads(match.group(0))

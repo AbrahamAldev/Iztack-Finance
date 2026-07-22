@@ -2,7 +2,7 @@
 Sistema Financiero - OCR Schemas
 Pydantic models for OCR request/response data.
 """
-from datetime import date, datetime
+from datetime import date
 from typing import Optional, List
 from pydantic import BaseModel, Field
 

@@ -3,15 +3,15 @@ Iztack-Finance - Financial Analysis Service v2
 Generates spending analysis, detects money leaks from real DB data.
 """
 import logging
-from datetime import date, datetime, timedelta
-from typing import Optional, List, Dict
-from dataclasses import dataclass, asdict
+from datetime import date, timedelta
+from typing import List, Dict
+from dataclasses import dataclass
 from collections import Counter, defaultdict
 
-from sqlalchemy import select, func, desc
+from sqlalchemy import select, desc
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database.models import Ticket, Product, User
+from app.database.models import Ticket, Product
 
 logger = logging.getLogger(__name__)
 

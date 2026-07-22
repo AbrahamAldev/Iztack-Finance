@@ -3,7 +3,7 @@ Iztack-Finance - Facturación Orchestrator
 Flujo completo de facturación inteligente post-OCR.
 """
 import logging
-from typing import Optional, Dict, Any, Tuple
+from typing import Optional, Dict, Any
 from dataclasses import dataclass, field
 from enum import Enum
 
@@ -61,11 +61,12 @@ class FacturacionOrchestrator:
     6. Fill and submit form
     """
 
-    def __init__(self, llm_client: LLMClient):
+    def __init__(self, llm_client: LLMClient, db):
         self.llm = llm_client
+        self.db = db
         self.discovery = PortalDiscovery(llm_client)
         self.learner = PortalLearner(llm_client)
-        self.credential_mgr = CredentialManager(llm_client)
+        self.credential_mgr = CredentialManager(db)
         self.fiscal_advisor = FiscalAdvisor(llm_client)
 
     async def start_invoicing(self, ticket: Ticket, user: User) -> InvoiceContext:

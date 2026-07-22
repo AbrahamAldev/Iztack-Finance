@@ -3,14 +3,11 @@ Iztack-Finance - Tickets Routes
 API endpoints for ticket upload and processing.
 """
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
-from typing import List, Optional
-from sqlalchemy.ext.asyncio import AsyncSession
+from typing import List
 
-from app.database.connection import get_db
 from app.modules.auth.deps import get_current_user
 from app.modules.tickets.service import TicketsService
-from app.database.models import User, Ticket
-from app.utils.llm import LLMClient
+from app.database.models import User
 
 router = APIRouter(prefix="/api/tickets", tags=["Tickets"])
 

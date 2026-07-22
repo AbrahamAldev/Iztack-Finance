@@ -4,16 +4,14 @@ Authentication and dashboard for admin portal.
 """
 import logging
 import hashlib
-import secrets
 import base64
 import json
 from datetime import datetime, timedelta
 from typing import Optional, Tuple
 
-from sqlalchemy import select, desc
 from sqlalchemy.orm import Session
 
-from app.database.models import StaffUser, User, Ticket
+from app.database.models import StaffUser, User
 from app.utils.hashing import PasswordHasher
 from app.config import get_settings
 

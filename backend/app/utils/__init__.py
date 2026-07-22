@@ -1,3 +1,3 @@
-from .crypto import CryptoManager
-from .hashing import FileHasher
-from .validators import Validators
+from .crypto import CryptoManager as CryptoManager
+from .hashing import FileHasher as FileHasher
+from .validators import Validators as Validators

@@ -4,7 +4,6 @@ CSF upload, tax regime management, deduction analysis.
 """
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import Optional
 
 from app.database.connection import get_db
 from app.modules.auth.deps import get_current_user

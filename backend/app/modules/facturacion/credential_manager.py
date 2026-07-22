@@ -1,22 +1,14 @@
 """Iztack-Finance - Credential Manager con almacenamiento en DB."""
 import logging
-import secrets
-import string
-from typing import Optional, Dict, Any
+from typing import Optional
 from sqlalchemy.orm import Session
 
-from app.database.models import StoreCredential, User
+from app.database.models import StoreCredential
 from app.utils.crypto import CryptoManager
 
 logger = logging.getLogger(__name__)
 
 crypto = CryptoManager()
-
-
-def generate_password(length: int = 16) -> str:
-    """Generate a secure random password."""
-    alphabet = string.ascii_letters + string.digits + "!@#$%&*"
-    return "".join(secrets.choice(alphabet) for _ in range(length))
 
 
 class CredentialManager:
@@ -69,7 +61,7 @@ class CredentialManager:
         self, user_id: str, store_name: str, email: str, portal_url: str = None,
     ) -> StoreCredential:
         """Create a new account for a store and save credentials."""
-        password = generate_password()
+        password = crypto.generate_password()
         return await self.save_credentials(
             user_id=user_id,
             store_name=store_name,

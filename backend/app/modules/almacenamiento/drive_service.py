@@ -4,16 +4,14 @@ Organizes and stores invoices (PDF/XML) in categorized Google Drive folders.
 """
 import logging
 import io
-import os
 from datetime import datetime, date
-from typing import Optional, List
+from typing import Optional
 import asyncio
 
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
-from googleapiclient.http import MediaIoBaseUpload, MediaFileUpload
-from googleapiclient.errors import HttpError
+from googleapiclient.http import MediaIoBaseUpload
 
 from app.config import get_settings
 from app.utils.validators import Validators

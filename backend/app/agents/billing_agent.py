@@ -6,9 +6,7 @@ Wraps the existing FacturacionOrchestrator for gradual migration.
 import logging
 import os
 from app.agents.base import Agent, AgentContext, AgentResult
-from app.modules.facturacion.orchestrator import FacturacionOrchestrator
 from app.modules.tickets.billing import trigger_billing
-from app.utils.llm import LLMClient
 
 logger = logging.getLogger(__name__)
 
@@ -58,7 +56,8 @@ Responde ÚNICAMENTE en formato JSON:
             max_tokens=512,
         )
 
-        import json, re
+        import json
+        import re
         decision = {"should_invoice": False, "reason": "No se pudo decidir"}
         try:
             match = re.search(r"\{.*\}", response, re.DOTALL)

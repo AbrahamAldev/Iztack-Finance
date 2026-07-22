@@ -6,9 +6,7 @@ Usa LLMClient directo + fallback a respuestas predefinidas.
 """
 import os
 import logging
-from datetime import datetime
 from typing import Optional
-import io
 
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (
@@ -20,7 +18,6 @@ from app.config import get_settings
 from app.database.connection import get_db_sync
 from app.database.models import User, Ticket, ProcessingError
 from app.modules.ocr.service import OCRService
-from app.modules.ocr.schemas import OCRResponse
 from app.utils.llm import LLMClient
 
 settings = get_settings()

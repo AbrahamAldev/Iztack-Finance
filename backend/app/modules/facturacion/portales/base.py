@@ -4,8 +4,7 @@ Abstract base class for all store invoicing portals.
 """
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Optional, List
-from datetime import date
+from typing import Optional
 import logging
 
 from playwright.async_api import async_playwright, Page, Browser

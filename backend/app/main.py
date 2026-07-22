@@ -4,7 +4,6 @@ FastAPI application with CORS, middleware, and route registration.
 """
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
 import logging
 

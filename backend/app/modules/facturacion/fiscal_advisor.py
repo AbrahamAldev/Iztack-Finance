@@ -1,6 +1,6 @@
 """Iztack-Finance - Fiscal Advisor. IA para recomendar tipo de gasto según régimen fiscal en México."""
 import logging
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List
 from app.utils.llm import LLMClient
 
 logger = logging.getLogger(__name__)

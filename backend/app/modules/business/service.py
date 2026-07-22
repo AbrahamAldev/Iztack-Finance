@@ -1,11 +1,11 @@
 """Iztack-Finance - Business Service. Multi-negocio familiar."""
 import logging
 from datetime import date, timedelta
-from typing import List, Dict, Optional
+from typing import List, Dict
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database.models import Ticket, Product, User
+from app.database.models import Ticket
 
 logger = logging.getLogger(__name__)
 

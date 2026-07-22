@@ -6,15 +6,14 @@ import base64
 import io
 import json
 import re
-from datetime import date, datetime
-from typing import Optional, List, Tuple
+from typing import Optional
 from PIL import Image, ImageEnhance
 from openai import OpenAI
 
 import logging
 import os
 from app.utils.validators import Validators
-from .schemas import OCRTicketData, OCRProduct, OCRResponse
+from .schemas import OCRTicketData, OCRResponse
 
 logger = logging.getLogger(__name__)
 
@@ -170,6 +169,22 @@ class OCRService:
                 error=f"Error al procesar la imagen: {str(e)[:100]}",
                 raw_text="",
             )
+
+    def extract_from_base64(self, image_base64: str) -> OCRResponse:
+        """Process a base64-encoded ticket image and extract structured data."""
+        try:
+            # Strip data URL prefix if present
+            if "," in image_base64:
+                image_base64 = image_base64.split(",", 1)[1]
+            image_bytes = base64.b64decode(image_base64)
+        except Exception as e:
+            logger.error(f"Base64 decode error: {e}")
+            return OCRResponse(
+                success=False,
+                error="La imagen base64 no es válida.",
+                raw_text="",
+            )
+        return self.extract_from_image(image_bytes)
 
     def _parse_ocr_response(self, raw_text: str) -> Optional[dict]:
         """Extract JSON from LLM response, handling markdown code blocks."""

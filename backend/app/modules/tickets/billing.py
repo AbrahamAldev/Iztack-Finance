@@ -1,6 +1,6 @@
 """Iztack-Finance - Post-OCR Billing Trigger. Dispara facturación automática tras procesar un ticket."""
 import logging
-from typing import Optional, Dict, Any
+from typing import Optional
 
 from app.database.models import Ticket, User
 from app.utils.llm import LLMClient
@@ -45,8 +45,8 @@ async def trigger_billing(
         return None
 
     llm_client = LLMClient(api_key)
-    orchestrator = FacturacionOrchestrator(llm_client)
-    
+    orchestrator = FacturacionOrchestrator(llm_client, db_session)
+
     ctx = await orchestrator.start_invoicing(ticket, user)
     logger.info(f"Billing started for ticket {ticket.id}: step={ctx.step.value}")
     

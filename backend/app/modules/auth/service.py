@@ -5,8 +5,6 @@ Business logic for user registration, login, and JWT token management.
 import logging
 from datetime import datetime, timedelta
 from typing import Optional, Tuple
-import secrets
-import string
 import hashlib
 
 from sqlalchemy import select
@@ -14,8 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.models import User, Tenant
 from app.modules.auth.schemas import (
-    RegisterRequest, LoginRequest, UserUpdateRequest,
-    UserResponse, TokenResponse
+    RegisterRequest, LoginRequest, UserUpdateRequest
 )
 from app.utils.hashing import PasswordHasher
 from app.config import get_settings

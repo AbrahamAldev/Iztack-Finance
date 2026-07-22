@@ -4,15 +4,12 @@ In-app chat with AI responses via OpenRouter (DeepSeek).
 Security: prompt injection protection, data isolation per user.
 """
 import logging
-from datetime import datetime, timedelta
 from typing import List, Optional, Tuple
-import json
 
 from sqlalchemy import select, desc
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database.models import User, ChatMessage, Ticket, Product, Invoice, ShoppingList
-from app.modules.auth.service import AuthService
+from app.database.models import User, ChatMessage, Ticket, ShoppingList
 from app.modules.ocr.service import OCRService
 from app.modules.ocr.schemas import OCRResponse
 from app.utils.llm import LLMClient

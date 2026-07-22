@@ -5,7 +5,9 @@ Dynamically selects and instantiates the correct portal driver for each store.
 import logging
 from typing import Optional, Dict, Type
 
-from .base import BasePortal, PortalCredentials, InvoiceResult
+from .base import BasePortal
+from .base import PortalCredentials as PortalCredentials
+from .base import InvoiceResult as InvoiceResult
 
 logger = logging.getLogger(__name__)
 

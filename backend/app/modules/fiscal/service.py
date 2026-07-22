@@ -5,7 +5,7 @@ and provides deduction recommendations based on Mexican tax law.
 """
 import logging
 import base64
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.models import FiscalData
@@ -135,7 +135,8 @@ class FiscalService:
                     "Si no encuentras algún dato, usa null."
                 )
                 llm_response = await llm.chat(user_message=prompt, max_tokens=300, temperature=0.0)
-                import json, re
+                import json
+                import re
                 json_match = re.search(r"\{.*\}", llm_response, re.DOTALL)
                 if json_match:
                     extracted = json.loads(json_match.group(0))

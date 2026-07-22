@@ -7,7 +7,7 @@ import logging
 import base64
 import email
 from datetime import datetime, timedelta
-from typing import Optional, List
+from typing import Optional
 from dataclasses import dataclass
 import asyncio
 

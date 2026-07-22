@@ -3,8 +3,6 @@ Sistema Financiero - Oxxo Invoicing Portal
 Oxxo uses a generic CFDI portal for all their stores.
 """
 import logging
-from datetime import datetime
-from typing import Optional
 
 from playwright.async_api import Page
 from .base import BasePortal, PortalCredentials

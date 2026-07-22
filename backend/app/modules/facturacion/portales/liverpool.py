@@ -2,13 +2,12 @@
 Sistema Financiero - Liverpool Invoicing Portal
 Automates the invoice request process on liverpool.com.mx/facturacion
 """
-import re
 import logging
 from typing import Optional
 from datetime import datetime
 
 from playwright.async_api import Page
-from .base import BasePortal, PortalCredentials, InvoiceResult
+from .base import BasePortal, PortalCredentials
 
 logger = logging.getLogger(__name__)
 

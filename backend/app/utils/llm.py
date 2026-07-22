@@ -5,7 +5,8 @@ Uses DeepSeek models via OpenRouter API.
 """
 import logging
 import json
-from typing import Optional, List, Dict, Any
+import os
+from typing import Optional, Dict, Any
 from openai import OpenAI
 
 logger = logging.getLogger(__name__)
@@ -132,3 +133,19 @@ class LLMClient:
     def validate_api_key(api_key: str) -> bool:
         """Validate that an API key looks like an OpenRouter key."""
         return api_key.startswith("sk-or-v1-") and len(api_key) > 30
+
+
+# Singleton-ish factory to avoid creating multiple LLMClient instances.
+_llm_client_instance: Optional[LLMClient] = None
+
+
+def get_llm_client() -> Optional[LLMClient]:
+    """Return a cached LLMClient instance using OPENROUTER_API_KEY from env."""
+    global _llm_client_instance
+    if _llm_client_instance is None:
+        api_key = os.environ.get("OPENROUTER_API_KEY", "")
+        if not LLMClient.validate_api_key(api_key):
+            logger.warning("OPENROUTER_API_KEY no está configurada o no es válida")
+            return None
+        _llm_client_instance = LLMClient(api_key)
+    return _llm_client_instance

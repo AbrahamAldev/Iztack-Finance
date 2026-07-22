@@ -3,9 +3,7 @@ Iztack-Finance - Settings Service
 User-specific settings: Telegram chat_id, Google Drive credentials.
 """
 import logging
-from typing import Optional, Tuple
 
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.models import User

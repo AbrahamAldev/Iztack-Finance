@@ -2,8 +2,6 @@
 Sistema Financiero - BP Invoicing Portal
 """
 import logging
-from datetime import datetime
-from typing import Optional
 from playwright.async_api import Page
 from .base import BasePortal, PortalCredentials
 

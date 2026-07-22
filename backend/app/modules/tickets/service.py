@@ -4,9 +4,7 @@ Handle ticket uploads, multi-image stitching, and OCR processing.
 """
 import logging
 import io
-import base64
-from datetime import datetime
-from typing import List, Optional, Tuple
+from typing import List
 from PIL import Image
 
 from app.modules.ocr.service import OCRService
@@ -119,7 +117,6 @@ class TicketsService:
         """
         try:
             import cv2
-            import numpy as np
 
             # Use ORB detector
             orb = cv2.ORB_create(nfeatures=500)

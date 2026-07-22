@@ -4,12 +4,12 @@ Runs periodic tasks: daily analysis, weekly shopping list, warranty alerts.
 Integrated into FastAPI lifespan — no separate worker needed.
 """
 import logging
-from datetime import datetime, date, timedelta
+from datetime import date, timedelta
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
-from sqlalchemy import select, func, desc
+from sqlalchemy import func, desc
 from app.database.connection import SyncSession
-from app.database.models import Ticket, Product, User, TelegramChatLink
+from app.database.models import Ticket, Product, User
 
 logger = logging.getLogger(__name__)
 
@@ -39,9 +39,9 @@ async def run_daily_analysis():
             # Notify via Telegram if linked
             if user.telegram_chat_id:
                 try:
-                    from app.modules.bots.telegram_bot import TelegramBot
                     # Use raw telegram API to send notification
-                    import os, requests
+                    import os
+                    import requests
                     bot_token = os.environ.get("TELEGRAM_BOT_TOKEN", "")
                     if bot_token:
                         msg = (
@@ -94,7 +94,8 @@ async def run_weekly_shopping_list():
 
             if user.telegram_chat_id:
                 try:
-                    import os, requests
+                    import os
+                    import requests
                     bot_token = os.environ.get("TELEGRAM_BOT_TOKEN", "")
                     if bot_token:
                         requests.post(
@@ -137,7 +138,8 @@ async def run_warranty_alerts():
             if user and user.telegram_chat_id:
                 days_left = (p.warranty_end_date - today).days
                 try:
-                    import os, requests
+                    import os
+                    import requests
                     bot_token = os.environ.get("TELEGRAM_BOT_TOKEN", "")
                     if bot_token:
                         requests.post(

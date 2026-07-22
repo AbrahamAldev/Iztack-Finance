@@ -1,5 +1,5 @@
 """Iztack-Finance - System Info & Pipeline Diagnostics."""
-from fastapi import APIRouter, Request
+from fastapi import APIRouter
 from datetime import datetime
 import os
 

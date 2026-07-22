@@ -7,7 +7,7 @@ import base64
 import logging
 import os
 from pathlib import Path
-from typing import List, Optional
+from typing import List
 
 from app.agents.base import Agent, AgentContext, AgentResult
 

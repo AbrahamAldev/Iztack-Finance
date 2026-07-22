@@ -2,9 +2,12 @@
 Iztack-Finance - Chat Routes
 API endpoints for in-app chat messaging.
 """
+import logging
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
+
+logger = logging.getLogger(__name__)
 
 from app.database.connection import get_db
 from app.modules.auth.deps import get_current_user

@@ -3,7 +3,7 @@ Sistema Financiero - Warranty Management Service
 Tracks products with warranties, alerts when they're about to expire.
 """
 import logging
-from datetime import date, datetime, timedelta
+from datetime import date
 from typing import Optional, List, Dict
 
 logger = logging.getLogger(__name__)

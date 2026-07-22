@@ -5,7 +5,6 @@ This agent wraps the existing OCRService for backward compatibility
 while adding agent-specific tracing and error handling.
 """
 import logging
-from typing import Optional
 
 from app.agents.base import Agent, AgentContext, AgentResult
 from app.modules.ocr.service import OCRService

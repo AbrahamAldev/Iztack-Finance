@@ -3,7 +3,6 @@ Iztack-Finance - Admin Staff Routes
 API endpoints for admin portal (admfinance.iztack.com).
 """
 from fastapi import APIRouter, Depends, HTTPException, Header
-from typing import Optional
 from sqlalchemy.orm import Session
 
 from app.database.connection import SyncSession

@@ -3,12 +3,11 @@ Sistema Financiero - Database Models
 Core data models for tickets, invoices, products, credentials, shopping lists, etc.
 """
 import uuid
-from datetime import datetime, date
+from datetime import datetime
 from sqlalchemy import (
     Column, String, Text, Integer, Float, Boolean, DateTime, Date,
-    ForeignKey, JSON, Enum as SAEnum, BigInteger, LargeBinary
+    ForeignKey, JSON, BigInteger, LargeBinary
 )
-from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from .connection import Base
 import enum

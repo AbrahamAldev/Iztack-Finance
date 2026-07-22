@@ -4,7 +4,6 @@ Saves execution traces for each step of ticket processing.
 Enables debugging from admfinance.iztack.com.
 """
 import time
-import uuid
 import logging
 from typing import Optional, Dict, Any
 from app.database.connection import SyncSession

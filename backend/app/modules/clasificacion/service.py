@@ -3,9 +3,8 @@ Sistema Financiero - Classification Service
 Categorizes products, detects warranties, and classifies expenses.
 """
 import logging
-from datetime import date, datetime, timedelta
-from typing import Optional, List, Tuple
-from dataclasses import dataclass
+from datetime import date
+from typing import Optional, Tuple
 
 logger = logging.getLogger(__name__)
 

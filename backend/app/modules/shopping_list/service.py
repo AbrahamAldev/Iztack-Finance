@@ -3,9 +3,9 @@ Sistema Financiero - Smart Shopping List Service
 Generates intelligent shopping lists based on consumption cycles and family voting.
 """
 import logging
-from datetime import date, datetime, timedelta
-from typing import Optional, List, Dict
-from dataclasses import dataclass, field
+from datetime import date, datetime
+from typing import List, Dict
+from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
 
