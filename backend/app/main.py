@@ -96,6 +96,10 @@ from app.modules.admin_staff.routes import router as admin_router
 from app.modules.business.routes import router as business_router
 from app.modules.fiscal.routes import router as fiscal_router
 from app.modules.agents.routes import router as agents_router
+from app.modules.finanzas.routes import router as finanzas_router
+from app.modules.garantias.routes import router as garantias_router
+from app.modules.shopping_list.routes import router as shopping_list_router
+from app.modules.almacenamiento.routes import router as almacenamiento_router
 
 app.include_router(ocr_router, prefix="/api/ocr", tags=["OCR"])
 app.include_router(setup_router, prefix="/api/setup", tags=["Setup"])
@@ -108,19 +112,17 @@ app.include_router(dashboard_router, tags=["Dashboard"])
 app.include_router(admin_router, tags=["Admin"])
 app.include_router(business_router, tags=["Business"])
 app.include_router(fiscal_router, prefix="/api/fiscal", tags=["Fiscal"])
+app.include_router(finanzas_router)
+app.include_router(garantias_router)
+app.include_router(shopping_list_router)
+app.include_router(almacenamiento_router)
 app.include_router(agents_router)
 
 # Future modules (to be activated in subsequent phases):
 # from app.modules.bots.routes import router as bots_router
 # from app.modules.facturacion.routes import router as facturacion_router
-# from app.modules.finanzas.routes import router as finanzas_router
-# from app.modules.shopping_list.routes import router as shopping_list_router
-# from app.modules.almacenamiento.routes import router as almacenamiento_router
 # app.include_router(bots_router, prefix="/api/bots", tags=["Bots"])
 # app.include_router(facturacion_router, prefix="/api/facturacion", tags=["Facturación"])
-# app.include_router(finanzas_router, prefix="/api/finanzas", tags=["Finanzas"])
-# app.include_router(shopping_list_router, prefix="/api/shopping-list", tags=["Lista de Compras"])
-# app.include_router(almacenamiento_router, prefix="/api/almacenamiento", tags=["Almacenamiento"])
 
 
 @app.get("/", tags=["System"])

@@ -55,8 +55,34 @@ FORMATO DE RESPUESTA:
         if not question:
             return self.fail("No se proporcionó pregunta financiera")
 
+        db_session = context.payload.get("db_session")
+        financial_summary = ""
+        if db_session and self._is_spending_question(question):
+            try:
+                from app.modules.finanzas.service import FinancialAnalysisService
+                from datetime import date
+
+                service = FinancialAnalysisService(db_session)
+                today = date.today()
+                report = await service.generate_monthly_report(
+                    user_id=context.user_id,
+                    year=today.year,
+                    month=today.month,
+                )
+                financial_summary = (
+                    f"RESUMEN FINANCIERO REAL DEL USUARIO (periodo {report.period}):\n"
+                    f"- Total gastado: ${report.total_spent:,.2f}\n"
+                    f"- Categoría principal: {report.by_category[0].category if report.by_category else 'N/A'} "
+                    f"({report.by_category[0].percentage if report.by_category else 0}%)\n"
+                    f"- Ahorro potencial mensual: ${sum(leak.monthly_savings for leak in report.leaks):,.2f}\n"
+                    f"- {len(report.leaks)} fugas de dinero detectadas\n"
+                    f"- Meta de ahorro semanal: ${report.savings_goal.get('weekly_target', 0):,.2f}\n\n"
+                )
+            except Exception as exc:
+                logger.warning(f"No se pudo generar resumen financiero: {exc}")
+
         context_str = self.rag.get_context(question, top_k=3)
-        if not context_str:
+        if not context_str and not financial_summary:
             return self.ok(
                 output={
                     "response": (
@@ -67,10 +93,12 @@ FORMATO DE RESPUESTA:
                 },
             )
 
+        full_context = f"{financial_summary}\n\n{context_str or ''}".strip()
+
         response = await self.call_llm(
             system_prompt=self.SYSTEM_PROMPT,
             user_message=question,
-            context_str=context_str,
+            context_str=full_context,
             temperature=self.config.get("temperature", 0.3),
             max_tokens=self.config.get("max_tokens", 1536),
         )
@@ -80,3 +108,15 @@ FORMATO DE RESPUESTA:
 
         sources = [r["source"] for r in self.rag.retrieve(question, top_k=3)]
         return self.ok(output={"response": response, "sources": list(set(sources))})
+
+    @staticmethod
+    def _is_spending_question(question: str) -> bool:
+        """Detect if the user is asking about their own spending/analysis."""
+        keywords = [
+            "gasto", "gastos", "reporte", "ahorro", "ahorros", "fuga", "fugas",
+            "dinero", "finanzas", "presupuesto", "categoría", "categorias",
+            "tienda", "mes", "mensual", "análisis", "analisis", "cuánto gasté",
+            "cuanto gaste", "dónde gasto", "donde gasto",
+        ]
+        q = question.lower()
+        return any(k in q for k in keywords)

@@ -100,9 +100,14 @@ class OrchestratorAgent:
             },
         )
 
-    async def process_chat_message(self, message: str, user_id: str, user_context: str = None) -> AgentResult:
+    async def process_chat_message(
+        self, message: str, user_id: str, user_context: str = None, db_session=None
+    ) -> AgentResult:
         """Main workflow for handling a user chat message."""
-        ctx = AgentContext(user_id=user_id, payload={"message": message, "user_context": user_context})
+        ctx = AgentContext(
+            user_id=user_id,
+            payload={"message": message, "user_context": user_context, "db_session": db_session},
+        )
         chat_result = await self._get_agent("chat").run(ctx)
 
         if chat_result.output.get("intent") == "fiscal":

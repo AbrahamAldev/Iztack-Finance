@@ -33,6 +33,7 @@ async def agent_chat(
     result = await orchestrator.process_chat_message(
         message=message,
         user_id=current_user.id,
+        db_session=db,
     )
 
     if not result.success:

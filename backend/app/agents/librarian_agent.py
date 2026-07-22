@@ -84,12 +84,49 @@ class LibrarianAgent(Agent):
         except Exception as exc:
             return self.fail(f"Contenido base64 inválido: {exc}")
 
+        # Local fallback
         relative_path = f"invoices/{ticket_uuid}/{filename}"
         full_path = self._safe_path(relative_path)
         full_path.parent.mkdir(parents=True, exist_ok=True)
         full_path.write_bytes(content)
 
-        return self.ok(output={"stored_path": str(full_path), "path": relative_path})
+        # Try Google Drive if configured
+        drive_urls = {}
+        try:
+            from app.modules.almacenamiento.drive_service import DriveStorageService
+            from datetime import date
+
+            store_name = context.payload.get("store_name", "Desconocido")
+            purchase_date_str = context.payload.get("purchase_date")
+            purchase_date = (
+                date.fromisoformat(purchase_date_str)
+                if purchase_date_str else date.today()
+            )
+            has_warranty = context.payload.get("has_warranty", False)
+            expense_type = context.payload.get("expense_type", "")
+
+            drive = DriveStorageService()
+            file_bytes = content if filename.endswith(".pdf") else None
+            xml_bytes = content if filename.endswith(".xml") else None
+            drive_urls = await drive.save_invoice(
+                store_name=store_name,
+                purchase_date=purchase_date,
+                pdf_bytes=file_bytes,
+                xml_bytes=xml_bytes,
+                ticket_id=ticket_uuid,
+                has_warranty=has_warranty,
+                expense_type=expense_type,
+            )
+        except Exception as exc:
+            logger.warning(f"No se pudo guardar factura en Drive: {exc}")
+
+        return self.ok(
+            output={
+                "stored_path": str(full_path),
+                "path": relative_path,
+                "drive_urls": drive_urls,
+            }
+        )
 
     async def _list_files(self, context: AgentContext) -> AgentResult:
         prefix = context.payload.get("prefix", "")

@@ -4,9 +4,12 @@ API endpoints for ticket upload and processing.
 """
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from typing import List
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modules.auth.deps import get_current_user
 from app.modules.tickets.service import TicketsService
+from app.modules.tickets.repository import TicketRepository
+from app.database.connection import get_db
 from app.database.models import User
 
 router = APIRouter(prefix="/api/tickets", tags=["Tickets"])
@@ -17,14 +20,15 @@ async def upload_ticket(
     files: List[UploadFile] = File(...),
     is_continuation: bool = Form(False),
     current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
 ):
     """
     Upload one or more ticket images.
-    
+
     - files: one or more image files (JPEG, PNG, WEBP)
     - is_continuation: if true, images will be stitched together
-    
-    Returns OCR results from processed image(s).
+
+    Returns OCR results from processed image(s) and persists the ticket in DB.
     """
     if not files:
         raise HTTPException(status_code=400, detail="No se recibieron archivos")
@@ -57,13 +61,25 @@ async def upload_ticket(
         user_id=current_user.id,
     )
 
-    if result.success:
+    if result.success and result.data:
+        ticket = await TicketRepository.save_ocr_result(
+            db=db,
+            ocr_data=result.data,
+            user_id=current_user.id,
+        )
         return {
             "success": True,
-            "data": result.data.dict() if result.data else None,
-            "message": "Ticket procesado correctamente"
+            "ticket_id": ticket.id,
+            "data": result.data.dict(),
+            "message": "Ticket procesado y guardado correctamente"
             if len(image_bytes_list) == 1
-            else f"{len(image_bytes_list)} imágenes combinadas correctamente",
+            else f"{len(image_bytes_list)} imágenes combinadas y guardadas correctamente",
+        }
+    elif result.success:
+        return {
+            "success": True,
+            "data": None,
+            "message": "OCR procesado pero no se extrajo información estructurada",
         }
     else:
         return {
@@ -77,10 +93,11 @@ async def upload_ticket(
 async def upload_ticket_base64(
     data: dict,
     current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
 ):
     """
     Upload ticket image(s) as base64 strings.
-    
+
     Body: {
         "images": ["base64_string_1", "base64_string_2"],
         "is_continuation": true
@@ -121,11 +138,23 @@ async def upload_ticket_base64(
         user_id=current_user.id,
     )
 
-    if result.success:
+    if result.success and result.data:
+        ticket = await TicketRepository.save_ocr_result(
+            db=db,
+            ocr_data=result.data,
+            user_id=current_user.id,
+        )
         return {
             "success": True,
-            "data": result.data.dict() if result.data else None,
-            "message": "Ticket procesado correctamente",
+            "ticket_id": ticket.id,
+            "data": result.data.dict(),
+            "message": "Ticket procesado y guardado correctamente",
+        }
+    elif result.success:
+        return {
+            "success": True,
+            "data": None,
+            "message": "OCR procesado pero no se extrajo información estructurada",
         }
     else:
         return {
