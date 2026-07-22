@@ -24,8 +24,9 @@ async def pipeline_health():
     # 2. DB
     try:
         from app.database.connection import SyncSession
+        from sqlalchemy import text
         db = SyncSession()
-        db.execute("SELECT 1")
+        db.execute(text("SELECT 1"))
         db.close()
         results["database"] = "connected"
     except Exception as e:

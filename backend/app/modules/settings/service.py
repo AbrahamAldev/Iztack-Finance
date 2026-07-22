@@ -42,20 +42,37 @@ class SettingsService:
         if not user:
             raise ValueError("Usuario no encontrado")
 
-        # Encrypt credentials (returns ciphertext, nonce, key_id)
-        enc_refresh, nonce_refresh, key_id = self.crypto.encrypt(refresh_token)
-        enc_folder, nonce_folder, _ = self.crypto.encrypt(folder_id)
-
-        # Store as: ciphertext + nonce (combined for storage)
-        import base64
-        user.encrypted_google_refresh_token = base64.b64encode(enc_refresh + nonce_refresh)
-        user.encrypted_google_drive_folder_id = base64.b64encode(enc_folder + nonce_folder)
-        user.encryption_key_id = key_id
+        # Encrypt credentials into a single blob for easy storage/retrieval
+        user.encrypted_google_refresh_token = self.crypto.encrypt_to_blob(
+            refresh_token, context=f"gdrive_refresh_{user_id}"
+        )
+        user.encrypted_google_drive_folder_id = self.crypto.encrypt_to_blob(
+            folder_id, context=f"gdrive_folder_{user_id}"
+        )
 
         await self.db.commit()
         await self.db.refresh(user)
         logger.info(f"Google Drive credentials updated for user {user_id}")
         return user
+
+    async def get_google_credentials(self, user_id: str) -> dict:
+        """Decrypt and return Google Drive credentials for a user."""
+        user = await AuthService(self.db).get_user_by_id(user_id)
+        if not user:
+            raise ValueError("Usuario no encontrado")
+
+        refresh_token = self.crypto.decrypt_from_blob(
+            user.encrypted_google_refresh_token,
+            context=f"gdrive_refresh_{user_id}",
+        )
+        folder_id = self.crypto.decrypt_from_blob(
+            user.encrypted_google_drive_folder_id,
+            context=f"gdrive_folder_{user_id}",
+        )
+        return {
+            "refresh_token": refresh_token,
+            "folder_id": folder_id,
+        }
 
     async def get_google_drive_status(self, user_id: str) -> dict:
         """

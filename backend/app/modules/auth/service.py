@@ -18,13 +18,15 @@ from app.modules.auth.schemas import (
     UserResponse, TokenResponse
 )
 from app.utils.hashing import PasswordHasher
+from app.config import get_settings
 
 logger = logging.getLogger(__name__)
 
-# JWT configuration
-JWT_SECRET = secrets.token_urlsafe(32)  # In production, load from env
-JWT_ALGORITHM = "HS256"
-JWT_EXPIRE_HOURS = 24 * 7  # 7 days
+# JWT configuration — derived from app settings so it persists across restarts
+_settings = get_settings()
+JWT_SECRET = _settings.secret_key
+JWT_ALGORITHM = _settings.algorithm
+JWT_EXPIRE_HOURS = _settings.access_token_expire_minutes / 60
 
 
 class AuthService:

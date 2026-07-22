@@ -15,11 +15,14 @@ from sqlalchemy.orm import Session
 
 from app.database.models import StaffUser, User, Ticket
 from app.utils.hashing import PasswordHasher
+from app.config import get_settings
 
 logger = logging.getLogger(__name__)
 
-JWT_SECRET = secrets.token_urlsafe(32)
-JWT_ALGORITHM = "HS256"
+# JWT configuration — derived from app settings so it persists across restarts
+_settings = get_settings()
+JWT_SECRET = _settings.secret_key
+JWT_ALGORITHM = _settings.algorithm
 JWT_EXPIRE_HOURS = 8
 
 

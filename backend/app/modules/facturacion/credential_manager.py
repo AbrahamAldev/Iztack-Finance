@@ -6,9 +6,11 @@ from typing import Optional, Dict, Any
 from sqlalchemy.orm import Session
 
 from app.database.models import StoreCredential, User
-from app.utils.crypto import CryptoUtil
+from app.utils.crypto import CryptoManager
 
 logger = logging.getLogger(__name__)
+
+crypto = CryptoManager()
 
 
 def generate_password(length: int = 16) -> str:
@@ -40,17 +42,17 @@ class CredentialManager:
         portal_url: str = None, store_category: str = None,
     ) -> StoreCredential:
         """Encrypt and save credentials for a store."""
-        encrypted_user = CryptoUtil.encrypt(username, context=f"cred_{user_id}_{store_name}")
-        encrypted_pass = CryptoUtil.encrypt(password, context=f"cred_{user_id}_{store_name}")
+        encrypted_user = crypto.encrypt(username, context=f"cred_{user_id}_{store_name}")
+        encrypted_pass = crypto.encrypt(password, context=f"cred_{user_id}_{store_name}")
 
         cred = StoreCredential(
             user_id=user_id,
             store_name=store_name,
             store_category=store_category or "other",
             portal_url=portal_url,
-            encrypted_username=encrypted_user["ciphertext"],
-            encrypted_password=encrypted_pass["ciphertext"],
-            encryption_key_id=encrypted_user["key_id"],
+            encrypted_username=encrypted_user[0],
+            encrypted_password=encrypted_pass[0],
+            encryption_key_id=encrypted_user[2],
             credential_hint=username,
             email_registered=username,
             has_account=True,
@@ -79,9 +81,17 @@ class CredentialManager:
     async def get_decrypted_password(self, cred: StoreCredential) -> Optional[str]:
         """Decrypt a stored password."""
         try:
-            return CryptoUtil.decrypt(
+            # Retrieve nonce from the credential record if stored separately,
+            # otherwise assume packed blob format.
+            if hasattr(cred, "encrypted_password_nonce") and cred.encrypted_password_nonce:
+                return crypto.decrypt(
+                    cred.encrypted_password,
+                    cred.encrypted_password_nonce,
+                    cred.encryption_key_id,
+                    context=f"cred_{cred.user_id}_{cred.store_name}",
+                )
+            return crypto.decrypt_from_blob(
                 cred.encrypted_password,
-                cred.encryption_key_id,
                 context=f"cred_{cred.user_id}_{cred.store_name}",
             )
         except Exception as e:

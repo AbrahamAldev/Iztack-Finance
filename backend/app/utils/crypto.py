@@ -63,6 +63,35 @@ class CryptoManager:
         plaintext = aesgcm.decrypt(nonce, ciphertext, context.encode())
         return plaintext.decode()
 
+    def encrypt_to_blob(self, plaintext: str, context: str = "") -> bytes:
+        """
+        Encrypt and pack into a single blob: base64(salt + nonce + ciphertext).
+        This is easier to store in a single DB column.
+        """
+        if not plaintext:
+            return None
+        ciphertext, nonce, key_id = self.encrypt(plaintext, context)
+        # Pack: salt(16) + nonce(12) + ciphertext
+        salt = base64.b64decode(key_id)
+        blob = salt + nonce + ciphertext
+        return base64.b64encode(blob)
+
+    def decrypt_from_blob(self, blob: bytes, context: str = "") -> str:
+        """
+        Decrypt a blob created by encrypt_to_blob.
+        """
+        if not blob:
+            return None
+        try:
+            raw = base64.b64decode(blob)
+            salt = raw[:16]
+            nonce = raw[16:28]
+            ciphertext = raw[28:]
+            key_id = base64.b64encode(salt).decode()
+            return self.decrypt(ciphertext, nonce, key_id, context)
+        except Exception:
+            return None
+
     def generate_password(self, length: int = 16, use_special: bool = True) -> str:
         """Generate a cryptographically secure random password."""
         import secrets

@@ -67,6 +67,9 @@ class Settings(BaseSettings):
     app_name: str = "Sistema Financiero"
     app_version: str = "1.0.0"
 
+    # --- CORS ---
+    allowed_origins: str = "http://localhost:3000,https://tu-dominio.com"
+
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"

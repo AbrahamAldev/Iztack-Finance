@@ -54,12 +54,12 @@ app = FastAPI(
 )
 
 # CORS middleware
+_origins = [o.strip() for o in settings.allowed_origins.split(",") if o.strip()]
+if settings.environment == "development":
+    _origins.append("http://localhost:3000")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"] if settings.environment == "development" else [
-        "http://localhost:3000",
-        "https://tu-dominio.com",
-    ],
+    allow_origins=_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
