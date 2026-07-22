@@ -11,13 +11,13 @@ class AgentModels:
     """Default model selections per agent role."""
 
     # Fast, cheap models for "worker" agents
-    WORKER = os.getenv("AGENT_WORKER_MODEL", "deepseek/deepseek-chat")
+    WORKER = os.getenv("AGENT_WORKER_MODEL", "openai/gpt-4o-mini")
 
     # More capable models for specialist agents
-    SPECIALIST = os.getenv("AGENT_SPECIALIST_MODEL", "deepseek/deepseek-chat")
+    SPECIALIST = os.getenv("AGENT_SPECIALIST_MODEL", "openai/gpt-4o-mini")
 
     # Default fallback
-    DEFAULT = os.getenv("AGENT_DEFAULT_MODEL", "deepseek/deepseek-chat")
+    DEFAULT = os.getenv("AGENT_DEFAULT_MODEL", "openai/gpt-4o-mini")
 
 
 class AgentConfig:
