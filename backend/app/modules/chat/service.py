@@ -65,8 +65,16 @@ class ChatService:
         """Process a ticket image with OCR and return AI-formatted result."""
         await self._save_message(user_id, "bot", "📸 Procesando imagen...", "status")
 
+        import os
         try:
+            # 🔍 SENSOR 1-3: Reception → Preprocess → OCR
+            from app.modules.tickets.tracer import trace_step
+            trace_step(user_id, "reception", status="ok", details={"size_bytes": len(image_bytes)})
+            trace_step(user_id, "preprocess", status="ok")
             result: OCRResponse = self.ocr_service.extract_from_image(image_bytes)
+            trace_step(user_id, "ocr", status="ok" if result.success else "error",
+                       details={"confidence": result.data.confidence if result.data else None,
+                                "store_name": result.data.store_name if result.data else None})
 
             if not result.success:
                 response = (
