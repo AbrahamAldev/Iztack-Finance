@@ -96,6 +96,7 @@ from app.modules.dashboard.routes import router as dashboard_router
 from app.modules.admin_staff.routes import router as admin_router
 from app.modules.business.routes import router as business_router
 from app.modules.fiscal.routes import router as fiscal_router
+from app.modules.agents.routes import router as agents_router
 
 app.include_router(ocr_router, prefix="/api/ocr", tags=["OCR"])
 app.include_router(setup_router, prefix="/api/setup", tags=["Setup"])
@@ -107,6 +108,8 @@ app.include_router(chat_router, tags=["Chat"])
 app.include_router(dashboard_router, tags=["Dashboard"])
 app.include_router(admin_router, tags=["Admin"])
 app.include_router(business_router, tags=["Business"])
+app.include_router(fiscal_router, prefix="/api/fiscal", tags=["Fiscal"])
+app.include_router(agents_router)
 
 # Future modules (to be activated in subsequent phases):
 # from app.modules.bots.routes import router as bots_router
