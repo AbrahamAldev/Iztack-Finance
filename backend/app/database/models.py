@@ -566,6 +566,25 @@ class FiscalData(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
+class PipelineTrace(Base):
+    """Trace each step of the ticket processing pipeline for debugging."""
+    __tablename__ = "pipeline_traces"
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+    user_id = Column(String, nullable=True, index=True)
+    ticket_id = Column(String, ForeignKey("tickets.id", ondelete="SET NULL"), nullable=True, index=True)
+
+    step = Column(String(50), nullable=False, index=True)  # reception, preprocess, ocr, parse, db_save, billing, response
+    status = Column(String(20), nullable=False, default="pending")  # pending, ok, error, warning
+    duration_ms = Column(Integer, nullable=True)
+    details = Column(JSON, nullable=True)  # Step-specific data
+
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+
+    def __repr__(self):
+        return f"<PipelineTrace {self.step} - {self.status}>"
+
+
 class AuditLog(Base):
     """Audit log for all system actions."""
     __tablename__ = "audit_logs"
