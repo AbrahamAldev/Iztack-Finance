@@ -123,8 +123,10 @@ class OCRService:
             processed_bytes = self.preprocess_image(image_bytes)
             b64_image = base64.b64encode(processed_bytes).decode("utf-8")
 
+            import os
+            ocr_model = os.getenv("OCR_MODEL", "google/gemma-4-26b-a4b-it:free")
             response = client.chat.completions.create(
-                model="openai/gpt-4o-mini",
+                model=ocr_model,
                 messages=[
                     {
                         "role": "user",

@@ -66,6 +66,13 @@ services:
       GOOGLE_DRIVE_FOLDER_ID: ${GOOGLE_DRIVE_FOLDER_ID:-}
       SECRET_KEY: ${SECRET_KEY:-default-secret-key}
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      # OpenRouter free-tier models (change to paid models for production)
+      OCR_MODEL: ${OCR_MODEL:-google/gemma-4-26b-a4b-it:free}
+      AGENT_OCR_MODEL: ${AGENT_OCR_MODEL:-google/gemma-4-26b-a4b-it:free}
+      AGENT_WORKER_MODEL: ${AGENT_WORKER_MODEL:-openai/gpt-oss-20b:free}
+      AGENT_SPECIALIST_MODEL: ${AGENT_SPECIALIST_MODEL:-nvidia/nemotron-3-super-120b-a12b:free}
+      AGENT_DEFAULT_MODEL: ${AGENT_DEFAULT_MODEL:-openai/gpt-oss-20b:free}
+      LLM_DEFAULT_MODEL: ${LLM_DEFAULT_MODEL:-openai/gpt-oss-20b:free}
     ports:
       - "8000:8000"
     volumes:
@@ -120,6 +127,13 @@ services:
       GOOGLE_DRIVE_FOLDER_ID: ${GOOGLE_DRIVE_FOLDER_ID:-}
       SECRET_KEY: ${SECRET_KEY:-default-secret-key}
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      # OpenRouter free-tier models
+      OCR_MODEL: ${OCR_MODEL:-google/gemma-4-26b-a4b-it:free}
+      AGENT_OCR_MODEL: ${AGENT_OCR_MODEL:-google/gemma-4-26b-a4b-it:free}
+      AGENT_WORKER_MODEL: ${AGENT_WORKER_MODEL:-openai/gpt-oss-20b:free}
+      AGENT_SPECIALIST_MODEL: ${AGENT_SPECIALIST_MODEL:-nvidia/nemotron-3-super-120b-a12b:free}
+      AGENT_DEFAULT_MODEL: ${AGENT_DEFAULT_MODEL:-openai/gpt-oss-20b:free}
+      LLM_DEFAULT_MODEL: ${LLM_DEFAULT_MODEL:-openai/gpt-oss-20b:free}
     volumes:
       - ./backend:/app
     command: python bot_main.py

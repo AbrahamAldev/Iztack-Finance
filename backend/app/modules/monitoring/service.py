@@ -456,7 +456,11 @@ class SensorsService:
             "check_name": "agents_llm",
             "status": "ok",
             "message": "Agents LLM backend available",
-            "details": {"model_default": "openai/gpt-4o-mini"},
+            "details": {
+                "worker_model": os.getenv("AGENT_WORKER_MODEL", "openai/gpt-oss-20b:free"),
+                "specialist_model": os.getenv("AGENT_SPECIALIST_MODEL", "nvidia/nemotron-3-super-120b-a12b:free"),
+                "ocr_model": os.getenv("OCR_MODEL", "google/gemma-4-26b-a4b-it:free"),
+            },
         }
 
     async def get_recent_readings(self, minutes: int = 60) -> List[Dict]:

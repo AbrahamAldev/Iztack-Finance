@@ -59,10 +59,12 @@ class LLMClient:
         self,
         user_message: str,
         context: Optional[str] = None,
-        model: str = "openai/gpt-4o-mini",
+        model: str = None,
         max_tokens: int = 1024,
         temperature: float = 0.7,
     ) -> str:
+        if model is None:
+            model = os.getenv("LLM_DEFAULT_MODEL", "openai/gpt-oss-20b:free")
         """
         Send a chat message to OpenRouter with security context.
         

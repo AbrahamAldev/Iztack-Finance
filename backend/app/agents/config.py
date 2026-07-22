@@ -10,14 +10,14 @@ from typing import Dict, Any
 class AgentModels:
     """Default model selections per agent role."""
 
-    # Fast, cheap models for "worker" agents
-    WORKER = os.getenv("AGENT_WORKER_MODEL", "openai/gpt-4o-mini")
+    # Fast, cheap models for "worker" agents (OpenRouter free tier)
+    WORKER = os.getenv("AGENT_WORKER_MODEL", "openai/gpt-oss-20b:free")
 
-    # More capable models for specialist agents
-    SPECIALIST = os.getenv("AGENT_SPECIALIST_MODEL", "openai/gpt-4o-mini")
+    # More capable models for specialist agents (OpenRouter free tier)
+    SPECIALIST = os.getenv("AGENT_SPECIALIST_MODEL", "nvidia/nemotron-3-super-120b-a12b:free")
 
-    # Default fallback
-    DEFAULT = os.getenv("AGENT_DEFAULT_MODEL", "openai/gpt-4o-mini")
+    # Default fallback (OpenRouter free tier)
+    DEFAULT = os.getenv("AGENT_DEFAULT_MODEL", "openai/gpt-oss-20b:free")
 
 
 class AgentConfig:
@@ -31,7 +31,7 @@ class AgentConfig:
             "description": "Coordina el flujo de agentes y decide siguiente paso.",
         },
         "ocr": {
-            "model": os.getenv("AGENT_OCR_MODEL", "openai/gpt-4o-mini"),
+            "model": os.getenv("AGENT_OCR_MODEL", "google/gemma-4-26b-a4b-it:free"),
             "temperature": 0.0,
             "max_tokens": 2048,
             "description": "Extrae datos estructurados de tickets.",
