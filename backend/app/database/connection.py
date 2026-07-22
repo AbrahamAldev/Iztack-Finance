@@ -25,7 +25,8 @@ async_session = async_sessionmaker(
 )
 
 # Sync engine (for Telegram bot, scripts)
-_sync_db_url = settings.database_url.replace("+asyncpg", "+psycopg2").replace("postgresql+psycopg2://", "postgresql://")
+# Use psycopg v3 (already in requirements) instead of psycopg2.
+_sync_db_url = settings.database_url.replace("+asyncpg", "+psycopg")
 _sync_engine = create_engine(
     _sync_db_url,
     echo=False,

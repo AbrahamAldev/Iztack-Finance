@@ -55,7 +55,7 @@ services:
         condition: service_healthy
     environment:
       DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/sistema_financiero
-      DATABASE_SYNC_URL: postgresql+psycopg2://postgres:postgres@postgres:5432/sistema_financiero
+      DATABASE_SYNC_URL: postgresql+psycopg://postgres:postgres@postgres:5432/sistema_financiero
       REDIS_URL: redis://redis:6379/0
       ENVIRONMENT: ${ENVIRONMENT:-development}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
@@ -108,7 +108,7 @@ services:
         condition: service_healthy
     environment:
       DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/sistema_financiero
-      DATABASE_SYNC_URL: postgresql+psycopg2://postgres:postgres@postgres:5432/sistema_financiero
+      DATABASE_SYNC_URL: postgresql+psycopg://postgres:postgres@postgres:5432/sistema_financiero
       REDIS_URL: redis://redis:6379/0
       ENVIRONMENT: ${ENVIRONMENT:-development}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}

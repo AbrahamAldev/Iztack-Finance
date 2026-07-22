@@ -13,7 +13,10 @@ logger = logging.getLogger(__name__)
 class Settings(BaseSettings):
     # --- Database ---
     database_url: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/sistema_financiero"
-    database_sync_url: str = "postgresql+psycopg2://postgres:postgres@localhost:5432/sistema_financiero"
+    database_sync_url: str = "postgresql+psycopg://postgres:postgres@localhost:5432/sistema_financiero"
+
+    # --- OpenRouter (LLM) ---
+    openrouter_api_key: Optional[str] = None
 
     # --- Security ---
     secret_key: str = "default-secret-key-change-in-production"
