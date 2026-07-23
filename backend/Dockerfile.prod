@@ -24,8 +24,9 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir --user -r requirements.txt
 
 # Install Playwright Chromium browser for the target platform
+ENV PATH=/root/.local/bin:$PATH
 RUN playwright install chromium
-RUN playwright install-deps chromium 2>/dev/null || echo "⚠️ install-deps partial failure (non-critical), continuing..."
+RUN playwright install-deps chromium 2>/dev/null || echo "install-deps partial failure (non-critical), continuing..."
 
 # -----------------------------------------------------------------------------
 FROM python:3.12-slim AS production
