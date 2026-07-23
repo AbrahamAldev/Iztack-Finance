@@ -1,6 +1,8 @@
 """
-Iztack-Finance - OCR Service (OpenRouter GPT-4o-mini Vision)
+Iztack-Finance - OCR Service (Local Tesseract + OpenRouter Vision)
 Extracts store name, date, products, prices, and totals from receipt images.
+Uses local Tesseract OCR as primary (free, no limits), with OpenRouter
+vision models as optional enhancement when available.
 """
 import base64
 import io
@@ -16,16 +18,19 @@ from PIL import Image, ImageEnhance
 from app.utils.validators import Validators
 
 from .schemas import OCRResponse, OCRTicketData
+from .local_service import LocalOCRService, ReceiptParser
 
 logger = logging.getLogger(__name__)
 
 
 class OCRService:
-    """Service for processing ticket images with OpenRouter GPT-4o-mini Vision."""
+    """Service for processing ticket images with local OCR + optional LLM enhancement."""
 
     def __init__(self):
         self.api_key = os.environ.get("OPENROUTER_API_KEY", "")
         self.validators = Validators()
+        self.local_ocr = LocalOCRService()
+        self.parser = ReceiptParser()
 
     def _get_client(self) -> Optional[OpenAI]:
         if not self.api_key or not self.api_key.startswith("sk-or-v1-"):
@@ -112,13 +117,27 @@ class OCRService:
 }"""
 
     def extract_from_image(self, image_bytes: bytes) -> OCRResponse:
-        """Process an image with OpenRouter vision and extract structured data."""
+        """Extract structured data from receipt image.
+
+        Uses local Tesseract OCR as primary method (free, no limits).
+        Falls back to OpenRouter vision models if available but not required.
+        """
+        raw_text = self.local_ocr.extract_text(image_bytes)
+        local_result = self.parser.parse(raw_text)
+
+        if local_result.success and local_result.data and local_result.data.confidence >= 0.5:
+            logger.info(f"Local OCR OK: {local_result.data.store_name}, {len(local_result.data.products)} products")
+            return local_result
+
         client = self._get_client()
         if not client:
+            if local_result.success:
+                return local_result
             return OCRResponse(
                 success=False,
-                error="OpenRouter API Key no configurada. Revisa OPENROUTER_API_KEY en .env",
-                raw_text="",
+                error="No se pudo leer el ticket con OCR local. "
+                      "Configura OPENROUTER_API_KEY para mejorar la precisión.",
+                raw_text=raw_text,
             )
 
         processed_bytes = self.preprocess_image(image_bytes)
@@ -131,7 +150,6 @@ class OCRService:
             if m.strip()
         ]
         models_to_try = [primary_model] + fallback_models
-        last_error = ""
 
         for idx, model in enumerate(models_to_try):
             try:
@@ -156,65 +174,48 @@ class OCRService:
                     temperature=0.0,
                 )
 
-                raw_text = response.choices[0].message.content or ""
-                logger.info(f"OCR ({model}) raw: {raw_text[:200]}")
+                llm_raw = response.choices[0].message.content or ""
+                logger.info(f"OCR LLM ({model}) raw: {llm_raw[:200]}")
 
-                data = self._parse_ocr_response(raw_text)
+                data = self._parse_ocr_response(llm_raw)
                 if data:
                     return OCRResponse(
                         success=True,
                         data=OCRTicketData(**data),
-                        raw_text=raw_text,
+                        raw_text=llm_raw,
                     )
                 else:
+                    if local_result.success:
+                        return local_result
                     return OCRResponse(
                         success=False,
-                        error="No se pudo interpretar el ticket. Intenta con mejor iluminación y sin sombras.",
-                        raw_text=raw_text,
+                        error="No se pudo interpretar el ticket con IA. Usando OCR local.",
+                        raw_text=llm_raw,
                     )
 
             except Exception as e:
                 error_str = str(e)
-                last_error = error_str
                 is_rate = "429" in error_str or "rate limit" in error_str.lower()
                 is_quota = "insufficient_quota" in error_str or "free-models-per-day" in error_str
-                is_credits = "402" in error_str or "insufficient credits" in error_str.lower() or "never purchased" in error_str.lower()
+                is_credits = "402" in error_str or "insufficient credits" in error_str.lower()
 
-                if is_rate or is_quota:
-                    if idx < len(models_to_try) - 1:
-                        logger.warning(f"Modelo {model} alcanzó límite, probando fallback: {models_to_try[idx + 1]}")
-                        continue
-                    return OCRResponse(
-                        success=False,
-                        error="Límite de IA alcanzado. Agrega créditos en https://openrouter.ai/settings/credits para seguir usando OCR.",
-                        raw_text="",
-                    )
-
-                if is_credits:
-                    if idx < len(models_to_try) - 1:
-                        logger.warning(f"Modelo {model} sin créditos, probando fallback: {models_to_try[idx + 1]}")
-                        continue
-                    return OCRResponse(
-                        success=False,
-                        error="Sin créditos en OpenRouter. Agrega $1+ en https://openrouter.ai/settings/credits para activar el OCR.",
-                        raw_text="",
-                    )
-
-                if idx < len(models_to_try) - 1:
-                    logger.warning(f"Error con modelo {model}, probando fallback: {models_to_try[idx + 1]}: {error_str[:100]}")
+                if (is_rate or is_quota or is_credits) and idx < len(models_to_try) - 1:
+                    logger.warning(f"LLM {model} no disponible, probando fallback: {models_to_try[idx + 1]}")
                     continue
 
-                logger.error(f"OCR error with all models: {e}", exc_info=True)
-                return OCRResponse(
-                    success=False,
-                    error=f"Error al procesar la imagen: {error_str[:100]}",
-                    raw_text="",
-                )
+                if idx < len(models_to_try) - 1:
+                    logger.warning(f"Error con LLM {model}, probando fallback: {error_str[:80]}")
+                    continue
+
+                logger.warning(f"LLM OCR no disponible: {error_str[:100]}")
+
+        if local_result.success:
+            return local_result
 
         return OCRResponse(
             success=False,
-            error=f"Error al procesar la imagen: {last_error[:100]}",
-            raw_text="",
+            error="No se pudo leer el ticket. Intenta con mejor iluminación.",
+            raw_text=raw_text or "",
         )
 
     def extract_from_base64(self, image_base64: str) -> OCRResponse:
