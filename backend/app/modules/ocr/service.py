@@ -124,10 +124,10 @@ class OCRService:
         processed_bytes = self.preprocess_image(image_bytes)
         b64_image = base64.b64encode(processed_bytes).decode("utf-8")
 
-        primary_model = os.getenv("OCR_MODEL", "nvidia/nemotron-nano-12b-v2-vl:free")
+        primary_model = os.getenv("OCR_MODEL", "qwen/qwen3-vl-32b-instruct")
         fallback_models = [
             m.strip()
-            for m in os.getenv("OCR_FALLBACK_MODELS", "qwen/qwen3-vl-32b-instruct,google/gemini-2.5-flash-image").split(",")
+            for m in os.getenv("OCR_FALLBACK_MODELS", "google/gemini-2.5-flash-image,nvidia/nemotron-nano-12b-v2-vl:free").split(",")
             if m.strip()
         ]
         models_to_try = [primary_model] + fallback_models
@@ -178,6 +178,7 @@ class OCRService:
                 last_error = error_str
                 is_rate = "429" in error_str or "rate limit" in error_str.lower()
                 is_quota = "insufficient_quota" in error_str or "free-models-per-day" in error_str
+                is_credits = "402" in error_str or "insufficient credits" in error_str.lower() or "never purchased" in error_str.lower()
 
                 if is_rate or is_quota:
                     if idx < len(models_to_try) - 1:
@@ -185,7 +186,17 @@ class OCRService:
                         continue
                     return OCRResponse(
                         success=False,
-                        error="Límite de uso de IA alcanzado. Agrega créditos a OpenRouter o inténtalo más tarde.",
+                        error="Límite de IA alcanzado. Agrega créditos en https://openrouter.ai/settings/credits para seguir usando OCR.",
+                        raw_text="",
+                    )
+
+                if is_credits:
+                    if idx < len(models_to_try) - 1:
+                        logger.warning(f"Modelo {model} sin créditos, probando fallback: {models_to_try[idx + 1]}")
+                        continue
+                    return OCRResponse(
+                        success=False,
+                        error="Sin créditos en OpenRouter. Agrega $1+ en https://openrouter.ai/settings/credits para activar el OCR.",
                         raw_text="",
                     )
 
