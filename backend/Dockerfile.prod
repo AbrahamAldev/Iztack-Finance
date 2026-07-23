@@ -58,7 +58,8 @@ COPY --from=builder /root/.cache/ms-playwright /root/.cache/ms-playwright
 COPY . .
 
 # Non-root user for security
-RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
+RUN chmod -R o+rX /root/.local /root/.cache/ms-playwright && \
+    useradd -m -u 1000 appuser && chown -R appuser:appuser /app
 USER appuser
 
 EXPOSE 8000
