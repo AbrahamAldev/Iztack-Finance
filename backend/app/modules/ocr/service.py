@@ -124,10 +124,10 @@ class OCRService:
         processed_bytes = self.preprocess_image(image_bytes)
         b64_image = base64.b64encode(processed_bytes).decode("utf-8")
 
-        primary_model = os.getenv("OCR_MODEL", "google/gemma-4-26b-a4b-it:free")
+        primary_model = os.getenv("OCR_MODEL", "google/gemini-2.0-flash-exp:free")
         fallback_models = [
             m.strip()
-            for m in os.getenv("OCR_FALLBACK_MODELS", "meta-llama/llama-3.2-90b-vision:free,mistralai/mistral-small-3.1-24b-instruct:free").split(",")
+            for m in os.getenv("OCR_FALLBACK_MODELS", "qwen/qwen-vl-plus:free,qwen/qwen2.5-vl-72b-instruct:free").split(",")
             if m.strip()
         ]
         models_to_try = [primary_model] + fallback_models
