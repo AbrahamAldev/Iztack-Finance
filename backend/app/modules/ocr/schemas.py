@@ -19,6 +19,8 @@ class OCRProduct(BaseModel):
     discount: Optional[float] = Field(None, description="Discount applied")
     sku: Optional[str] = Field(None, description="Product SKU if visible")
     category: Optional[str] = Field(None, description="Detected product category")
+    has_warranty: bool = Field(False, description="Whether this product has warranty")
+    warranty_info: Optional[str] = Field(None, description="Warranty details if available")
 
 
 class OCRTicketData(BaseModel):
