@@ -124,10 +124,10 @@ class OCRService:
         processed_bytes = self.preprocess_image(image_bytes)
         b64_image = base64.b64encode(processed_bytes).decode("utf-8")
 
-        primary_model = os.getenv("OCR_MODEL", "google/gemini-2.0-flash-exp:free")
+        primary_model = os.getenv("OCR_MODEL", "nvidia/nemotron-nano-12b-v2-vl:free")
         fallback_models = [
             m.strip()
-            for m in os.getenv("OCR_FALLBACK_MODELS", "qwen/qwen-vl-plus:free,qwen/qwen2.5-vl-72b-instruct:free").split(",")
+            for m in os.getenv("OCR_FALLBACK_MODELS", "qwen/qwen3-vl-32b-instruct,google/gemini-2.5-flash-image").split(",")
             if m.strip()
         ]
         models_to_try = [primary_model] + fallback_models
