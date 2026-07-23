@@ -1,0 +1,94 @@
+# Iztack-Finance - Production Docker Compose
+# Uses Dockerfile.prod images. Run with:
+#   docker compose -f docker-compose.prod.yml up -d
+name: iztack-finance
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: sf-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: sistema_financiero
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: sf-redis
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.prod
+    container_name: sf-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/sistema_financiero
+      DATABASE_SYNC_URL: postgresql+psycopg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/sistema_financiero
+      REDIS_URL: redis://redis:6379/0
+    expose:
+      - "8000"
+    volumes:
+      - /opt/iztack-finance/.setup_key:/opt/iztack-finance/.setup_key:ro
+
+  telegram-bot:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.prod
+    container_name: sf-telegram-bot
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/sistema_financiero
+      DATABASE_SYNC_URL: postgresql+psycopg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/sistema_financiero
+    command: ["python", "-m", "app.modules.bots.telegram_bot"]
+    volumes:
+      - /opt/iztack-finance/.setup_key:/opt/iztack-finance/.setup_key:ro
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://api.iztack.com/api}
+    container_name: sf-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    env_file:
+      - .env
+    expose:
+      - "3000"
+
+volumes:
+  postgres_data:
+  redis_data:

@@ -5,6 +5,7 @@ Oxxo uses a generic CFDI portal for all their stores.
 import logging
 
 from playwright.async_api import Page
+
 from .base import BasePortal, PortalCredentials
 
 logger = logging.getLogger(__name__)
@@ -35,30 +36,30 @@ class OxxoPortal(BasePortal):
     async def request_invoice(self, page: Page, ticket_data: dict) -> bool:
         try:
             await page.wait_for_timeout(3000)
-            
+
             ticket = ticket_data.get("receipt_number", "")
             if ticket:
                 inp = page.locator("input[name*='folio'], input[name*='ticket'], input[placeholder*='folio'], input[placeholder*='ticket']")
                 if await inp.is_visible(timeout=5000):
                     await inp.fill(ticket)
-            
+
             date_str = ticket_data.get("purchase_date", "")
             if date_str:
                 inp = page.locator("input[type='date'], input[name*='fecha']")
                 if await inp.is_visible(timeout=5000):
                     await inp.fill(date_str)
-            
+
             total = ticket_data.get("total_amount", 0)
             if total:
                 inp = page.locator("input[name*='total'], input[name*='monto']")
                 if await inp.is_visible(timeout=5000):
                     await inp.fill(str(total))
-            
+
             submit_btn = page.locator("button[type='submit'], button:has-text('Facturar')")
             if await submit_btn.is_visible(timeout=5000):
                 await submit_btn.click()
                 await page.wait_for_timeout(5000)
-            
+
             return True
         except Exception as e:
             logger.error(f"Oxxo invoice error: {e}", exc_info=True)

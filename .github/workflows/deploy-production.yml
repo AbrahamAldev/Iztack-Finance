@@ -28,7 +28,7 @@ jobs:
             git fetch origin
             git reset --hard origin/main
             echo "=== Restarting stack ==="
-            docker compose up -d --build
+            docker compose -f docker-compose.prod.yml up -d --build
             echo "=== Health check ==="
             sleep 10
             curl -sf http://localhost:8000/api/health || echo "WARNING: Health check failed, check logs"

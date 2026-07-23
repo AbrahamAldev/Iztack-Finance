@@ -2,13 +2,14 @@
 Iztack-Finance - Business Routes (Multi-negocio familiar)
 CRUD for family businesses with independent tracking.
 """
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.connection import get_db
-from app.modules.auth.deps import get_current_user
-from app.modules.business.service import BusinessService
 from app.database.models import User
+from app.modules.auth.deps import get_current_user
+from app.modules.business.schemas import BusinessCreateRequest, BusinessUpdateRequest
+from app.modules.business.service import BusinessService
 
 router = APIRouter(prefix="/api/business", tags=["Business"])
 
@@ -26,24 +27,17 @@ async def list_businesses(
 
 @router.post("")
 async def create_business(
-    data: dict,
+    data: BusinessCreateRequest,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     """Create a new business for the current user."""
-    name = data.get("name", "").strip()
-    description = data.get("description", "")
-    currency = data.get("currency", "MXN")
-
-    if not name:
-        raise HTTPException(status_code=400, detail="El nombre del negocio es requerido")
-
     service = BusinessService(db)
     business = await service.create_business(
         user_id=current_user.id,
-        name=name,
-        description=description,
-        currency=currency,
+        name=data.name,
+        description=data.description,
+        currency=data.currency,
     )
     return {"success": True, "business": business}
 
@@ -51,7 +45,7 @@ async def create_business(
 @router.put("/{business_id}")
 async def update_business(
     business_id: str,
-    data: dict,
+    data: BusinessUpdateRequest,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
@@ -60,7 +54,7 @@ async def update_business(
     business = await service.update_business(
         user_id=current_user.id,
         business_id=business_id,
-        data=data,
+        data=data.model_dump(exclude_unset=True),
     )
     return {"success": True, "business": business}
 

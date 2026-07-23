@@ -3,10 +3,11 @@ Iztack-Finance - LLM Client
 OpenRouter client with security measures against prompt injection.
 Uses DeepSeek models via OpenRouter API.
 """
-import logging
 import json
+import logging
 import os
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
+
 from openai import OpenAI
 
 logger = logging.getLogger(__name__)

@@ -2,15 +2,27 @@
 Sistema Financiero - Database Models
 Core data models for tickets, invoices, products, credentials, shopping lists, etc.
 """
+import enum
 import uuid
 from datetime import datetime
+
 from sqlalchemy import (
-    Column, String, Text, Integer, Float, Boolean, DateTime, Date,
-    ForeignKey, JSON, BigInteger, LargeBinary
+    JSON,
+    BigInteger,
+    Boolean,
+    Column,
+    Date,
+    DateTime,
+    Float,
+    ForeignKey,
+    Integer,
+    LargeBinary,
+    String,
+    Text,
 )
 from sqlalchemy.orm import relationship
+
 from .connection import Base
-import enum
 
 
 def generate_uuid():
@@ -110,11 +122,11 @@ class Ticket(Base):
 
     id = Column(String, primary_key=True, default=generate_uuid)
     user_id = Column(String, nullable=False, index=True)
-    
+
     # Store info
     store_name = Column(String(255), nullable=False, index=True)
     store_category = Column(String(50), nullable=True, index=True)
-    
+
     # Receipt data
     receipt_number = Column(String(100), nullable=True)
     purchase_date = Column(Date, nullable=False, index=True)
@@ -124,27 +136,27 @@ class Ticket(Base):
     taxes = Column(Float, nullable=True)
     payment_method = Column(String(100), nullable=True)
     currency = Column(String(10), default="MXN")
-    
+
     # Raw data
     ocr_raw_text = Column(Text, nullable=True)
     ocr_confidence = Column(Float, nullable=True)
-    
+
     # Image storage
     original_image_url = Column(Text, nullable=True)
     processed_image_url = Column(Text, nullable=True)
-    
+
     # Status
     status = Column(String(20), default=TicketStatus.PENDING.value, index=True)
     invoice_status = Column(String(20), default=InvoiceStatus.PENDING.value)
     error_message = Column(Text, nullable=True)
-    
+
     # Warranty
     has_warranty_items = Column(Boolean, default=False)
-    
+
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow, index=True)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
+
     # Relationships
     products = relationship("Product", back_populates="ticket", cascade="all, delete-orphan")
     invoice = relationship("Invoice", back_populates="ticket", uselist=False, cascade="all, delete-orphan")
@@ -159,7 +171,7 @@ class Product(Base):
 
     id = Column(String, primary_key=True, default=generate_uuid)
     ticket_id = Column(String, ForeignKey("tickets.id", ondelete="CASCADE"), nullable=False, index=True)
-    
+
     # Product info
     name = Column(String(500), nullable=False, index=True)
     brand = Column(String(255), nullable=True)
@@ -170,24 +182,24 @@ class Product(Base):
     discount = Column(Float, nullable=True)
     sku = Column(String(100), nullable=True)
     barcode = Column(String(100), nullable=True)
-    
+
     # Classification
     category = Column(String(50), nullable=True, index=True)
     expense_type = Column(String(20), nullable=True, index=True)
-    
+
     # Warranty
     has_warranty = Column(Boolean, default=False, index=True)
     warranty_months = Column(Integer, nullable=True)
     warranty_end_date = Column(Date, nullable=True)
-    
+
     # Consumption cycle (for smart shopping list)
     consumption_cycle_days = Column(Integer, nullable=True)  # Detected cycle
     is_consumable = Column(Boolean, default=True)  # False = durable goods
     is_high_value = Column(Boolean, default=False)  # high-value items
-    
+
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow)
-    
+
     # Relationships
     ticket = relationship("Ticket", back_populates="products")
 
@@ -202,29 +214,29 @@ class Invoice(Base):
     id = Column(String, primary_key=True, default=generate_uuid)
     ticket_id = Column(String, ForeignKey("tickets.id", ondelete="CASCADE"), nullable=False, index=True)
     user_id = Column(String, nullable=False, index=True)
-    
+
     # Invoice info
     invoice_uuid = Column(String(100), unique=True, nullable=True)  # CFDI UUID
     invoice_series = Column(String(50), nullable=True)
     invoice_number = Column(String(50), nullable=True)
     invoice_date = Column(Date, nullable=True)
-    
+
     # RFC info
     issuer_rfc = Column(String(13), nullable=True)
     issuer_name = Column(String(255), nullable=True)
     receiver_rfc = Column(String(13), nullable=True)
-    
+
     # Amounts
     subtotal = Column(Float, nullable=True)
     total = Column(Float, nullable=True)
     tax_base = Column(Float, nullable=True)
     tax_rate = Column(Float, nullable=True)
     tax_amount = Column(Float, nullable=True)
-    
+
     # Source
     source = Column(String(50), default="web")  # web, email, manual
     status = Column(String(20), default=InvoiceStatus.PENDING.value)
-    
+
     # File storage
     pdf_drive_url = Column(Text, nullable=True)
     pdf_drive_file_id = Column(String(200), nullable=True)
@@ -232,21 +244,21 @@ class Invoice(Base):
     xml_drive_file_id = Column(String(200), nullable=True)
     pdf_hash = Column(String(64), nullable=True)  # SHA-256 for dedup
     xml_hash = Column(String(64), nullable=True)  # SHA-256 for dedup
-    
+
     # Email data (if found via email)
     email_message_id = Column(String(200), nullable=True)
     email_sender = Column(String(255), nullable=True)
     email_subject = Column(Text, nullable=True)
     email_received_date = Column(DateTime, nullable=True)
-    
+
     # Error tracking
     error_message = Column(Text, nullable=True)
     retry_count = Column(Integer, default=0)
-    
+
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
+
     # Relationships
     ticket = relationship("Ticket", back_populates="invoice")
 
@@ -260,29 +272,29 @@ class StoreCredential(Base):
 
     id = Column(String, primary_key=True, default=generate_uuid)
     user_id = Column(String, nullable=False, index=True)
-    
+
     # Store
     store_name = Column(String(255), nullable=False)
     store_category = Column(String(50), nullable=False, index=True)
     portal_url = Column(Text, nullable=True)
-    
+
     # Credentials (encrypted with AES-256-GCM)
     encrypted_username = Column(LargeBinary, nullable=True)
     encrypted_password = Column(LargeBinary, nullable=True)
     encryption_key_id = Column(String(100), nullable=True)  # Key identifier for re-encryption
     credential_hint = Column(String(255), nullable=True)  # Visible hint
-    
+
     # Account info
     rfc = Column(String(13), nullable=True)  # Mexican tax ID
     email_registered = Column(String(255), nullable=True)
     has_account = Column(Boolean, default=False)
     account_created_automatically = Column(Boolean, default=False)
-    
+
     # Status
     is_active = Column(Boolean, default=True)
     last_used_at = Column(DateTime, nullable=True)
     last_error = Column(Text, nullable=True)
-    
+
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -297,12 +309,12 @@ class ConsumptionCycle(Base):
 
     id = Column(String, primary_key=True, default=generate_uuid)
     user_id = Column(String, nullable=False, index=True)
-    
+
     # Product
     product_name = Column(String(500), nullable=False)
     product_category = Column(String(50), nullable=True)
     preferred_store = Column(String(255), nullable=True)
-    
+
     # Cycle data
     avg_days_between_purchases = Column(Integer, nullable=True)  # Detected average
     last_purchase_date = Column(Date, nullable=True)
@@ -311,16 +323,16 @@ class ConsumptionCycle(Base):
     total_quantity_purchased = Column(Float, nullable=True)
     avg_unit_price = Column(Float, nullable=True)
     price_trend = Column(Float, default=0.0)  # Positive = increasing
-    
+
     # Preferences
     preferred_brand = Column(String(255), nullable=True)
     preferred_quantity = Column(Float, nullable=True)
     preferred_unit = Column(String(50), nullable=True)
-    
+
     # Status
     is_active = Column(Boolean, default=True)
     auto_generate = Column(Boolean, default=True)  # Include in auto lists
-    
+
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -335,34 +347,34 @@ class ShoppingList(Base):
 
     id = Column(String, primary_key=True, default=generate_uuid)
     user_id = Column(String, nullable=False, index=True)
-    
+
     # List info
     title = Column(String(255), nullable=False)
     description = Column(Text, nullable=True)
     status = Column(String(20), default=ShoppingListStatus.DRAFT.value, index=True)
-    
+
     # Budget
     estimated_total = Column(Float, nullable=True)
     approved_budget = Column(Float, nullable=True)
     actual_total = Column(Float, nullable=True)
-    
+
     # Generation
     generated_by = Column(String(50), default="auto")  # auto, manual
     source_text = Column(Text, nullable=True)  # AI prompt used
-    
+
     # Printing
     printed = Column(Boolean, default=False)
     printed_at = Column(DateTime, nullable=True)
     printer_width = Column(Integer, nullable=True)
-    
+
     # Start/end dates for the shopping trip
     planned_date_start = Column(Date, nullable=True)
     planned_date_end = Column(Date, nullable=True)
-    
+
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
+
     # Relationships
     items = relationship("ShoppingItem", back_populates="shopping_list", cascade="all, delete-orphan")
     votes = relationship("FamilyVote", back_populates="shopping_list", cascade="all, delete-orphan")
@@ -377,7 +389,7 @@ class ShoppingItem(Base):
 
     id = Column(String, primary_key=True, default=generate_uuid)
     shopping_list_id = Column(String, ForeignKey("shopping_lists.id", ondelete="CASCADE"), nullable=False, index=True)
-    
+
     # Item info
     product_name = Column(String(500), nullable=False)
     category = Column(String(50), nullable=True)
@@ -385,25 +397,25 @@ class ShoppingItem(Base):
     unit = Column(String(50), default="pza")
     estimated_price = Column(Float, nullable=True)
     actual_price = Column(Float, nullable=True)
-    
+
     # Store
     preferred_store = Column(String(255), nullable=True)
     product_link = Column(Text, nullable=True)  # URL for pre-order
-    
+
     # Status
     status = Column(String(20), default=ShoppingItemStatus.PENDING.value, index=True)
     added_by_member_id = Column(String(100), nullable=True)  # Who suggested it
-    
+
     # Ticket matching
     matched_ticket_id = Column(String, ForeignKey("tickets.id", ondelete="SET NULL"), nullable=True)
     matched_at = Column(DateTime, nullable=True)
-    
+
     # Priority
     priority = Column(Integer, default=0)  # Higher = more important
-    
+
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow)
-    
+
     # Relationships
     shopping_list = relationship("ShoppingList", back_populates="items")
 
@@ -417,23 +429,23 @@ class FamilyVote(Base):
 
     id = Column(String, primary_key=True, default=generate_uuid)
     shopping_list_id = Column(String, ForeignKey("shopping_lists.id", ondelete="CASCADE"), nullable=False, index=True)
-    
+
     # Member info
     member_name = Column(String(255), nullable=False)
     member_role = Column(String(50), default="member")  # member, head, admin
     chat_id = Column(String(100), nullable=True)  # Telegram/WhatsApp ID
-    
+
     # Vote
     voted_at = Column(DateTime, default=datetime.utcnow)
     approved = Column(Boolean, nullable=True)  # True=approve, False=reject, Null=abstain
     comment = Column(Text, nullable=True)
-    
+
     # Suggestion (if adding an item)
     suggested_item_name = Column(String(500), nullable=True)
     suggested_store = Column(String(255), nullable=True)
     suggested_link = Column(Text, nullable=True)
     suggested_quantity = Column(Float, nullable=True)
-    
+
     # Relationships
     shopping_list = relationship("ShoppingList", back_populates="votes")
 
@@ -447,30 +459,30 @@ class FinancialAnalysis(Base):
 
     id = Column(String, primary_key=True, default=generate_uuid)
     user_id = Column(String, nullable=False, index=True)
-    
+
     # Analysis period
     analysis_type = Column(String(50), nullable=False)  # monthly, quarterly, yearly
     period_start = Column(Date, nullable=False)
     period_end = Column(Date, nullable=False)
-    
+
     # Results (stored as JSON for flexibility)
     total_spent = Column(Float, default=0.0)
     total_income = Column(Float, nullable=True)
     savings_rate = Column(Float, nullable=True)
-    
+
     # Category breakdown
     category_spending = Column(JSON, nullable=True)  # {"alimentos": 5000, "hogar": 3000}
     store_spending = Column(JSON, nullable=True)     # {"walmart": 4000, "liverpool": 2000}
-    
+
     # Insights
     detected_leaks = Column(JSON, nullable=True)     # Fugas de dinero detectadas
     savings_suggestions = Column(JSON, nullable=True)  # Sugerencias de ahorro
     predictions = Column(JSON, nullable=True)        # Predicciones de gasto
-    
+
     # Full report
     summary_text = Column(Text, nullable=True)       # Human-readable summary
     report_pdf_url = Column(Text, nullable=True)     # Generated PDF report
-    
+
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow)
     expires_at = Column(DateTime, nullable=True)     # Cache expiration
@@ -485,29 +497,29 @@ class CredentialGenerated(Base):
 
     id = Column(String, primary_key=True, default=generate_uuid)
     user_id = Column(String, nullable=False, index=True)
-    
+
     # Store
     store_name = Column(String(255), nullable=False)
     store_category = Column(String(50), nullable=False)
     portal_url = Column(Text, nullable=True)
-    
+
     # Generated credentials (encrypted)
     encrypted_username = Column(LargeBinary, nullable=True)
     encrypted_password = Column(LargeBinary, nullable=True)
-    
+
     # Plain text for sending to user (temporary, cleared after sending)
     plain_username = Column(String(255), nullable=True)
     plain_password = Column(String(255), nullable=True)
-    
+
     # Account info
     rfc = Column(String(13), nullable=True)
     email_used = Column(String(255), nullable=True)
-    
+
     # Status
     sent_to_user = Column(Boolean, default=False)
     saved_to_password_manager = Column(Boolean, default=False)
     password_manager_type = Column(String(50), nullable=True)  # apple, google, none
-    
+
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow)
     sent_at = Column(DateTime, nullable=True)
@@ -523,20 +535,20 @@ class ProcessingError(Base):
     id = Column(String, primary_key=True, default=generate_uuid)
     user_id = Column(String, nullable=True, index=True)
     ticket_id = Column(String, ForeignKey("tickets.id", ondelete="SET NULL"), nullable=True, index=True)
-    
+
     # Error info
     error_type = Column(String(50), nullable=False)  # ocr, scraping, email, auth, etc.
     error_code = Column(String(50), nullable=True)
     error_message = Column(Text, nullable=False)
     error_details = Column(JSON, nullable=True)
     stack_trace = Column(Text, nullable=True)
-    
+
     # Resolution
     suggested_action = Column(Text, nullable=True)  # What the user can do
     auto_resolvable = Column(Boolean, default=False)  # Can the bot fix it?
     resolved = Column(Boolean, default=False)
     resolved_at = Column(DateTime, nullable=True)
-    
+
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow)
 
@@ -590,20 +602,20 @@ class AuditLog(Base):
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     user_id = Column(String, nullable=True, index=True)
-    
+
     # Action
     action = Column(String(100), nullable=False, index=True)  # ticket.created, invoice.downloaded, etc.
     entity_type = Column(String(50), nullable=True)           # ticket, invoice, credential, etc.
     entity_id = Column(String, nullable=True)                 # ID of affected entity
-    
+
     # Context
     details = Column(JSON, nullable=True)
     ip_address = Column(String(45), nullable=True)
     user_agent = Column(String(500), nullable=True)
-    
+
     # Channel
     source_channel = Column(String(50), nullable=True)  # telegram, whatsapp, web, api
-    
+
     # Timestamp
     created_at = Column(DateTime, default=datetime.utcnow, index=True)
 
@@ -719,6 +731,25 @@ class Tenant(Base):
 
     def __repr__(self):
         return f"<Tenant {self.name} - setup_done={self.setup_completed}>"
+
+
+class Business(Base):
+    """Family business / sub-entity tracked independently by a user."""
+    __tablename__ = "businesses"
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+    user_id = Column(String, nullable=False, index=True)
+
+    name = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    currency = Column(String(10), default="MXN")
+    is_active = Column(Boolean, default=True)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def __repr__(self):
+        return f"<Business {self.name} user={self.user_id}>"
 
 
 class StaffUser(Base):

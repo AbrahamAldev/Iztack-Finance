@@ -3,11 +3,11 @@ Sistema Financiero - Portal Factory
 Dynamically selects and instantiates the correct portal driver for each store.
 """
 import logging
-from typing import Optional, Dict, Type
+from typing import Dict, Optional, Type
 
 from .base import BasePortal
-from .base import PortalCredentials as PortalCredentials
 from .base import InvoiceResult as InvoiceResult
+from .base import PortalCredentials as PortalCredentials
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +45,7 @@ class PortalFactory:
         if not portal_class:
             logger.warning(f"No hay portal registrado para: {store_category}")
             return None
-        
+
         try:
             return portal_class()
         except Exception as e:

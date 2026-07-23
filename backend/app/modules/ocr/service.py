@@ -5,15 +5,17 @@ Extracts store name, date, products, prices, and totals from receipt images.
 import base64
 import io
 import json
-import re
-from typing import Optional
-from PIL import Image, ImageEnhance
-from openai import OpenAI
-
 import logging
 import os
+import re
+from typing import Optional
+
+from openai import OpenAI
+from PIL import Image, ImageEnhance
+
 from app.utils.validators import Validators
-from .schemas import OCRTicketData, OCRResponse
+
+from .schemas import OCRResponse, OCRTicketData
 
 logger = logging.getLogger(__name__)
 

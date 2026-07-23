@@ -14,18 +14,20 @@ from __future__ import annotations
 import logging
 import os
 import re
-import secrets
 import subprocess
 from datetime import datetime
 from typing import Optional
 
 import httpx
-from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.models import Tenant
 from app.modules.setup.schemas import FinalizeRequest, ValidateRequest
+from app.utils.setup_crypto import (
+    encrypt_secret,
+    get_or_create_master_key,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -155,42 +157,6 @@ async def validate_credential(req: ValidateRequest) -> tuple[bool, Optional[str]
 # Encryption (AES-256-GCM)
 # =============================================================================
 
-# In production this key MUST come from a KMS / env var, NEVER hardcoded.
-# For local-dev / single-tenant we derive it from the SECRET_KEY env var.
-def _get_or_create_master_key() -> bytes:
-    """
-    Returns a 32-byte master key, persisting a random one to .setup_key if needed.
-    """
-    env_key = os.getenv("SETUP_MASTER_KEY")
-    if env_key:
-        # Deterministic dev key — NOT for production.
-        import hashlib
-        return hashlib.sha256(env_key.encode()).digest()
-
-    key_file = os.getenv("SETUP_MASTER_KEY_FILE", "/opt/iztack-finance/.setup_key")
-    if os.path.exists(key_file):
-        with open(key_file, "rb") as f:
-            return f.read()
-    key = secrets.token_bytes(32)
-    try:
-        os.makedirs(os.path.dirname(key_file), exist_ok=True)
-        with open(key_file, "wb") as f:
-            f.write(key)
-        os.chmod(key_file, 0o600)
-        logger.info("Generated new master key at %s", key_file)
-    except Exception as exc:
-        logger.warning("Could not persist master key (%s); using in-memory key", exc)
-    return key
-
-
-def encrypt_secret(plaintext: str, key: bytes, key_id: str = "v1") -> tuple[bytes, str]:
-    """Encrypt with AES-256-GCM. Returns (ciphertext, key_id)."""
-    aes = AESGCM(key)
-    nonce = secrets.token_bytes(12)  # 96-bit nonce
-    ct = aes.encrypt(nonce, plaintext.encode("utf-8"), associated_data=key_id.encode())
-    return nonce + ct, key_id
-
-
 # =============================================================================
 # Persistence
 # =============================================================================
@@ -199,7 +165,7 @@ def encrypt_secret(plaintext: str, key: bytes, key_id: str = "v1") -> tuple[byte
 async def is_setup_completed(db: AsyncSession) -> bool:
     """True if at least one tenant has setup_completed=True."""
     result = await db.execute(
-        select(Tenant).where(Tenant.setup_completed == True).limit(1)  # noqa: E712
+        select(Tenant).where(Tenant.setup_completed.is_(True)).limit(1)
     )
     return result.scalar_one_or_none() is not None
 
@@ -215,7 +181,7 @@ async def finalize_setup(db: AsyncSession, req: FinalizeRequest) -> Tenant:
     Create or update the default tenant with the credentials.
     Returns the Tenant row.
     """
-    key = _get_or_create_master_key()
+    key = get_or_create_master_key()
     key_id = "v1"
 
     tenant = await get_default_tenant(db)
@@ -250,19 +216,20 @@ async def finalize_setup(db: AsyncSession, req: FinalizeRequest) -> Tenant:
     await db.commit()
     await db.refresh(tenant)
 
-    # Write to .env so the bot container picks it up on next restart
-    _write_env_file(req, tenant.id)
+    # Persist only the non-secret tenant identifier to .env if needed by other
+    # services. Actual credentials are encrypted in the database.
+    _write_env_file(tenant.id)
 
-    # Trigger bot restart if running in Docker
+    # Trigger bot restart if running in Docker so it loads the new token from DB
     restarted = _restart_telegram_bot()
 
     logger.info("Setup finalized for tenant=%s (restart_triggered=%s)", tenant.id, restarted)
     return tenant
 
 
-def _write_env_file(req: FinalizeRequest, tenant_id: str) -> None:
+def _write_env_file(tenant_id: str) -> None:
     """
-    Append/update credential lines in /opt/iztack-finance/.env (the docker-compose bind mount).
+    Persist only non-secret identifiers to .env. Secrets stay encrypted in DB.
     """
     env_path = os.getenv("ENV_FILE_PATH", "/opt/iztack-finance/.env")
     if not os.path.exists(os.path.dirname(env_path)):
@@ -282,14 +249,16 @@ def _write_env_file(req: FinalizeRequest, tenant_id: str) -> None:
     except FileNotFoundError:
         pass
 
-    existing["TELEGRAM_BOT_TOKEN"] = req.telegram_bot_token
-    existing["GEMINI_API_KEY"] = req.gemini_api_key
-    if req.google_client_id:
-        existing["GOOGLE_CLIENT_ID"] = req.google_client_id
-    if req.google_client_secret:
-        existing["GOOGLE_CLIENT_SECRET"] = req.google_client_secret
-    if req.google_refresh_token:
-        existing["GOOGLE_REFRESH_TOKEN"] = req.google_refresh_token
+    # Remove any previously-written secrets so they don't live in plain text
+    for secret_key in (
+        "TELEGRAM_BOT_TOKEN",
+        "GEMINI_API_KEY",
+        "GOOGLE_CLIENT_ID",
+        "GOOGLE_CLIENT_SECRET",
+        "GOOGLE_REFRESH_TOKEN",
+    ):
+        existing.pop(secret_key, None)
+
     existing["DEFAULT_TENANT_ID"] = tenant_id
 
     with open(env_path, "w", encoding="utf-8") as f:
@@ -300,7 +269,7 @@ def _write_env_file(req: FinalizeRequest, tenant_id: str) -> None:
         os.chmod(env_path, 0o600)
     except Exception:
         pass
-    logger.info("Wrote credentials to %s", env_path)
+    logger.info("Wrote non-secret config to %s", env_path)
 
 
 def _restart_telegram_bot() -> bool:

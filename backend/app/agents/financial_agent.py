@@ -59,8 +59,9 @@ FORMATO DE RESPUESTA:
         financial_summary = ""
         if db_session and self._is_spending_question(question):
             try:
-                from app.modules.finanzas.service import FinancialAnalysisService
                 from datetime import date
+
+                from app.modules.finanzas.service import FinancialAnalysisService
 
                 service = FinancialAnalysisService(db_session)
                 today = date.today()

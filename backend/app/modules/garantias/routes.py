@@ -2,14 +2,15 @@
 Iztack-Finance - Warranty Routes
 API endpoints for warranty tracking and alerts.
 """
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
 from typing import Optional
 
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.database.connection import get_db
+from app.database.models import Product, User
 from app.modules.auth.deps import get_current_user
-from app.database.models import User, Product
 from app.modules.garantias.service import WarrantyService
 from app.modules.tickets.tracer import trace_step
 
@@ -25,7 +26,7 @@ async def list_warranties(
     """List products with warranty for the current user."""
     query = select(Product).join(Product.ticket).where(
         Product.ticket.has(user_id=current_user.id),
-        Product.has_warranty == True,
+        Product.has_warranty.is_(True),
     )
     if status:
         # Status filtering is done in Python after fetching because warranty
@@ -36,7 +37,7 @@ async def list_warranties(
     products = result.scalars().all()
 
     items = []
-    today = __import__("datetime").date.today()
+    __import__("datetime").date.today()
     trace_step(
         user_id=current_user.id,
         step="warranty_list",
@@ -80,7 +81,7 @@ async def warranty_alerts(
     result = await db.execute(
         select(Product).join(Product.ticket).where(
             Product.ticket.has(user_id=current_user.id),
-            Product.has_warranty == True,
+            Product.has_warranty.is_(True),
             Product.warranty_end_date.isnot(None),
         ).order_by(Product.warranty_end_date)
     )

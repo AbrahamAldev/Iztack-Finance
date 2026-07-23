@@ -2,9 +2,9 @@
 Sistema Financiero - Setup Schemas
 Pydantic models for the setup wizard endpoints.
 """
-from typing import Optional, Literal
-from pydantic import BaseModel, Field
+from typing import Literal, Optional
 
+from pydantic import BaseModel, Field
 
 Provider = Literal["telegram", "gemini", "google"]
 

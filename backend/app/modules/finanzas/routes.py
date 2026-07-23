@@ -2,14 +2,15 @@
 Iztack-Finance - Financial Analysis Routes
 API endpoints for spending reports, money leaks, and savings goals.
 """
+from datetime import date
+from typing import Optional
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import Optional
-from datetime import date
 
 from app.database.connection import get_db
-from app.modules.auth.deps import get_current_user
 from app.database.models import User
+from app.modules.auth.deps import get_current_user
 from app.modules.finanzas.service import FinancialAnalysisService
 from app.modules.tickets.tracer import trace_step
 

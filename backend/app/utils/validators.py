@@ -3,7 +3,7 @@ Sistema Financiero - Validation Utilities
 Validators for RFC, CURP, emails, amounts, etc.
 """
 import re
-from datetime import datetime, date
+from datetime import date, datetime
 
 
 class Validators:
@@ -85,9 +85,9 @@ class Validators:
         """Detect store category from store name."""
         if not name:
             return "other"
-        
+
         name_lower = name.lower().strip()
-        
+
         store_map = {
             "liverpool": "liverpool",
             "ikea": "ikea",
@@ -110,9 +110,9 @@ class Validators:
             "bodega aurrera": "walmart",
             "superama": "walmart",
         }
-        
+
         for key, value in store_map.items():
             if key in name_lower:
                 return value
-        
+
         return "other"

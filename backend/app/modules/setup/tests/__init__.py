@@ -3,8 +3,8 @@ Sistema Financiero - Setup Module Tests
 Basic unit tests for the credential validators.
 """
 from app.modules.setup.service import (
-    _validate_telegram_shape,
     _validate_gemini_shape,
+    _validate_telegram_shape,
 )
 
 

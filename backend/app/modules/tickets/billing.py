@@ -3,9 +3,9 @@ import logging
 from typing import Optional
 
 from app.database.models import Ticket, User
-from app.utils.llm import LLMClient
 from app.modules.facturacion.orchestrator import FacturacionOrchestrator, InvoiceContext
 from app.modules.ocr.schemas import OCRTicketData
+from app.utils.llm import LLMClient
 
 logger = logging.getLogger(__name__)
 
@@ -49,8 +49,8 @@ async def trigger_billing(
 
     ctx = await orchestrator.start_invoicing(ticket, user)
     logger.info(f"Billing started for ticket {ticket.id}: step={ctx.step.value}")
-    
+
     if ctx.needs_user_input and ctx.user_message:
         logger.info(f"Billing needs user input: {ctx.step.value}")
-    
+
     return ctx

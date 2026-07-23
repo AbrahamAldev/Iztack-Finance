@@ -2,20 +2,18 @@
 Iztack-Finance - Auth Service
 Business logic for user registration, login, and JWT token management.
 """
+import hashlib
 import logging
 from datetime import datetime, timedelta
 from typing import Optional, Tuple
-import hashlib
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database.models import User, Tenant
-from app.modules.auth.schemas import (
-    RegisterRequest, LoginRequest, UserUpdateRequest
-)
-from app.utils.hashing import PasswordHasher
 from app.config import get_settings
+from app.database.models import Tenant, User
+from app.modules.auth.schemas import LoginRequest, RegisterRequest, UserUpdateRequest
+from app.utils.hashing import PasswordHasher
 
 logger = logging.getLogger(__name__)
 
@@ -184,9 +182,9 @@ class AuthService:
     def verify_token(token: str) -> Optional[dict]:
         """Verify JWT token and return payload."""
         import base64
-        import json
-        import hmac
         import hashlib
+        import hmac
+        import json
 
         try:
             parts = token.split(".")

@@ -4,6 +4,7 @@ Chat Agent — handles user conversations across web and Telegram.
 Routes fiscal/financial questions to specialist agents when detected.
 """
 import logging
+
 from app.agents.base import Agent, AgentContext, AgentResult
 
 logger = logging.getLogger(__name__)

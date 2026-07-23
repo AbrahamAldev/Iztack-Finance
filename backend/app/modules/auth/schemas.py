@@ -2,9 +2,10 @@
 Iztack-Finance - Auth Schemas
 Pydantic models for authentication requests and responses.
 """
-from pydantic import BaseModel, Field
-from typing import Optional
 from datetime import datetime
+from typing import Optional
+
+from pydantic import BaseModel, Field
 
 
 class RegisterRequest(BaseModel):

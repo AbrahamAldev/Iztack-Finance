@@ -2,13 +2,33 @@
 Sistema Financiero - Main Application Entry Point
 FastAPI application with CORS, middleware, and route registration.
 """
+import logging
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from contextlib import asynccontextmanager
-import logging
 
 from app.config import get_settings
-from app.database.connection import init_db, close_db
+from app.database.connection import close_db, init_db
+from app.modules.admin_staff.routes import router as admin_router
+from app.modules.agents.routes import router as agents_router
+from app.modules.almacenamiento.routes import router as almacenamiento_router
+from app.modules.auth.routes import router as auth_router
+from app.modules.business.routes import router as business_router
+from app.modules.chat.routes import router as chat_router
+from app.modules.clasificacion.routes import router as clasificacion_router
+from app.modules.dashboard.routes import router as dashboard_router
+from app.modules.finanzas.routes import router as finanzas_router
+from app.modules.fiscal.routes import router as fiscal_router
+from app.modules.garantias.routes import router as garantias_router
+from app.modules.info import router as info_router
+from app.modules.monitoring.routes import router as monitoring_router
+from app.modules.ocr.routes import router as ocr_router
+from app.modules.settings.routes import router as settings_router
+from app.modules.setup.routes import router as setup_router
+from app.modules.shopping_list.routes import router as shopping_list_router
+from app.modules.tickets.routes import router as tickets_router
+from app.scheduler import start_scheduler, stop_scheduler
 
 # Configure logging
 logging.basicConfig(
@@ -25,18 +45,17 @@ async def lifespan(app: FastAPI):
     """Application lifespan: startup and shutdown events."""
     logger.info(f"Starting {settings.app_name} v{settings.app_version}...")
     logger.info(f"Environment: {settings.environment}")
-    
+
     # Initialize database
     await init_db()
     logger.info("Database initialized successfully")
 
     # Start scheduler
-    from app.scheduler import start_scheduler, stop_scheduler
     start_scheduler()
     logger.info("Scheduler started")
 
     yield
-    
+
     # Shutdown
     stop_scheduler()
     await close_db()
@@ -84,24 +103,6 @@ async def health_check():
 # Route Registration
 # =============================================================================
 
-from app.modules.ocr.routes import router as ocr_router
-from app.modules.setup.routes import router as setup_router
-from app.modules.info import router as info_router
-from app.modules.auth.routes import router as auth_router
-from app.modules.settings.routes import router as settings_router
-from app.modules.tickets.routes import router as tickets_router
-from app.modules.chat.routes import router as chat_router
-from app.modules.dashboard.routes import router as dashboard_router
-from app.modules.admin_staff.routes import router as admin_router
-from app.modules.business.routes import router as business_router
-from app.modules.fiscal.routes import router as fiscal_router
-from app.modules.agents.routes import router as agents_router
-from app.modules.finanzas.routes import router as finanzas_router
-from app.modules.garantias.routes import router as garantias_router
-from app.modules.shopping_list.routes import router as shopping_list_router
-from app.modules.almacenamiento.routes import router as almacenamiento_router
-from app.modules.monitoring.routes import router as monitoring_router
-
 app.include_router(ocr_router, prefix="/api/ocr", tags=["OCR"])
 app.include_router(setup_router, prefix="/api/setup", tags=["Setup"])
 app.include_router(info_router, prefix="/api", tags=["System"])
@@ -117,6 +118,7 @@ app.include_router(finanzas_router)
 app.include_router(garantias_router)
 app.include_router(shopping_list_router)
 app.include_router(almacenamiento_router)
+app.include_router(clasificacion_router)
 app.include_router(agents_router)
 app.include_router(monitoring_router, prefix="/api", tags=["Monitoring"])
 

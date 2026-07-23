@@ -16,6 +16,8 @@ import {
   PieChart,
   Activity,
   Zap,
+  Settings,
+  ShoppingCart,
 } from "lucide-react";
 
 interface DashboardData {
@@ -55,7 +57,7 @@ function KpiCard({
   title: string;
   value: string;
   icon: any;
-  trend?: string;
+  trend?: React.ReactNode;
   color: "blue" | "emerald" | "amber" | "rose";
 }) {
   const gradients: Record<string, string> = {

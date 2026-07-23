@@ -1,8 +1,9 @@
 """Iztack-Finance - Portal Learner. Analyzes and fills billing forms via Playwright + IA."""
-import logging
 import json
+import logging
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
+
 from app.utils.llm import LLMClient
 
 logger = logging.getLogger(__name__)

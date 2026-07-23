@@ -4,30 +4,62 @@ Un solo bot @IztackFinance_Bot atiende a todos los usuarios.
 Identifica al usuario por su chat_id vinculado en Settings.
 Usa LLMClient directo + fallback a respuestas predefinidas.
 """
-import os
 import logging
+import os
 from typing import Optional
 
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import (
-    Application, CommandHandler, MessageHandler, CallbackQueryHandler,
-    filters, ContextTypes
+    Application,
+    CallbackQueryHandler,
+    CommandHandler,
+    ContextTypes,
+    MessageHandler,
+    filters,
 )
 
 from app.config import get_settings
 from app.database.connection import get_db_sync
-from app.database.models import User, Ticket, ProcessingError
+from app.database.models import ProcessingError, Tenant, Ticket, User
 from app.modules.ocr.service import OCRService
 from app.utils.llm import LLMClient
+from app.utils.setup_crypto import decrypt_tenant_secret
 
 settings = get_settings()
 logger = logging.getLogger(__name__)
 
 
+def _load_bot_token() -> str | None:
+    """Load the Telegram bot token from the encrypted tenant record in DB."""
+    # 1. Prefer explicit env var for local/dev override
+    env_token = os.environ.get("TELEGRAM_BOT_TOKEN")
+    if env_token:
+        return env_token
+
+    # 2. Load from the default tenant stored in the database
+    try:
+        db = get_db_sync()
+        try:
+            tenant = db.query(Tenant).order_by(Tenant.created_at.asc()).first()
+            if tenant and tenant.encrypted_telegram_bot_token:
+                token = decrypt_tenant_secret(
+                    tenant.encrypted_telegram_bot_token,
+                    tenant.encryption_key_id,
+                )
+                if token:
+                    logger.info("Telegram bot token loaded from DB tenant=%s", tenant.id)
+                    return token
+        finally:
+            db.close()
+    except Exception as exc:
+        logger.error("Failed to load bot token from DB: %s", exc)
+    return None
+
+
 class TelegramBot:
 
     def __init__(self):
-        self.token = settings.telegram_bot_token
+        self.token = _load_bot_token()
         self.ocr_service = OCRService()
         self.application = None
 
@@ -36,7 +68,7 @@ class TelegramBot:
             db = get_db_sync()
             user = db.query(User).filter(
                 User.telegram_chat_id == str(chat_id),
-                User.is_active == True
+                User.is_active.is_(True)
             ).first()
             db.close()
             return user
@@ -70,7 +102,7 @@ class TelegramBot:
             products = db.query(Product).join(Ticket).filter(Ticket.user_id == user_id)\
                 .order_by(Product.created_at.desc()).limit(15).all()
             if products:
-                lines.append(f"PRODUCTOS RECIENTES:")
+                lines.append("PRODUCTOS RECIENTES:")
                 for p in products[:10]:
                     lines.append(f"- {p.name} ${p.total_price:.2f} [{p.category or 'sin cat'}]")
             db.close()
@@ -102,7 +134,7 @@ class TelegramBot:
         else:
             keyboard = [[InlineKeyboardButton("🔗 Vincular mi cuenta", url="https://finance.iztack.com/settings")]]
             await update.message.reply_text(
-                f"👋 *Hola! Soy Iztack-Finance Bot*\n\n"
+                "👋 *Hola! Soy Iztack-Finance Bot*\n\n"
                 "No tengo tu cuenta vinculada aún.\n\n"
                 "1. Ve a *Configuración* en tu dashboard\n"
                 "2. En *Telegram*, pega este ID:\n\n`{chat_id}`\n\n"
@@ -222,7 +254,7 @@ class TelegramBot:
             if not result.success:
                 return await msg.edit_text(f"❌ *Error*\n\n{result.error}", parse_mode="Markdown")
             d = result.data
-            parts = [f"✅ *Ticket Identificado*", f"🏪 *Tienda:* {d.store_name}", f"📅 *Fecha:* {d.purchase_date.strftime('%d/%m/%Y')}", f"💰 *Total:* *${d.total_amount:,.2f}*"]
+            parts = ["✅ *Ticket Identificado*", f"🏪 *Tienda:* {d.store_name}", f"📅 *Fecha:* {d.purchase_date.strftime('%d/%m/%Y')}", f"💰 *Total:* *${d.total_amount:,.2f}*"]
             if d.products:
                 parts.append("\n📦 *Productos:*")
                 for i, p in enumerate(d.products[:5], 1):
@@ -300,3 +332,8 @@ class TelegramBot:
         self.application.add_error_handler(self.error_handler)
         logger.info("🤖 Telegram Bot multi-usuario iniciado...")
         self.application.run_polling(allowed_updates=Update.ALL_TYPES)
+
+
+if __name__ == "__main__":
+    bot = TelegramBot()
+    bot.run()

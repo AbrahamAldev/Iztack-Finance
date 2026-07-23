@@ -4,7 +4,6 @@ Admin endpoints for sensors, metrics, pipeline traces, and logs.
 Protected by staff JWT (admfinance.iztack.com).
 """
 import logging
-from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession

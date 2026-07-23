@@ -6,6 +6,7 @@ from datetime import datetime
 from typing import Optional
 
 from playwright.async_api import Page
+
 from .base import BasePortal, PortalCredentials
 
 logger = logging.getLogger(__name__)
@@ -36,7 +37,7 @@ class IKEAPortal(BasePortal):
     async def request_invoice(self, page: Page, ticket_data: dict) -> bool:
         try:
             await page.wait_for_timeout(3000)
-            
+
             # Fill folio / order number
             order_number = ticket_data.get("receipt_number", "")
             if order_number:
@@ -46,7 +47,7 @@ class IKEAPortal(BasePortal):
                 )
                 if await order_input.is_visible(timeout=5000):
                     await order_input.fill(order_number)
-            
+
             # Fill date
             purchase_date = ticket_data.get("purchase_date", "")
             if purchase_date:
@@ -60,7 +61,7 @@ class IKEAPortal(BasePortal):
                         await date_input.fill(dt.strftime("%Y-%m-%d"))
                     except ValueError:
                         await date_input.fill(purchase_date)
-            
+
             # Fill total
             total = ticket_data.get("total_amount", 0)
             if total:
@@ -69,7 +70,7 @@ class IKEAPortal(BasePortal):
                 )
                 if await amount_input.is_visible(timeout=5000):
                     await amount_input.fill(str(total))
-            
+
             # RFC
             rfc = ticket_data.get("rfc", "")
             if rfc:
@@ -78,7 +79,7 @@ class IKEAPortal(BasePortal):
                 )
                 if await rfc_input.is_visible(timeout=5000):
                     await rfc_input.fill(rfc)
-            
+
             # Submit
             submit_btn = page.locator(
                 "button[type='submit'], button:has-text('Solicitar'), "
@@ -87,9 +88,9 @@ class IKEAPortal(BasePortal):
             if await submit_btn.is_visible(timeout=5000):
                 await submit_btn.click()
                 await page.wait_for_timeout(5000)
-            
+
             return True
-            
+
         except Exception as e:
             logger.error(f"IKEA invoice request error: {e}", exc_info=True)
             return False
@@ -99,7 +100,7 @@ class IKEAPortal(BasePortal):
         xml_bytes = None
         try:
             await page.wait_for_timeout(3000)
-            
+
             pdf_links = page.locator(
                 "a[href*='.pdf'], a:has-text('PDF'), button:has-text('PDF')"
             )
@@ -108,7 +109,7 @@ class IKEAPortal(BasePortal):
                     await pdf_links.first.click()
                 download = await download_info.value
                 pdf_bytes = await download.read()
-            
+
             xml_links = page.locator(
                 "a[href*='.xml'], a:has-text('XML'), button:has-text('XML')"
             )
@@ -117,8 +118,8 @@ class IKEAPortal(BasePortal):
                     await xml_links.first.click()
                 download = await download_info.value
                 xml_bytes = await download.read()
-            
+
         except Exception as e:
             logger.warning(f"IKEA download error: {e}")
-        
+
         return pdf_bytes, xml_bytes

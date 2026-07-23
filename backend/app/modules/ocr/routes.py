@@ -2,12 +2,13 @@
 Sistema Financiero - OCR Routes
 API endpoints for ticket OCR processing.
 """
-from fastapi import APIRouter, UploadFile, File, Form, HTTPException
-from fastapi.responses import Response
 from typing import Optional
 
-from .service import OCRService
+from fastapi import APIRouter, File, Form, HTTPException, UploadFile
+from fastapi.responses import Response
+
 from .schemas import OCRRequest, OCRResponse
+from .service import OCRService
 
 router = APIRouter()
 ocr_service = OCRService()
@@ -31,14 +32,14 @@ async def process_ticket_image(
             status_code=400,
             detail=f"Formato no soportado: {file.content_type}. Usa JPEG, PNG o WEBP."
         )
-    
+
     contents = await file.read()
     if len(contents) > 10 * 1024 * 1024:
         raise HTTPException(
             status_code=400,
             detail="La imagen es demasiado grande. Máximo 10MB."
         )
-    
+
     result = ocr_service.extract_from_image(contents)
     return result
 
@@ -48,7 +49,7 @@ async def process_ticket_base64(request: OCRRequest):
     """Process a ticket image from base64 encoded string."""
     if not request.image_base64:
         raise HTTPException(status_code=400, detail="Se requiere image_base64")
-    
+
     result = ocr_service.extract_from_base64(request.image_base64)
     return result
 
@@ -58,7 +59,7 @@ async def preprocess_image(file: UploadFile = File(...)):
     """Preprocess an image for better OCR and return the enhanced version."""
     contents = await file.read()
     processed = ocr_service.preprocess_image(contents)
-    
+
     return Response(
         content=processed,
         media_type="image/jpeg",

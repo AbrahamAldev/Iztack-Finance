@@ -3,7 +3,8 @@ Sistema Financiero - OCR Schemas
 Pydantic models for OCR request/response data.
 """
 from datetime import date
-from typing import Optional, List
+from typing import List, Optional
+
 from pydantic import BaseModel, Field
 
 
@@ -25,30 +26,30 @@ class OCRTicketData(BaseModel):
     # Store info
     store_name: str = Field(..., description="Store or business name")
     store_category: Optional[str] = Field(None, description="Detected store category")
-    
+
     # Receipt metadata
     receipt_number: Optional[str] = Field(None, description="Receipt/folio number")
     purchase_date: date = Field(..., description="Date of purchase")
     purchase_time: Optional[str] = Field(None, description="Time of purchase (HH:MM)")
-    
+
     # Financial data
     subtotal: Optional[float] = Field(None, description="Subtotal before taxes")
     taxes: Optional[float] = Field(None, description="Tax amount (IVA)")
     total_amount: float = Field(..., description="Total amount paid")
     payment_method: Optional[str] = Field(None, description="Payment method (cash, card, etc.)")
     currency: str = Field("MXN", description="Currency code")
-    
+
     # Products
     products: List[OCRProduct] = Field(default_factory=list, description="List of purchased products")
-    
+
     # Raw OCR
     raw_text: str = Field("", description="Raw OCR text output")
     confidence: float = Field(0.0, description="OCR confidence score (0-1)")
-    
+
     # Classification
     has_warranty_items: bool = Field(False, description="Whether any product has warranty")
     expense_type: Optional[str] = Field(None, description="Detected expense type")
-    
+
     class Config:
         json_schema_extra = {
             "example": {

@@ -24,7 +24,11 @@ jobs:
             git fetch origin
             git reset --hard origin/${{ github.ref_name }}
             echo "=== Restarting stack ==="
-            docker compose up -d --build
+            if [ "${{ github.ref_name }}" = "main" ]; then
+              docker compose -f docker-compose.prod.yml up -d --build
+            else
+              docker compose up -d --build
+            fi
             echo "=== Health check ==="
             sleep 10
             curl -sf http://localhost:8000/api/health || echo "WARNING: Health check failed, check logs"

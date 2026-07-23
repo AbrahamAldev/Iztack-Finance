@@ -3,15 +3,15 @@ Iztack-Finance - Facturación Orchestrator
 Flujo completo de facturación inteligente post-OCR.
 """
 import logging
-from typing import Optional, Dict, Any
 from dataclasses import dataclass, field
 from enum import Enum
+from typing import Any, Dict, Optional
 
-from app.database.models import Ticket, User, StoreCredential, Invoice
-from app.modules.facturacion.portal_discovery import PortalDiscovery
-from app.modules.facturacion.portal_learner import PortalLearner
+from app.database.models import Invoice, StoreCredential, Ticket, User
 from app.modules.facturacion.credential_manager import CredentialManager
 from app.modules.facturacion.fiscal_advisor import FiscalAdvisor
+from app.modules.facturacion.portal_discovery import PortalDiscovery
+from app.modules.facturacion.portal_learner import PortalLearner
 from app.utils.llm import LLMClient
 
 logger = logging.getLogger(__name__)
@@ -77,7 +77,7 @@ class FacturacionOrchestrator:
 
     async def _continue_flow(self, ctx: InvoiceContext) -> InvoiceContext:
         """Continue the billing workflow from current step."""
-        
+
         # Step 1-2: Discover URL or analyze portal
         if ctx.step in (InvoiceStep.OCR_DONE, InvoiceStep.DISCOVERING_URL):
             ctx = await self._discover_and_analyze(ctx)
@@ -111,7 +111,7 @@ class FacturacionOrchestrator:
     async def _discover_and_analyze(self, ctx: InvoiceContext) -> InvoiceContext:
         """Discover billing URL and analyze portal structure."""
         ctx.step = InvoiceStep.DISCOVERING_URL
-        
+
         # Try to find URL from known portals first
         portal_url = await self.discovery.find_portal_url(
             store_name=ctx.ticket.store_name,
@@ -145,7 +145,7 @@ class FacturacionOrchestrator:
         # Analyze portal structure
         ctx.step = InvoiceStep.ANALYZING_PORTAL
         structure = await self.learner.analyze_portal(ctx.portal_url, ctx.ticket.store_name)
-        
+
         if structure.get("requires_login"):
             ctx.step = InvoiceStep.NEED_CREDENTIALS
         elif structure.get("requires_fiscal_data"):
@@ -160,7 +160,7 @@ class FacturacionOrchestrator:
         existing = await self.credential_mgr.get_credentials(
             ctx.user.id, ctx.ticket.store_name
         )
-        
+
         if existing and existing.has_account:
             ctx.credentials = existing
             ctx.step = InvoiceStep.FILLING_FORM
@@ -182,11 +182,11 @@ class FacturacionOrchestrator:
     async def _handle_fiscal_data(self, ctx: InvoiceContext) -> InvoiceContext:
         """Get fiscal data needed for billing."""
         ctx.fiscal_data = await self.fiscal_advisor.get_user_fiscal_data(ctx.user.id)
-        
+
         # Check if we have all required fields
         required = ["rfc", "razon_social", "codigo_postal", "regimen_fiscal"]
         missing = [f for f in required if not ctx.fiscal_data.get(f)]
-        
+
         if missing:
             ctx.needs_user_input = True
             ctx.user_message = (
@@ -197,7 +197,7 @@ class FacturacionOrchestrator:
                 "2. Subir tu *Constancia de Situación Fiscal* (PDF) y los extraigo automáticamente"
             )
             return ctx
-        
+
         ctx.step = InvoiceStep.NEED_GASTO_TYPE
         return ctx
 
@@ -235,7 +235,7 @@ class FacturacionOrchestrator:
     async def _fill_and_submit(self, ctx: InvoiceContext) -> InvoiceContext:
         """Fill the billing form and submit."""
         ctx.step = InvoiceStep.SUBMITTING
-        
+
         try:
             result = await self.learner.fill_and_submit(
                 portal_url=ctx.portal_url,
@@ -244,7 +244,7 @@ class FacturacionOrchestrator:
                 fiscal_data=ctx.fiscal_data,
                 gasto_type=ctx.gasto_type,
             )
-            
+
             if result.get("success"):
                 ctx.step = InvoiceStep.COMPLETED
                 ctx.result = result.get("invoice")

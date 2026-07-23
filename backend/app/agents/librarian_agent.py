@@ -93,8 +93,9 @@ class LibrarianAgent(Agent):
         # Try Google Drive if configured
         drive_urls = {}
         try:
-            from app.modules.almacenamiento.drive_service import DriveStorageService
             from datetime import date
+
+            from app.modules.almacenamiento.drive_service import DriveStorageService
 
             store_name = context.payload.get("store_name", "Desconocido")
             purchase_date_str = context.payload.get("purchase_date")

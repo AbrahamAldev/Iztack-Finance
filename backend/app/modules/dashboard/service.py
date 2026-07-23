@@ -5,10 +5,10 @@ Real-time dashboard data from user's tickets, products, and invoices.
 import logging
 from datetime import datetime
 
-from sqlalchemy import select, func, desc
+from sqlalchemy import desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database.models import Ticket, Product
+from app.database.models import Product, Ticket
 
 logger = logging.getLogger(__name__)
 
@@ -89,14 +89,14 @@ class DashboardService:
         return result.scalar()
 
     async def _get_active_warranties(self, user_id: str) -> int:
-        now = datetime.utcnow()
+        datetime.utcnow()
         result = await self.db.execute(
             select(func.count())
             .select_from(Product)
             .join(Ticket, Product.ticket_id == Ticket.id)
             .where(
                 Ticket.user_id == user_id,
-                Product.has_warranty == True,
+                Product.has_warranty.is_(True),
             )
         )
         return result.scalar()

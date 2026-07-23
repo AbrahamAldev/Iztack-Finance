@@ -3,17 +3,22 @@ Iztack-Finance - Auth Routes
 API endpoints for authentication and user management.
 """
 from datetime import datetime
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.connection import get_db
+from app.database.models import User
+from app.modules.auth.deps import get_current_user
 from app.modules.auth.schemas import (
-    RegisterRequest, LoginRequest, UserUpdateRequest,
-    UserResponse, TokenResponse, PasswordChangeRequest
+    LoginRequest,
+    PasswordChangeRequest,
+    RegisterRequest,
+    TokenResponse,
+    UserResponse,
+    UserUpdateRequest,
 )
 from app.modules.auth.service import AuthService
-from app.modules.auth.deps import get_current_user
-from app.database.models import User
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 

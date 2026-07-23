@@ -39,6 +39,14 @@ error_log/
 # Docker
 docker-data/
 
+# Frontend
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+
+# OS
+.DS_Store
+
 # Playwright browsers (downloaded at build time)
 ms-playwright/
 

@@ -8,24 +8,24 @@ import shutil
 import smtplib
 import time
 from datetime import datetime, timedelta
-from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from typing import Dict, List, Optional
+from email.mime.text import MIMEText
+from typing import Dict, List
 
 import httpx
-from sqlalchemy import text, select, func
+from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import get_settings
 from app.database.models import (
-    Ticket,
-    Product,
-    ProcessingError,
-    PipelineTrace,
-    SensorReading,
-    EmailAlert,
     ConsumptionCycle,
+    EmailAlert,
+    PipelineTrace,
+    ProcessingError,
+    Product,
+    SensorReading,
     ShoppingList,
+    Ticket,
 )
 
 logger = logging.getLogger(__name__)
@@ -72,10 +72,11 @@ class EmailService:
         ]):
             return False
         try:
+            import base64
+
             from google.auth.transport.requests import Request
             from google.oauth2.credentials import Credentials
             from googleapiclient.discovery import build
-            import base64
 
             creds = Credentials(
                 token=None,
@@ -221,7 +222,7 @@ class SensorsService:
                 f"Panel admin: https://admfinance.iztack.com"
             )
 
-            sent = self.email.send_alert(subject, body)
+            self.email.send_alert(subject, body)
             alert = EmailAlert(
                 alert_key=alert_key,
                 component=reading.component,
@@ -408,7 +409,7 @@ class SensorsService:
     async def _check_pipeline_warranty(self) -> Dict:
         try:
             result = await self.db.execute(
-                select(func.count(Product.id)).where(Product.has_warranty == True)
+                select(func.count(Product.id)).where(Product.has_warranty.is_(True))
             )
             warranty_count = result.scalar()
             return {

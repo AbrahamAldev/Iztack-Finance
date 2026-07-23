@@ -7,8 +7,8 @@ while adding agent-specific tracing and error handling.
 import logging
 
 from app.agents.base import Agent, AgentContext, AgentResult
-from app.modules.ocr.service import OCRService
 from app.modules.ocr.schemas import OCRResponse
+from app.modules.ocr.service import OCRService
 from app.modules.tickets.tracer import trace_step
 
 logger = logging.getLogger(__name__)

@@ -2,13 +2,14 @@
 Iztack-Finance - Shopping List Routes
 API endpoints for smart shopping lists.
 """
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Optional
 
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.database.connection import get_db
-from app.modules.auth.deps import get_current_user
 from app.database.models import User
+from app.modules.auth.deps import get_current_user
 from app.modules.shopping_list.service import ShoppingListService
 from app.modules.tickets.tracer import trace_step
 

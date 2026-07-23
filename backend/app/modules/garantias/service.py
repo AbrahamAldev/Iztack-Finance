@@ -4,7 +4,7 @@ Tracks products with warranties, alerts when they're about to expire.
 """
 import logging
 from datetime import date
-from typing import Optional, List, Dict
+from typing import Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -46,26 +46,26 @@ class WarrantyService:
             ext = cls.EXTENDED_WARRANTY[category]
             if price >= ext["threshold"]:
                 return ext["months"]
-        
+
         # Standard warranty
         if category in cls.WARRANTY_CATEGORIES:
             return cls.WARRANTY_CATEGORIES[category]["months"]
-        
+
         return 0
 
     @classmethod
-    def get_warranty_end_date(cls, purchase_date: date, category: str, 
+    def get_warranty_end_date(cls, purchase_date: date, category: str,
                                price: float) -> Optional[date]:
         """Calculate warranty end date."""
         months = cls.get_warranty_months(category, price)
         if months <= 0:
             return None
-        
+
         # Add months to date
         end_month = purchase_date.month + months
         end_year = purchase_date.year + (end_month - 1) // 12
         end_month = ((end_month - 1) % 12) + 1
-        
+
         try:
             return purchase_date.replace(year=end_year, month=end_month)
         except ValueError:
@@ -75,7 +75,7 @@ class WarrantyService:
             return purchase_date.replace(year=end_year, month=end_month, day=last_day)
 
     @classmethod
-    def get_warranty_status(cls, purchase_date: date, category: str, 
+    def get_warranty_status(cls, purchase_date: date, category: str,
                              price: float) -> Dict:
         """
         Get warranty status with alerts.
@@ -91,14 +91,14 @@ class WarrantyService:
                 "status": "no_warranty",
                 "alert": None,
             }
-        
+
         end_date = cls.get_warranty_end_date(purchase_date, category, price)
         if not end_date:
             return {"has_warranty": False}
-        
+
         today = date.today()
         days_remaining = (end_date - today).days
-        
+
         # Determine status and alert
         if days_remaining < 0:
             status = "expired"
@@ -119,7 +119,7 @@ class WarrantyService:
         else:
             status = "active"
             alert = None
-        
+
         return {
             "has_warranty": True,
             "end_date": end_date,
@@ -133,21 +133,21 @@ class WarrantyService:
         """Get products whose warranty is about to expire."""
         alerts = []
         today = date.today()
-        
+
         for product in products:
             purchase_date = product.get("purchase_date")
             category = product.get("category", "")
             price = product.get("price", 0)
-            
+
             if not purchase_date or not cls.is_warrantable(category, price):
                 continue
-            
+
             end_date = cls.get_warranty_end_date(purchase_date, category, price)
             if not end_date:
                 continue
-            
+
             days_remaining = (end_date - today).days
-            
+
             # Alert if expiring within 30 days
             if 0 <= days_remaining <= 30:
                 alerts.append({
@@ -162,5 +162,5 @@ class WarrantyService:
                         f"Fecha de compra: {purchase_date.strftime('%d/%m/%Y')}"
                     ),
                 })
-        
+
         return alerts

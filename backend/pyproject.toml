@@ -1,0 +1,28 @@
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "F",   # Pyflakes
+    "W",   # pycodestyle warnings
+    "I",   # isort
+]
+ignore = [
+    "E501",  # Line too long (legacy prompts/docstrings)
+    "E701",  # Multiple statements on one line (legacy code)
+    "E702",  # Multiple statements on one line (legacy code)
+    "E722",  # Bare except (legacy code)
+    "E741",  # Ambiguous variable names (legacy code)
+    "F841",  # Unused local variables (legacy code)
+    "W293",  # Blank line contains whitespace (legacy code)
+    "W292",  # No newline at end of file (legacy code)
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"

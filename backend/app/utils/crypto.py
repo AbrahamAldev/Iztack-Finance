@@ -2,10 +2,11 @@
 Sistema Financiero - Cryptographic Utilities
 AES-256-GCM encryption for storing sensitive credentials.
 """
-import os
 import base64
-from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+import os
+
 from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
 
@@ -23,7 +24,7 @@ class CryptoManager:
         """Derive a 256-bit key using PBKDF2."""
         if salt is None:
             salt = os.urandom(16)
-        
+
         kdf = PBKDF2HMAC(
             algorithm=hashes.SHA256(),
             length=32,
@@ -40,26 +41,26 @@ class CryptoManager:
         """
         if not plaintext:
             return None, None, None
-        
+
         key, salt = self._derive_key()
         aesgcm = AESGCM(key)
         nonce = os.urandom(12)
         ciphertext = aesgcm.encrypt(nonce, plaintext.encode(), context.encode())
-        
+
         # key_id is base64 of salt for later key derivation
         key_id = base64.b64encode(salt).decode()
-        
+
         return ciphertext, nonce, key_id
 
     def decrypt(self, ciphertext: bytes, nonce: bytes, key_id: str, context: str = "") -> str:
         """Decrypt ciphertext with AES-256-GCM."""
         if not ciphertext or not nonce or not key_id:
             return None
-        
+
         salt = base64.b64decode(key_id)
         key, _ = self._derive_key(salt)
         aesgcm = AESGCM(key)
-        
+
         plaintext = aesgcm.decrypt(nonce, ciphertext, context.encode())
         return plaintext.decode()
 
@@ -96,11 +97,11 @@ class CryptoManager:
         """Generate a cryptographically secure random password."""
         import secrets
         import string
-        
+
         chars = string.ascii_letters + string.digits
         if use_special:
             chars += "!@#$%^&*()-_=+[]{}|;:,.<>?"
-        
+
         # Ensure at least one of each type
         password = [
             secrets.choice(string.ascii_lowercase),
@@ -109,10 +110,10 @@ class CryptoManager:
         ]
         if use_special:
             password.append(secrets.choice("!@#$%^&*()-_=+[]{}|;:,.<>?"))
-        
+
         # Fill the rest
         password.extend(secrets.choice(chars) for _ in range(length - len(password)))
-        
+
         # Shuffle
         secrets.SystemRandom().shuffle(password)
         return "".join(password)

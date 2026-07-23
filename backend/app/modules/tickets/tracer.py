@@ -3,13 +3,22 @@ Iztack-Finance - Pipeline Tracer
 Saves execution traces for each step of ticket processing.
 Enables debugging from admfinance.iztack.com.
 """
-import time
 import logging
-from typing import Optional, Dict, Any
+import time
+from typing import Any, Dict, Optional
+
 from app.database.connection import SyncSession
 from app.database.models import PipelineTrace
 
 logger = logging.getLogger(__name__)
+
+
+def _close_db(db):
+    """Best-effort DB session close."""
+    try:
+        db.close()
+    except Exception:
+        pass
 
 
 def trace_step(
@@ -21,6 +30,7 @@ def trace_step(
     details: Dict[str, Any] = None,
 ) -> Optional[str]:
     """Save a pipeline trace entry. Returns the trace ID or None on failure."""
+    db = None
     try:
         db = SyncSession()
         trace = PipelineTrace(
@@ -34,12 +44,12 @@ def trace_step(
         db.add(trace)
         db.commit()
         trace_id = trace.id
-        db.close()
+        _close_db(db)
         return trace_id
     except Exception as e:
         logger.error(f"Failed to save trace [{step}]: {e}")
-        try: db.close()
-        except: pass
+        if db:
+            _close_db(db)
         return None
 
 
@@ -67,6 +77,7 @@ class TraceContext:
         duration = int((time.time() - self.start_time) * 1000)
         status = "ok" if exc_type is None else "error"
 
+        db = None
         try:
             db = SyncSession()
             trace = db.query(PipelineTrace).filter(PipelineTrace.id == self.trace_id).first()
@@ -76,10 +87,10 @@ class TraceContext:
                 if exc_val:
                     trace.details = (trace.details or {}) | {"error": str(exc_val)[:500]}
                 db.commit()
-            db.close()
+            _close_db(db)
         except Exception as e:
             logger.error(f"Failed to update trace [{self.step}]: {e}")
-            try: db.close()
-            except: pass
+            if db:
+                _close_db(db)
 
         return False  # Don't suppress exceptions

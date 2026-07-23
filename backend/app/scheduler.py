@@ -3,13 +3,17 @@ Iztack-Finance - Scheduler (APScheduler)
 Runs periodic tasks: daily analysis, weekly shopping list, warranty alerts.
 Integrated into FastAPI lifespan — no separate worker needed.
 """
+import asyncio
 import logging
 from datetime import date, timedelta
+
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
-from sqlalchemy import func, desc
+from sqlalchemy import desc, func
+
 from app.database.connection import SyncSession, async_session
-from app.database.models import Ticket, Product, User
+from app.database.models import Product, Ticket, User
+from app.modules.facturacion.scheduler_tasks import process_pending_invoices
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +27,7 @@ async def run_daily_analysis():
     try:
         today = date.today()
         yesterday = today - timedelta(days=1)
-        users = db.query(User).filter(User.is_active == True).all()
+        users = db.query(User).filter(User.is_active.is_(True)).all()
 
         for user in users:
             tickets = db.query(Ticket).filter(
@@ -41,6 +45,7 @@ async def run_daily_analysis():
                 try:
                     # Use raw telegram API to send notification
                     import os
+
                     import requests
                     bot_token = os.environ.get("TELEGRAM_BOT_TOKEN", "")
                     if bot_token:
@@ -69,7 +74,7 @@ async def run_weekly_shopping_list():
     logger.info("Scheduler: weekly shopping list generation...")
     db = SyncSession()
     try:
-        users = db.query(User).filter(User.is_active == True).all()
+        users = db.query(User).filter(User.is_active.is_(True)).all()
         for user in users:
             # Check for products bought 2+ times in last 30 days
             thirty_days_ago = date.today() - timedelta(days=30)
@@ -79,7 +84,7 @@ async def run_weekly_shopping_list():
                 .filter(
                     Ticket.user_id == user.id,
                     Ticket.purchase_date >= thirty_days_ago,
-                    Product.is_consumable == True,
+                    Product.is_consumable.is_(True),
                 )
                 .group_by(Product.name)
                 .having(func.count(Product.id) >= 2)
@@ -95,6 +100,7 @@ async def run_weekly_shopping_list():
             if user.telegram_chat_id:
                 try:
                     import os
+
                     import requests
                     bot_token = os.environ.get("TELEGRAM_BOT_TOKEN", "")
                     if bot_token:
@@ -144,7 +150,7 @@ async def run_warranty_alerts():
             db.query(Product)
             .join(Ticket)
             .filter(
-                Product.has_warranty == True,
+                Product.has_warranty.is_(True),
                 Product.warranty_end_date.isnot(None),
                 Product.warranty_end_date <= thirty_days,
                 Product.warranty_end_date >= today,
@@ -157,6 +163,7 @@ async def run_warranty_alerts():
                 days_left = (p.warranty_end_date - today).days
                 try:
                     import os
+
                     import requests
                     bot_token = os.environ.get("TELEGRAM_BOT_TOKEN", "")
                     if bot_token:
@@ -193,8 +200,18 @@ def start_scheduler():
     scheduler.add_job(run_warranty_alerts, CronTrigger(hour=9, minute=0), id="warranty_alerts")
     # Sensor / monitoring checks every 15 minutes
     scheduler.add_job(run_sensor_checks, "interval", minutes=15, id="sensor_checks")
+    # Invoice processing every 5 minutes
+    scheduler.add_job(
+        lambda: asyncio.create_task(process_pending_invoices()),
+        "interval",
+        minutes=5,
+        id="invoice_processing",
+    )
     scheduler.start()
-    logger.info("✅ Scheduler started: daily(23:00), weekly(Sun 08:00), warranties(09:00), sensors(15m)")
+    logger.info(
+        "✅ Scheduler started: daily(23:00), weekly(Sun 08:00), warranties(09:00), "
+        "sensors(15m), invoices(5m)"
+    )
 
 
 def stop_scheduler():

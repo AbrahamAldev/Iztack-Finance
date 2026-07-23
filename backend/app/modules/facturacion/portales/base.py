@@ -2,12 +2,12 @@
 Sistema Financiero - Base Portal
 Abstract base class for all store invoicing portals.
 """
+import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Optional
-import logging
 
-from playwright.async_api import async_playwright, Page, Browser
+from playwright.async_api import Browser, Page, async_playwright
 
 logger = logging.getLogger(__name__)
 
@@ -100,7 +100,7 @@ class BasePortal(ABC):
         """
         self.credentials = credentials
         result = InvoiceResult(success=False)
-        
+
         try:
             async with async_playwright() as pw:
                 # Launch browser
@@ -113,7 +113,7 @@ class BasePortal(ABC):
                         "--disable-gpu",
                     ]
                 )
-                
+
                 context = await self.browser.new_context(
                     viewport={"width": 1280, "height": 800},
                     user_agent=(
@@ -124,47 +124,47 @@ class BasePortal(ABC):
                     locale="es-MX",
                     timezone_id="America/Mexico_City",
                 )
-                
+
                 self.page = await context.new_page()
-                
+
                 # Step 1: Login
                 logger.info(f"[{self.store_name}] Iniciando sesión en {self.portal_url}")
                 login_success = await self.login(self.page, credentials)
-                
+
                 if not login_success:
                     result.error_message = f"Error al iniciar sesión en {self.store_name}"
                     return result
-                
+
                 logger.info(f"[{self.store_name}] Login exitoso")
-                
+
                 # Step 2: Request invoice
                 logger.info(f"[{self.store_name}] Solicitando factura...")
                 request_success = await self.request_invoice(self.page, ticket_data)
-                
+
                 if not request_success:
                     result.error_message = f"Error al solicitar factura en {self.store_name}"
                     return result
-                
+
                 logger.info(f"[{self.store_name}] Factura solicitada exitosamente")
-                
+
                 # Step 3: Download files
                 logger.info(f"[{self.store_name}] Descargando archivos...")
                 pdf_bytes, xml_bytes = await self.download_files(self.page)
-                
+
                 result.success = True
                 result.pdf_bytes = pdf_bytes
                 result.xml_bytes = xml_bytes
-                
+
                 logger.info(f"[{self.store_name}] Proceso completado exitosamente")
-                
+
         except Exception as e:
             logger.error(f"[{self.store_name}] Error: {e}", exc_info=True)
             result.error_message = f"Error en {self.store_name}: {str(e)}"
-        
+
         finally:
             if self.browser:
                 await self.browser.close()
-        
+
         return result
 
     async def take_screenshot(self, name: str = "debug"):

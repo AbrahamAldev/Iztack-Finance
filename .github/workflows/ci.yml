@@ -50,7 +50,6 @@ jobs:
         run: |
           cd backend
           pip install -r requirements.txt
-          pip install pytest pytest-asyncio httpx
 
       - name: Instalar Playwright browsers
         run: |
@@ -61,12 +60,12 @@ jobs:
       - name: Correr tests
         env:
           DATABASE_URL: postgresql+asyncpg://test:test@localhost:5432/sistema_financiero_test
-          DATABASE_SYNC_URL: postgresql+psycopg2://test:test@localhost:5432/sistema_financiero_test
+          DATABASE_SYNC_URL: postgresql+psycopg://test:test@localhost:5432/sistema_financiero_test
           SECRET_KEY: test-key-for-ci
           ENVIRONMENT: testing
         run: |
           cd backend
-          python -m pytest tests/ -v --timeout=60 2>&1 || echo "No tests yet"
+          python -m pytest tests/ -v
 
   lint-backend:
     name: Lint Backend
@@ -78,15 +77,15 @@ jobs:
           python-version: '3.12'
       - name: Instalar linters
         run: |
-          pip install flake8 black
-      - name: Flake8
+          pip install ruff
+      - name: Ruff check
         run: |
           cd backend
-          flake8 app/ --max-line-length=100 --extend-ignore=E203,W503 2>&1 || echo "Lint warnings"
-      - name: Black check
+          ruff check app/
+      - name: Ruff format check
         run: |
           cd backend
-          black --check app/ --diff 2>&1 || echo "Format issues found"
+          ruff format --check app/
 
   build-docker:
     name: Build Docker Images (Validation)
@@ -99,7 +98,7 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
       
-      - name: Build Backend (validation only)
+      - name: Build Backend dev (validation only)
         uses: docker/build-push-action@v5
         with:
           context: ./backend
@@ -108,14 +107,25 @@ jobs:
           tags: sistema-financiero/backend:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Build Backend prod (validation only)
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile.prod
+          push: false
+          tags: sistema-financiero/backend:prod
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
       
-      - name: Build Frontend (validation only)
+      - name: Build Frontend prod (validation only)
         uses: docker/build-push-action@v5
         with:
           context: ./frontend
-          file: ./frontend/Dockerfile
+          file: ./frontend/Dockerfile.prod
           push: false
-          tags: sistema-financiero/frontend:latest
+          tags: sistema-financiero/frontend:prod
+          build-args: NEXT_PUBLIC_API_URL=https://api.iztack.com/api
           cache-from: type=gha
           cache-to: type=gha,mode=max
       

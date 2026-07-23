@@ -1,6 +1,7 @@
 """Iztack-Finance - Fiscal Advisor. IA para recomendar tipo de gasto según régimen fiscal en México."""
 import logging
-from typing import Dict, Any, List
+from typing import Any, Dict, List
+
 from app.utils.llm import LLMClient
 
 logger = logging.getLogger(__name__)
@@ -43,7 +44,7 @@ class FiscalAdvisor:
             f"que compró en '{store_name}' los productos: {', '.join(products)}.\n"
             "Responde SOLO en formato JSON: {\"gasto\": \"tipo de gasto\", \"razon\": \"breve explicación\"}"
         )
-        
+
         try:
             response = await self.llm.chat(user_message=prompt, max_tokens=150, temperature=0.0)
             import json

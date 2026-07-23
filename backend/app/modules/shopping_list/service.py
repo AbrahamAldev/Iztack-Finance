@@ -3,20 +3,22 @@ Iztack-Finance - Smart Shopping List Service v2
 Generates shopping lists from consumption cycles and recent purchase history.
 """
 import logging
-from datetime import date, timedelta, datetime
-from typing import List, Dict, Optional
 from dataclasses import dataclass
+from datetime import date, datetime, timedelta
+from typing import Dict, List, Optional
 
+from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, desc
 
 from app.database.models import (
-    Ticket,
     ConsumptionCycle,
-    ShoppingList,
-    ShoppingItem as ShoppingItemModel,
-    ShoppingListStatus,
     ShoppingItemStatus,
+    ShoppingList,
+    ShoppingListStatus,
+    Ticket,
+)
+from app.database.models import (
+    ShoppingItem as ShoppingItemModel,
 )
 from app.modules.clasificacion.service import ClassificationService
 
@@ -200,8 +202,8 @@ class ShoppingListService:
         result = await self.db.execute(
             select(ConsumptionCycle).where(
                 ConsumptionCycle.user_id == user_id,
-                ConsumptionCycle.is_active == True,
-                ConsumptionCycle.auto_generate == True,
+                ConsumptionCycle.is_active.is_(True),
+                ConsumptionCycle.auto_generate.is_(True),
                 ConsumptionCycle.next_estimated_purchase.isnot(None),
                 ConsumptionCycle.next_estimated_purchase <= next_week,
             )
@@ -316,12 +318,12 @@ class ShoppingListService:
 
     async def update_consumption_cycles(self, user_id: str, ticket: Ticket):
         """Update or create consumption cycles after a new ticket is saved."""
-        today = date.today()
+        date.today()
         for product in ticket.products:
             if not product.is_consumable:
                 continue
 
-            name_lower = product.name.lower()
+            product.name.lower()
             result = await self.db.execute(
                 select(ConsumptionCycle).where(
                     ConsumptionCycle.user_id == user_id,

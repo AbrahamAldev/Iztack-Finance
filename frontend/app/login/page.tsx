@@ -116,9 +116,15 @@ export default function LoginPage() {
               className="btn btn-primary w-full py-3"
             >
               {loading ? (
-                <><Loader2 className="h-4 w-4 animate-spin" /> Iniciando...</>
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>Iniciando...</span>
+                </>
               ) : (
-                <><span>Iniciar sesión</span><ArrowRight className="h-4 w-4" />
+                <>
+                  <span>Iniciar sesión</span>
+                  <ArrowRight className="h-4 w-4" />
+                </>
               )}
             </button>
           </form>

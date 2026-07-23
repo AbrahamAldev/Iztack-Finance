@@ -3,7 +3,8 @@ Iztack-Finance - Portal Discovery
 Finds billing portal URLs for stores.
 """
 import logging
-from typing import Optional, Dict
+from typing import Dict, Optional
+
 from app.utils.llm import LLMClient
 
 logger = logging.getLogger(__name__)

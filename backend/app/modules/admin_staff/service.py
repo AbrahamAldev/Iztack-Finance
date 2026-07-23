@@ -2,18 +2,18 @@
 Iztack-Finance - Admin Staff Service
 Authentication and dashboard for admin portal.
 """
-import logging
-import hashlib
 import base64
+import hashlib
 import json
+import logging
 from datetime import datetime, timedelta
 from typing import Optional, Tuple
 
 from sqlalchemy.orm import Session
 
+from app.config import get_settings
 from app.database.models import StaffUser, User
 from app.utils.hashing import PasswordHasher
-from app.config import get_settings
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +39,7 @@ class AdminStaffService:
 
         user = self.db.query(StaffUser).filter(
             StaffUser.email == email,
-            StaffUser.is_active == True
+            StaffUser.is_active.is_(True)
         ).first()
 
         if not user:

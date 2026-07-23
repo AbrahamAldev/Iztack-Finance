@@ -36,7 +36,7 @@ PRODUCT_CATEGORY_KEYWORDS = {
         "escoba", "jerga", "esponja", "fabuloso", "pinol"
     ],
     "electronicos": [
-        "television", "tv", "monitor", "laptop", "computadora", "tablet",
+        "television", "televisor", "televisores", "tv", "monitor", "laptop", "computadora", "tablet",
         "celular", "telefono", "audifonos", "bocina", "parlante",
         "cargador", "cable", "hub", "router", "modem", "disco duro",
         "memoria usb", "teclado", "mouse", "webcam", "impresora",
@@ -119,7 +119,7 @@ class ClassificationService:
             dict with: category, has_warranty, is_consumable, is_high_value
         """
         name_lower = product_name.lower().strip()
-        
+
         # Find matching category
         category = "otros"
         for cat, keywords in PRODUCT_CATEGORY_KEYWORDS.items():
@@ -129,19 +129,19 @@ class ClassificationService:
                     break
             if category != "otros":
                 break
-        
+
         # Determine if high value
         is_high_value = price >= HIGH_VALUE_PRICE_THRESHOLD if price else False
-        
+
         # Determine warranty
         has_warranty = (
             category in HIGH_VALUE_CATEGORIES or
             (is_high_value and category not in CONSUMABLE_CATEGORIES)
         )
-        
+
         # Determine if consumable
         is_consumable = category in CONSUMABLE_CATEGORIES
-        
+
         return {
             "category": category,
             "has_warranty": has_warranty,
@@ -160,11 +160,11 @@ class ClassificationService:
         """
         if not purchase_date:
             return True, 0
-        
+
         today = date.today()
         days_elapsed = (today - purchase_date).days
         days_remaining = max_days - days_elapsed
-        
+
         return days_elapsed > max_days, days_remaining
 
     @staticmethod
@@ -179,15 +179,15 @@ class ClassificationService:
             if price >= 3000:
                 return 36  # 3 years for expensive electronics
             return 12  # 1 year standard
-        
+
         if category == "muebles":
             if price >= 5000:
                 return 60  # 5 years for expensive furniture
             return 24  # 2 years standard
-        
+
         if category == "automotriz":
             return 36  # 3 years for auto parts
-        
+
         return 0  # No warranty for other categories
 
     @staticmethod
@@ -200,36 +200,36 @@ class ClassificationService:
             Estimated days between purchases, or None if not applicable
         """
         name_lower = product_name.lower()
-        
+
         # Weekly consumables
-        weekly_keywords = ["leche", "pan", "huevo", "tortilla", "yogur", "fruta", 
+        weekly_keywords = ["leche", "pan", "huevo", "tortilla", "yogur", "fruta",
                           "verdura", "carne", "pollo", "pescado", "agua", "refresco"]
         for keyword in weekly_keywords:
             if keyword in name_lower:
                 return 7
-        
+
         # Bi-weekly consumables
         biweekly_keywords = ["arroz", "frijol", "pasta", "aceite", "cereal", "galleta",
                             "queso", "jabon", "shampoo", "papel higienico", "servilleta"]
         for keyword in biweekly_keywords:
             if keyword in name_lower:
                 return 15
-        
+
         # Monthly consumables
         monthly_keywords = ["detergente", "suavizante", "cloro", "limpiador",
                            "fabuloso", "pinol", "desodorante", "crema", "pasta dental"]
         for keyword in monthly_keywords:
             if keyword in name_lower:
                 return 30
-        
+
         # Quarterly
         if category in {"limpieza", "higiene"}:
             return 90
-        
+
         return None  # Not a consumable / irregular cycle
 
     @staticmethod
-    def detect_money_leak(product_name: str, unit_price: float, 
+    def detect_money_leak(product_name: str, unit_price: float,
                            bulk_price: float, bulk_quantity: int) -> dict:
         """
         Detect if buying smaller quantities is a money leak vs bulk.
@@ -242,10 +242,10 @@ class ClassificationService:
         """
         unit_cost = unit_price
         bulk_unit_cost = bulk_price / bulk_quantity
-        
+
         savings_per_unit = unit_cost - bulk_unit_cost
         savings_percentage = (savings_per_unit / unit_cost) * 100 if unit_cost > 0 else 0
-        
+
         return {
             "has_leak": savings_per_unit > 0,
             "product": product_name,
@@ -274,16 +274,16 @@ class ClassificationService:
         total = sum(monthly_expenses.values())
         target_savings = total * (target_savings_percent / 100)
         weekly_savings = target_savings / 4.33  # Average weeks per month
-        
+
         # Essential vs discretionary
-        essential_categories = {"alimentos", "bebidas", "higiene", "limpieza", 
+        essential_categories = {"alimentos", "bebidas", "higiene", "limpieza",
                                  "salud", "combustible", "hogar"}
         essential_spending = sum(
-            amt for cat, amt in monthly_expenses.items() 
+            amt for cat, amt in monthly_expenses.items()
             if cat in essential_categories
         )
         discretionary_spending = total - essential_spending
-        
+
         return {
             "total_monthly_expenses": total,
             "target_savings_percent": target_savings_percent,

@@ -2,16 +2,17 @@
 Iztack-Finance - Tickets Routes
 API endpoints for ticket upload and processing.
 """
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from typing import List
+
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.modules.auth.deps import get_current_user
-from app.modules.tickets.service import TicketsService
-from app.modules.tickets.repository import TicketRepository
-from app.modules.tickets.tracer import trace_step
 from app.database.connection import get_db
 from app.database.models import User
+from app.modules.auth.deps import get_current_user
+from app.modules.tickets.repository import TicketRepository
+from app.modules.tickets.service import TicketsService
+from app.modules.tickets.tracer import trace_step
 
 router = APIRouter(prefix="/api/tickets", tags=["Tickets"])
 
@@ -56,54 +57,66 @@ async def upload_ticket(
         image_bytes_list.append(contents)
 
     service = TicketsService()
-    result = await service.upload_and_process(
+    results = await service.upload_and_process(
         images=image_bytes_list,
         is_continuation=is_continuation,
         user_id=current_user.id,
     )
 
-    if result.success and result.data:
-        try:
-            ticket = await TicketRepository.save_ocr_result(
-                db=db,
-                ocr_data=result.data,
-                user_id=current_user.id,
-            )
-            trace_step(
-                user_id=current_user.id,
-                step="db_save",
-                status="ok",
-                ticket_id=ticket.id,
-                details={"store_name": result.data.store_name, "total_amount": result.data.total_amount},
-            )
-            return {
-                "success": True,
-                "ticket_id": ticket.id,
-                "data": result.data.dict(),
-                "message": "Ticket procesado y guardado correctamente"
-                if len(image_bytes_list) == 1
-                else f"{len(image_bytes_list)} imágenes combinadas y guardadas correctamente",
-            }
-        except Exception as exc:
-            trace_step(
-                user_id=current_user.id,
-                step="db_save",
-                status="error",
-                details={"error": str(exc)[:500]},
-            )
-            raise
-    elif result.success:
+    saved_tickets = []
+    errors = []
+
+    for idx, result in enumerate(results):
+        if result.success and result.data:
+            try:
+                ticket = await TicketRepository.save_ocr_result(
+                    db=db,
+                    ocr_data=result.data,
+                    user_id=current_user.id,
+                )
+                trace_step(
+                    user_id=current_user.id,
+                    step="db_save",
+                    status="ok",
+                    ticket_id=ticket.id,
+                    details={"store_name": result.data.store_name, "total_amount": result.data.total_amount},
+                )
+                saved_tickets.append({
+                    "ticket_id": ticket.id,
+                    "data": result.data.dict(),
+                })
+            except Exception as exc:
+                trace_step(
+                    user_id=current_user.id,
+                    step="db_save",
+                    status="error",
+                    details={"image_index": idx + 1, "error": str(exc)[:500]},
+                )
+                errors.append(str(exc)[:500])
+                raise
+        elif result.success:
+            saved_tickets.append({"ticket_id": None, "data": None, "message": "OCR procesado pero no se extrajo información estructurada"})
+        else:
+            errors.append(result.error or f"No se pudo procesar la imagen {idx + 1}")
+
+    if saved_tickets:
         return {
             "success": True,
-            "data": None,
-            "message": "OCR procesado pero no se extrajo información estructurada",
+            "tickets": saved_tickets,
+            "count": len(saved_tickets),
+            "message": (
+                f"{len(saved_tickets)} ticket(s) procesado(s) y guardado(s) correctamente"
+                if len(saved_tickets) > 1
+                else "Ticket procesado y guardado correctamente"
+            ),
+            "errors": errors if errors else None,
         }
-    else:
-        return {
-            "success": False,
-            "error": result.error or "No se pudo procesar el ticket",
-            "suggestion": "Asegúrate de que la foto sea clara y esté bien iluminada",
-        }
+
+    return {
+        "success": False,
+        "error": errors[0] if errors else "No se pudo procesar el ticket",
+        "suggestion": "Asegúrate de que la foto sea clara y esté bien iluminada",
+    }
 
 
 @router.post("/upload-base64")
@@ -149,48 +162,62 @@ async def upload_ticket_base64(
             )
 
     service = TicketsService()
-    result = await service.upload_and_process(
+    results = await service.upload_and_process(
         images=image_bytes_list,
         is_continuation=is_continuation,
         user_id=current_user.id,
     )
 
-    if result.success and result.data:
-        try:
-            ticket = await TicketRepository.save_ocr_result(
-                db=db,
-                ocr_data=result.data,
-                user_id=current_user.id,
-            )
-            trace_step(
-                user_id=current_user.id,
-                step="db_save",
-                status="ok",
-                ticket_id=ticket.id,
-                details={"store_name": result.data.store_name, "total_amount": result.data.total_amount},
-            )
-            return {
-                "success": True,
-                "ticket_id": ticket.id,
-                "data": result.data.dict(),
-                "message": "Ticket procesado y guardado correctamente",
-            }
-        except Exception as exc:
-            trace_step(
-                user_id=current_user.id,
-                step="db_save",
-                status="error",
-                details={"error": str(exc)[:500]},
-            )
-            raise
-    elif result.success:
+    saved_tickets = []
+    errors = []
+
+    for idx, result in enumerate(results):
+        if result.success and result.data:
+            try:
+                ticket = await TicketRepository.save_ocr_result(
+                    db=db,
+                    ocr_data=result.data,
+                    user_id=current_user.id,
+                )
+                trace_step(
+                    user_id=current_user.id,
+                    step="db_save",
+                    status="ok",
+                    ticket_id=ticket.id,
+                    details={"store_name": result.data.store_name, "total_amount": result.data.total_amount},
+                )
+                saved_tickets.append({
+                    "ticket_id": ticket.id,
+                    "data": result.data.dict(),
+                })
+            except Exception as exc:
+                trace_step(
+                    user_id=current_user.id,
+                    step="db_save",
+                    status="error",
+                    details={"image_index": idx + 1, "error": str(exc)[:500]},
+                )
+                errors.append(str(exc)[:500])
+                raise
+        elif result.success:
+            saved_tickets.append({"ticket_id": None, "data": None, "message": "OCR procesado pero no se extrajo información estructurada"})
+        else:
+            errors.append(result.error or f"No se pudo procesar la imagen {idx + 1}")
+
+    if saved_tickets:
         return {
             "success": True,
-            "data": None,
-            "message": "OCR procesado pero no se extrajo información estructurada",
+            "tickets": saved_tickets,
+            "count": len(saved_tickets),
+            "message": (
+                f"{len(saved_tickets)} ticket(s) procesado(s) y guardado(s) correctamente"
+                if len(saved_tickets) > 1
+                else "Ticket procesado y guardado correctamente"
+            ),
+            "errors": errors if errors else None,
         }
-    else:
-        return {
-            "success": False,
-            "error": result.error or "No se pudo procesar el ticket",
-        }
+
+    return {
+        "success": False,
+        "error": errors[0] if errors else "No se pudo procesar el ticket",
+    }

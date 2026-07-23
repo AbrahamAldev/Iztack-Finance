@@ -3,13 +3,14 @@ Iztack-Finance - Auth Dependencies
 FastAPI dependencies for JWT authentication.
 """
 from typing import Optional
+
 from fastapi import Depends, HTTPException
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.connection import get_db
-from app.modules.auth.service import AuthService
 from app.database.models import User
+from app.modules.auth.service import AuthService
 
 # Bearer token prefix
 SECURITY = HTTPBearer(auto_error=False)

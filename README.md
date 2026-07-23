@@ -51,13 +51,14 @@ Las bibliotecas de conocimiento se encuentran en `docs/agents/fiscal_library/` y
 
 | Capa | Tecnología |
 |---|---|
-| **Frontend** | Next.js 14 + Tailwind CSS |
+| **Frontend** | Next.js 15 + Tailwind CSS |
 | **Backend** | FastAPI + SQLAlchemy 2 async + Pydantic v2 |
 | **Base de Datos** | PostgreSQL 16 |
 | **Cache** | Redis 7 |
+| **Task Scheduler** | APScheduler (inside backend container) |
 | **Bot Telegram** | python-telegram-bot v21 (multi-usuario) |
-| **IA / LLM** | OpenRouter (DeepSeek) |
-| **OCR** | OpenRouter GPT-4o-mini Vision / DeepSeek |
+| **IA / LLM** | OpenRouter (free-tier models) |
+| **OCR** | OpenRouter vision models |
 | **CFDI** | Playwright (9 portales) |
 | **Cifrado** | AES-256-GCM (PBKDF2) |
 | **Infraestructura** | Proxmox LXC + Docker |
@@ -80,8 +81,11 @@ git checkout multiagentes
 cp .env.example .env
 # Editar .env con tus claves (SECRET_KEY, TELEGRAM_BOT_TOKEN, OPENROUTER_API_KEY, etc.)
 
-# Iniciar servicios
+# Development
 docker compose up -d --build
+
+# Production
+docker compose -f docker-compose.prod.yml up -d --build
 
 # Verificar
 curl http://localhost:8000/api/health
@@ -97,34 +101,28 @@ curl http://localhost:8000/api/health
 ├── backend/                    # FastAPI + SQLAlchemy
 │   ├── app/
 │   │   ├── main.py            # Entry point
-│   │   ├── agents/            # Sistema multi-agente
-│   │   │   ├── base.py        # Clases base de agentes
-│   │   │   ├── orchestrator.py
-│   │   │   ├── ocr_agent.py
-│   │   │   ├── chat_agent.py
-│   │   │   ├── validator_agent.py
-│   │   │   ├── billing_agent.py
-│   │   │   ├── librarian_agent.py
-│   │   │   ├── fiscal_agent.py
-│   │   │   ├── financial_agent.py
-│   │   │   └── rag/           # Motor RAG simple
-│   │   ├── database/          # Modelos + conexión
-│   │   ├── modules/           # Módulos por dominio
+│   │   ├── config.py          # Pydantic-Settings config
+│   │   ├── scheduler.py       # APScheduler jobs
+│   │   ├── database/          # Models + connection
+│   │   ├── modules/           # Domain modules
 │   │   └── utils/             # Crypto, hashing, LLM
+│   ├── Dockerfile             # Development image
+│   ├── Dockerfile.prod        # Production multi-stage image
 │   └── requirements.txt
-├── frontend/                   # Next.js 14
-│   └── app/
-│       ├── page.tsx           # Landing page SaaS
-│       ├── login/register/    # Autenticación
-│       ├── dashboard/         # Dashboard protegido
-│       ├── settings/          # Configuración
-│       └── shopping-list/     # Lista de compras
-├── docs/                       # Documentación
-│   └── agents/                # Bibliotecas de conocimiento
+├── frontend/                   # Next.js 15
+│   ├── app/                   # App Router pages
+│   ├── components/
+│   ├── Dockerfile             # Development image
+│   ├── Dockerfile.prod        # Production image
+│   └── next.config.js
+├── docs/                       # Documentation
+│   └── agents/                # Knowledge libraries
 │       ├── fiscal_library/
 │       └── financial_library/
-├── docker-compose.yml          # Servicios de desarrollo
-└── README.md                   # Este archivo
+├── docker-compose.yml          # Development services
+├── docker-compose.prod.yml     # Production services
+├── AGENTS.md                   # Guide for coding agents
+└── README.md                   # This file
 ```
 
 ---
@@ -133,11 +131,12 @@ curl http://localhost:8000/api/health
 
 | Documento | Propósito |
 |---|---|
+| [AGENTS.md](AGENTS.md) | Guía para agentes de código (fuente de verdad activa) |
 | [ARQUITECTURA_AGENTES.md](docs/ARQUITECTURA_AGENTES.md) | Arquitectura del sistema multi-agente |
-| [ARQUITECTURA_FINAL_v2.md](docs/ARQUITECTURA_FINAL_v2.md) | Arquitectura general y stack |
 | [CHANGELOG.md](docs/CHANGELOG.md) | Historial de cambios |
-| [GUIA_DEPLOY_PASO_A_PASO.md](docs/GUIA_DEPLOY_PASO_A_PASO.md) | Tutorial de despliegue |
 | [GUIA_ACCESO_REMOTO.md](docs/GUIA_ACCESO_REMOTO.md) | Acceso remoto seguro |
+
+> **Nota:** Documentos como `ARQUITECTURA_FINAL_v2.md` y `GUIA_DEPLOY_PASO_A_PASO.md` son históricos y pueden contener referencias a carpetas eliminadas (`apps/`, `packages/`, `infrastructure/`). Usa `AGENTS.md` y `docker-compose.prod.yml` como referencia actual.
 
 ---
 
@@ -187,8 +186,9 @@ curl -X POST http://localhost:8000/api/agents/process-ticket \
 # Tests
 cd backend && python -m pytest tests/
 
-# Lint
-cd backend && flake8 app/ --max-line-length=100 --extend-ignore=E203,W503
+# Lint / format (recommended)
+cd backend && ruff check app/
+cd backend && ruff format app/
 
 # Build frontend
 cd frontend && npm run build

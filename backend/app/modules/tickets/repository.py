@@ -8,10 +8,10 @@ from typing import Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database.models import Ticket, Product
-from app.modules.ocr.schemas import OCRTicketData, OCRProduct
+from app.database.models import Product, Ticket
 from app.modules.clasificacion.service import ClassificationService
 from app.modules.garantias.service import WarrantyService
+from app.modules.ocr.schemas import OCRProduct, OCRTicketData
 from app.modules.shopping_list.service import ShoppingListService
 
 logger = logging.getLogger(__name__)

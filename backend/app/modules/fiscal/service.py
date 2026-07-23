@@ -3,9 +3,10 @@ Iztack-Finance - Fiscal Service (México)
 Processes Constancia de Situación Fiscal (PDF), manages fiscal data,
 and provides deduction recommendations based on Mexican tax law.
 """
-import logging
 import base64
-from typing import Optional, Dict
+import logging
+from typing import Dict, Optional
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.models import FiscalData

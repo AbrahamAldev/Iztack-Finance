@@ -6,12 +6,12 @@ Security: prompt injection protection, data isolation per user.
 import logging
 from typing import List, Optional, Tuple
 
-from sqlalchemy import select, desc
+from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database.models import User, ChatMessage, Ticket, ShoppingList
-from app.modules.ocr.service import OCRService
+from app.database.models import ChatMessage, ShoppingList, Ticket, User
 from app.modules.ocr.schemas import OCRResponse
+from app.modules.ocr.service import OCRService
 from app.utils.llm import LLMClient
 
 logger = logging.getLogger(__name__)
@@ -87,7 +87,7 @@ class ChatService:
                 return response, {"type": "error"}
 
             data = result.data
-            lines = [f"✅ Ticket identificado", ""]
+            lines = ["✅ Ticket identificado", ""]
 
             if data.store_name:
                 lines.append(f"🏪 Tienda: **{data.store_name}**")
@@ -119,8 +119,8 @@ class ChatService:
             try:
                 api_key = os.environ.get("OPENROUTER_API_KEY", "")
                 if api_key:
-                    from app.modules.tickets.billing import trigger_billing
                     from app.database.connection import get_db_sync
+                    from app.modules.tickets.billing import trigger_billing
                     db_sync = get_db_sync()
                     billing_ctx = await trigger_billing(data, user_id, db_sync)
                     if billing_ctx:
@@ -253,7 +253,7 @@ class ChatService:
             )
             user = user_result.scalar_one_or_none()
             if user:
-                parts.append(f"\n## CONFIGURACIÓN:")
+                parts.append("\n## CONFIGURACIÓN:")
                 parts.append(f"- Moneda: {user.currency}")
                 parts.append(f"- Zona horaria: {user.timezone}")
                 parts.append(f"- Telegram: {'✅ Vinculado' if user.telegram_chat_id else '❌ No vinculado'}")

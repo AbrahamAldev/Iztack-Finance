@@ -3,9 +3,10 @@ Sistema Financiero - Configuration Module
 Loads environment variables and provides settings for the entire application.
 """
 import logging
-from pydantic_settings import BaseSettings
-from typing import Optional, Literal
 from functools import lru_cache
+from typing import Literal, Optional
+
+from pydantic_settings import BaseSettings
 
 logger = logging.getLogger(__name__)
 
@@ -52,12 +53,8 @@ class Settings(BaseSettings):
     smtp_use_tls: bool = True
     admin_alert_emails: str = "admin@iztack.com,abraham@iztack.com"
 
-    # --- Redis (Celery) ---
+    # --- Redis (cache / task broker if needed) ---
     redis_url: str = "redis://localhost:6379/0"
-
-    # --- Celery ---
-    celery_broker_url: str = "redis://localhost:6379/0"
-    celery_result_backend: str = "redis://localhost:6379/0"
 
     # --- Storage Preference ---
     storage_backend: Literal["drive", "icloud"] = "drive"
@@ -79,7 +76,7 @@ class Settings(BaseSettings):
     app_version: str = "1.0.0"
 
     # --- CORS ---
-    allowed_origins: str = "http://localhost:3000,https://tu-dominio.com"
+    allowed_origins: str = "http://localhost:3000,https://finance.iztack.com,https://apifinance.iztack.com,https://admfinance.iztack.com"
 
     class Config:
         env_file = ".env"

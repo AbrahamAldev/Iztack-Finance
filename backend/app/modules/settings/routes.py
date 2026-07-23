@@ -6,9 +6,9 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.connection import get_db
+from app.database.models import User
 from app.modules.auth.deps import get_current_user
 from app.modules.settings.service import SettingsService
-from app.database.models import User
 
 router = APIRouter(prefix="/api/settings", tags=["Settings"])
 
@@ -67,7 +67,7 @@ async def update_google_drive(
         )
 
     try:
-        user = await SettingsService(db).update_google_drive(
+        await SettingsService(db).update_google_drive(
             current_user.id, refresh_token, folder_id
         )
         return {

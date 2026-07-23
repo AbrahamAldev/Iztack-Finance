@@ -3,6 +3,7 @@ Validator Agent — validates OCR output for consistency and quality.
 """
 import logging
 from datetime import date
+
 from app.agents.base import Agent, AgentContext, AgentResult
 from app.modules.ocr.schemas import OCRTicketData
 

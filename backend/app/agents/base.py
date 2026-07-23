@@ -1,11 +1,11 @@
 """
 Base classes for the multi-agent system.
 """
+import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
 from datetime import datetime
-import logging
+from typing import Any, Dict, List, Optional
 
 from app.utils.llm import LLMClient
 

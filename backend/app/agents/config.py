@@ -4,7 +4,7 @@ Configuration for the multi-agent system.
 Models are selected from OpenRouter. DeepSeek is preferred for cost efficiency.
 """
 import os
-from typing import Dict, Any
+from typing import Any, Dict
 
 
 class AgentModels:

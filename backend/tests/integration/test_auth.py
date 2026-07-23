@@ -1,8 +1,15 @@
-"""Tests for authentication endpoints."""
+"""Integration tests for authentication endpoints.
+
+These tests require a running backend server (local or CI).
+Run with: pytest tests/integration/ -m integration
+"""
 import pytest
 import requests
 
 BASE = "http://localhost:8000"
+
+
+pytestmark = pytest.mark.integration
 
 def test_health():
     r = requests.get(f"{BASE}/api/health")

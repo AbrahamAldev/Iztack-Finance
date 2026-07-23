@@ -6,17 +6,17 @@ Receives events, decides which agents to run, and handles errors gracefully.
 import logging
 from typing import Dict, Type
 
-from app.utils.llm import LLMClient
 from app.agents.base import Agent, AgentContext, AgentResult
-from app.agents.config import AgentConfig
-from app.agents.ocr_agent import OCRAgent
-from app.agents.chat_agent import ChatAgent
-from app.agents.validator_agent import ValidatorAgent
 from app.agents.billing_agent import BillingAgent
-from app.agents.librarian_agent import LibrarianAgent
-from app.agents.fiscal_agent import FiscalAdvisorAgent
+from app.agents.chat_agent import ChatAgent
+from app.agents.config import AgentConfig
 from app.agents.financial_agent import FinancialAdvisorAgent
+from app.agents.fiscal_agent import FiscalAdvisorAgent
+from app.agents.librarian_agent import LibrarianAgent
+from app.agents.ocr_agent import OCRAgent
+from app.agents.validator_agent import ValidatorAgent
 from app.modules.tickets.tracer import trace_step
+from app.utils.llm import LLMClient
 
 logger = logging.getLogger(__name__)
 

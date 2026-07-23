@@ -4,10 +4,10 @@ Simple keyword-based RAG engine for agent knowledge libraries.
 This is intentionally lightweight to avoid heavy vector DB dependencies.
 In production, this can be replaced with pgvector, Chroma, or FAISS.
 """
+import logging
 import re
 from pathlib import Path
-from typing import List, Dict, Any, Optional
-import logging
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 

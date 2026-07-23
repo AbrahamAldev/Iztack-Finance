@@ -2,13 +2,14 @@
 Iztack-Finance - Tickets Service
 Handle ticket uploads, multi-image stitching, and OCR processing.
 """
-import logging
 import io
+import logging
 from typing import List
+
 from PIL import Image
 
-from app.modules.ocr.service import OCRService
 from app.modules.ocr.schemas import OCRResponse
+from app.modules.ocr.service import OCRService
 from app.modules.tickets.tracer import trace_step
 
 logger = logging.getLogger(__name__)
@@ -22,7 +23,7 @@ class TicketsService:
 
     async def process_single(self, image_bytes: bytes, user_id: str) -> OCRResponse:
         """Process a single ticket image."""
-        trace_id = trace_step(
+        trace_step(
             user_id=user_id,
             step="preprocess",
             status="ok",
@@ -236,11 +237,11 @@ class TicketsService:
 
     async def upload_and_process(
         self, images: List[bytes], is_continuation: bool, user_id: str
-    ) -> OCRResponse:
+    ) -> List[OCRResponse]:
         """
         Main upload handler.
-        If is_continuation is True, stitch images together.
-        Otherwise process each independently.
+        - If is_continuation is True, stitch images together as a single ticket.
+        - Otherwise process each image as an independent ticket.
         """
         trace_step(
             user_id=user_id,
@@ -248,12 +249,20 @@ class TicketsService:
             status="ok",
             details={"image_count": len(images), "is_continuation": is_continuation},
         )
-        if is_continuation and len(images) > 1:
-            return await self.process_multi(images, user_id)
+        if not images:
+            return [OCRResponse(success=False, error="No se recibieron imágenes")]
 
-        # Process first image (or only image)
-        result = await self.process_single(images[0], user_id)
+        if is_continuation:
+            return [await self.process_multi(images, user_id)]
 
-        # If there are additional images (not continuation), process separately
-        # For now, just return first result
-        return result
+        # Process every image as its own ticket
+        results = []
+        for idx, img_bytes in enumerate(images):
+            trace_step(
+                user_id=user_id,
+                step="reception",
+                status="ok",
+                details={"image_index": idx + 1, "total_images": len(images)},
+            )
+            results.append(await self.process_single(img_bytes, user_id))
+        return results

@@ -1,7 +1,8 @@
 """Iztack-Finance - System Info & Pipeline Diagnostics."""
-from fastapi import APIRouter
-from datetime import datetime
 import os
+from datetime import datetime
+
+from fastapi import APIRouter
 
 router = APIRouter(tags=["System"])
 
@@ -23,8 +24,9 @@ async def pipeline_health():
 
     # 2. DB
     try:
-        from app.database.connection import SyncSession
         from sqlalchemy import text
+
+        from app.database.connection import SyncSession
         db = SyncSession()
         db.execute(text("SELECT 1"))
         db.close()
@@ -56,7 +58,7 @@ async def pipeline_health():
     # 5. Tickets in DB
     try:
         from app.database.connection import SyncSession
-        from app.database.models import Ticket, ProcessingError, PipelineTrace
+        from app.database.models import PipelineTrace, ProcessingError, Ticket
         db = SyncSession()
         ticket_count = db.query(Ticket).count()
         error_count = db.query(ProcessingError).count()
