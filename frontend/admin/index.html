@@ -342,7 +342,8 @@ async function runSensors() {
   const btn = document.getElementById('btnRunSensors');
   btn.disabled = true; btn.textContent = 'Ejecutando...';
   try {
-    await apiGet(API_MONITOR + '/sensors/run');
+    const res = await fetch(API_MONITOR + '/sensors/run', { method: 'POST', headers: authHeaders() });
+    if (!res.ok) throw new Error((await res.json()).detail || 'HTTP ' + res.status);
     await refreshDashboard();
     if (!document.getElementById('section-sensors').classList.contains('hidden')) loadSensorsDetail();
   } catch(e) { alert('Error ejecutando checks: ' + e.message); }
