@@ -2,7 +2,8 @@
 import logging
 from typing import Optional
 
-from sqlalchemy.orm import Session
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.models import StoreCredential
 from app.utils.crypto import CryptoManager
@@ -15,20 +16,19 @@ crypto = CryptoManager()
 class CredentialManager:
     """Manages store credentials with encryption at rest."""
 
-    def __init__(self, db: Session):
+    def __init__(self, db: AsyncSession):
         self.db = db
 
     async def get_credentials(self, user_id: str, store_name: str) -> Optional[StoreCredential]:
         """Get stored credentials for a user and store."""
-        return (
-            self.db.query(StoreCredential)
-            .filter(
+        result = await self.db.execute(
+            select(StoreCredential).where(
                 StoreCredential.user_id == user_id,
                 StoreCredential.store_name.ilike(f"%{store_name}%"),
                 StoreCredential.is_active.is_(True),
             )
-            .first()
         )
+        return result.scalar_one_or_none()
 
     async def save_credentials(
         self, user_id: str, store_name: str, username: str, password: str,
@@ -54,8 +54,8 @@ class CredentialManager:
             is_active=True,
         )
         self.db.add(cred)
-        self.db.commit()
-        self.db.refresh(cred)
+        await self.db.commit()
+        await self.db.refresh(cred)
         logger.info(f"Credentials saved for {store_name} (user {user_id})")
         return cred
 
@@ -96,11 +96,13 @@ class CredentialManager:
 
     async def list_user_credentials(self, user_id: str) -> list:
         """List all stores with saved credentials for a user."""
-        creds = (
-            self.db.query(StoreCredential)
-            .filter(StoreCredential.user_id == user_id, StoreCredential.is_active.is_(True))
-            .all()
+        result = await self.db.execute(
+            select(StoreCredential).where(
+                StoreCredential.user_id == user_id,
+                StoreCredential.is_active.is_(True),
+            )
         )
+        creds = result.scalars().all()
         return [
             {
                 "store_name": c.store_name,

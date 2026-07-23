@@ -139,7 +139,6 @@ class TicketRepository:
 
         db.add(ticket)
         await db.commit()
-        await db.refresh(ticket)
         logger.info(f"Ticket {ticket.id} saved for user {user_id} with {len(ticket.products)} products")
 
         # Update consumption cycles for smart shopping list

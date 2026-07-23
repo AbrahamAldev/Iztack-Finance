@@ -115,22 +115,19 @@ class ChatService:
             lines.append("")
             lines.append("🔄 Iniciando facturación automática...")
 
-            # 🔥 INTEGRACIÓN: Disparar facturación post-OCR
+            # 🔥 INTEGRACIÓN: Disparar facturación post-OCR (usando session async)
             try:
                 api_key = os.environ.get("OPENROUTER_API_KEY", "")
                 if api_key:
-                    from app.database.connection import get_db_sync
                     from app.modules.tickets.billing import trigger_billing
-                    db_sync = get_db_sync()
-                    billing_ctx = await trigger_billing(data, user_id, db_sync)
+                    billing_ctx = await trigger_billing(data, user_id, self.db)
                     if billing_ctx:
                         lines.append("")
                         lines.append(f"📋 Facturación: {billing_ctx.step.value}")
                         if billing_ctx.needs_user_input:
                             lines.append(f"💬 {billing_ctx.user_message[:200]}")
-                    db_sync.close()
             except Exception as billing_err:
-                logger.error(f"Billing trigger failed: {billing_err}")
+                logger.error(f"Billing trigger failed: {billing_err}", exc_info=True)
                 lines.append("⚠️ La facturación automática falló. Puedes intentarlo manualmente.")
 
             if data.has_warranty_items:

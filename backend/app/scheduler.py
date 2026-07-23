@@ -3,7 +3,6 @@ Iztack-Finance - Scheduler (APScheduler)
 Runs periodic tasks: daily analysis, weekly shopping list, warranty alerts.
 Integrated into FastAPI lifespan — no separate worker needed.
 """
-import asyncio
 import logging
 from datetime import date, timedelta
 
@@ -202,7 +201,7 @@ def start_scheduler():
     scheduler.add_job(run_sensor_checks, "interval", minutes=15, id="sensor_checks")
     # Invoice processing every 5 minutes
     scheduler.add_job(
-        lambda: asyncio.create_task(process_pending_invoices()),
+        process_pending_invoices,
         "interval",
         minutes=5,
         id="invoice_processing",
