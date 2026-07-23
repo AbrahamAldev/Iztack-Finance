@@ -49,8 +49,8 @@ services:
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/sistema_financiero
       DATABASE_SYNC_URL: postgresql+psycopg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/sistema_financiero
       REDIS_URL: redis://redis:6379/0
-    expose:
-      - "8000"
+    ports:
+      - "8000:8000"
     volumes:
       - /opt/iztack-finance/.setup_key:/opt/iztack-finance/.setup_key:ro
 
@@ -85,8 +85,8 @@ services:
       - backend
     env_file:
       - .env
-    expose:
-      - "3000"
+    ports:
+      - "3000:3000"
 
 volumes:
   postgres_data:
