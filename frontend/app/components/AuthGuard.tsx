@@ -2,11 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Loader2, Wallet } from "lucide-react";
 
-/**
- * AuthGuard - Client component that protects app routes.
- * Redirects to /login if no JWT token is present in localStorage.
- */
 export default function AuthGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
@@ -22,10 +19,12 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
 
   if (isAuthenticated === null) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-[var(--background)]">
         <div className="text-center">
-          <div className="text-4xl animate-pulse mb-4">🏦</div>
-          <p className="text-gray-500">Cargando...</p>
+          <div className="w-16 h-16 rounded-2xl gradient-bg flex items-center justify-center mx-auto mb-4 animate-pulse shadow-glow">
+            <Wallet className="h-8 w-8 text-white" />
+          </div>
+          <p className="text-[var(--text-secondary)]">Cargando...</p>
         </div>
       </div>
     );

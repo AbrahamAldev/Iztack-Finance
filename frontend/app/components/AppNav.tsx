@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
-import { Menu, X } from "lucide-react";
+import { Menu, X, LogOut, Wallet, LayoutDashboard, ShoppingCart, Settings } from "lucide-react";
 import ChatWidget from "./ChatWidget";
 import ThemeToggle from "./ThemeToggle";
 
@@ -18,75 +18,102 @@ export default function AppNav() {
   }
 
   const links = [
-    { href: "/dashboard", label: "Dashboard" },
-    { href: "/shopping-list", label: "Lista de Compras" },
-    { href: "/settings", label: "Configuración" },
+    { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { href: "/shopping-list", label: "Lista de compras", icon: ShoppingCart },
+    { href: "/settings", label: "Configuración", icon: Settings },
   ];
 
   return (
     <>
-      <nav className="bg-white border-b border-gray-200 px-4 py-3 mb-6">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <Link href="/dashboard" className="text-xl font-bold text-sky-600 shrink-0">
-            🏦 Iztack
-          </Link>
+      <nav className="sticky top-0 z-30 glass border-b border-[var(--border)]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          <div className="flex items-center justify-between h-16">
+            <Link href="/dashboard" className="flex items-center gap-2.5 shrink-0 group">
+              <div className="w-9 h-9 rounded-xl gradient-bg flex items-center justify-center shadow-glow group-hover:scale-105 transition-transform">
+                <Wallet className="h-5 w-5 text-white" />
+              </div>
+              <span className="text-xl font-bold">
+                <span className="gradient-text">Iztack</span>
+              </span>
+            </Link>
 
-          {/* Desktop nav */}
-          <div className="hidden md:flex gap-4 items-center">
-            {links.map((l) => (
-              <Link
-                key={l.href}
-                href={l.href}
-                className={`text-sm ${
-                  pathname === l.href
-                    ? "text-sky-600 font-semibold"
-                    : "text-gray-600 hover:text-sky-600"
-                }`}
+            {/* Desktop nav */}
+            <div className="hidden md:flex items-center gap-1">
+              {links.map((l) => {
+                const Icon = l.icon;
+                const active = pathname === l.href;
+                return (
+                  <Link
+                    key={l.href}
+                    href={l.href}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                      active
+                        ? "bg-primary-50 dark:bg-primary-500/15 text-primary-700 dark:text-primary-300"
+                        : "text-[var(--text-secondary)] hover:text-[var(--text)] hover:bg-[var(--surface-elevated)]"
+                    }`}
+                  >
+                    <Icon className="h-4 w-4" />
+                    {l.label}
+                  </Link>
+                );
+              })}
+            </div>
+
+            <div className="hidden md:flex items-center gap-2">
+              <ThemeToggle />
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl transition-colors"
               >
-                {l.label}
-              </Link>
-            ))}
-            <ThemeToggle />
-            <button
-              onClick={handleLogout}
-              className="text-sm text-red-600 hover:text-red-700 font-medium"
-            >
-              Cerrar Sesión
-            </button>
-          </div>
+                <LogOut className="h-4 w-4" />
+                Salir
+              </button>
+            </div>
 
-          {/* Mobile hamburger */}
-          <button
-            onClick={() => setMenuOpen(!menuOpen)}
-            className="md:hidden p-1 text-gray-600"
-          >
-            {menuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-          </button>
+            {/* Mobile hamburger */}
+            <div className="flex md:hidden items-center gap-2">
+              <ThemeToggle />
+              <button
+                onClick={() => setMenuOpen(!menuOpen)}
+                className="p-2 rounded-xl text-[var(--text)] hover:bg-[var(--surface-elevated)]"
+              >
+                {menuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* Mobile menu */}
         {menuOpen && (
-          <div className="md:hidden mt-3 pt-3 border-t border-gray-100 space-y-2">
-            {links.map((l) => (
-              <Link
-                key={l.href}
-                href={l.href}
-                onClick={() => setMenuOpen(false)}
-                className={`block px-2 py-2 rounded text-sm ${
-                  pathname === l.href
-                    ? "text-sky-600 font-semibold bg-sky-50"
-                    : "text-gray-600 hover:bg-gray-50"
-                }`}
+          <div className="md:hidden border-t border-[var(--border)] bg-[var(--surface)] animate-fade-in">
+            <div className="px-4 py-3 space-y-1">
+              {links.map((l) => {
+                const Icon = l.icon;
+                const active = pathname === l.href;
+                return (
+                  <Link
+                    key={l.href}
+                    href={l.href}
+                    onClick={() => setMenuOpen(false)}
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium ${
+                      active
+                        ? "bg-primary-50 dark:bg-primary-500/15 text-primary-700 dark:text-primary-300"
+                        : "text-[var(--text-secondary)] hover:bg-[var(--surface-elevated)]"
+                    }`}
+                  >
+                    <Icon className="h-5 w-5" />
+                    {l.label}
+                  </Link>
+                );
+              })}
+              <button
+                onClick={handleLogout}
+                className="flex w-full items-center gap-3 px-3 py-2.5 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl"
               >
-                {l.label}
-              </Link>
-            ))}
-            <button
-              onClick={handleLogout}
-              className="block w-full text-left px-2 py-2 text-sm text-red-600 hover:bg-red-50 rounded"
-            >
-              Cerrar Sesión
-            </button>
+                <LogOut className="h-5 w-5" />
+                Cerrar sesión
+              </button>
+            </div>
           </div>
         )}
       </nav>

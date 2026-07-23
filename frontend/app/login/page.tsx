@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { Mail, Lock, ArrowRight, Loader2, Wallet } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -10,6 +11,15 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    const saved = localStorage.getItem("iztack_theme");
+    if (saved === "dark" || (!saved && window.matchMedia("(prefers-color-scheme: dark)").matches)) {
+      document.documentElement.classList.add("dark");
+    }
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -39,64 +49,87 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-sky-50 to-indigo-100 px-4">
-      <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8">
-        <div className="text-center mb-8">
-          <div className="text-5xl mb-4">🏦</div>
-          <h1 className="text-2xl font-bold text-sky-600">Iztack-Finance</h1>
-          <p className="text-sm text-gray-500 mt-1">Inicia sesión en tu cuenta</p>
-        </div>
+    <div className="min-h-screen flex items-center justify-center relative overflow-hidden px-4">
+      {/* Background decoration */}
+      <div className="absolute inset-0 bg-gradient-to-br from-primary-50 via-white to-indigo-50 dark:from-surface-900 dark:via-surface-900 dark:to-surface-800 -z-20" />
+      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary-400/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 -z-10" />
+      <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-indigo-400/10 rounded-full blur-3xl translate-y-1/3 -translate-x-1/4 -z-10" />
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
-              {error}
+      <div className={`max-w-md w-full transition-all duration-700 ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}>
+        <div className="card p-8 sm:p-10">
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl gradient-bg shadow-glow mb-5">
+              <Wallet className="h-8 w-8 text-white" />
             </div>
-          )}
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Email
-            </label>
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
-              placeholder="tu@email.com"
-            />
+            <h1 className="text-3xl font-bold mb-2">
+              <span className="gradient-text">Iztack</span> Finance
+            </h1>
+            <p className="text-[var(--text-secondary)] text-sm">
+              Bienvenido de nuevo. Inicia sesión para continuar.
+            </p>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Contraseña
-            </label>
-            <input
-              type="password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
-              placeholder="••••••••"
-            />
-          </div>
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {error && (
+              <div className="bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 text-red-700 dark:text-red-300 px-4 py-3 rounded-xl text-sm animate-fade-in">
+                {error}
+              </div>
+            )}
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-sky-600 text-white py-2.5 rounded-lg font-medium hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? "Iniciando..." : "Iniciar Sesión"}
-          </button>
-        </form>
+            <div>
+              <label className="block text-sm font-semibold mb-2 text-[var(--text)]">
+                Correo electrónico
+              </label>
+              <div className="relative">
+                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-[var(--text-muted)]" />
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="input pl-11"
+                  placeholder="tu@email.com"
+                />
+              </div>
+            </div>
 
-        <p className="text-center text-sm text-gray-500 mt-6">
-          ¿No tienes cuenta?{" "}
-          <Link href="/register" className="text-sky-600 font-medium hover:underline">
-            Regístrate aquí
-          </Link>
-        </p>
+            <div>
+              <label className="block text-sm font-semibold mb-2 text-[var(--text)]">
+                Contraseña
+              </label>
+              <div className="relative">
+                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-[var(--text-muted)]" />
+                <input
+                  type="password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="input pl-11"
+                  placeholder="••••••••"
+                />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="btn btn-primary w-full py-3"
+            >
+              {loading ? (
+                <><Loader2 className="h-4 w-4 animate-spin" /> Iniciando...</>
+              ) : (
+                <><span>Iniciar sesión</span><ArrowRight className="h-4 w-4" />
+              )}
+            </button>
+          </form>
+
+          <p className="text-center text-sm text-[var(--text-secondary)] mt-6">
+            ¿No tienes cuenta?{" "}
+            <Link href="/register" className="font-semibold text-primary-600 dark:text-primary-400 hover:underline">
+              Crea una gratis
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );

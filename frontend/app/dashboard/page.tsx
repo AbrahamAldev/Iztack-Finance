@@ -1,9 +1,22 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import AuthGuard from "../components/AuthGuard";
 import AppNav from "../components/AppNav";
 import TicketUpload from "../components/TicketUpload";
+import {
+  TrendingUp,
+  Receipt,
+  FileWarning,
+  ShieldCheck,
+  Camera,
+  ArrowUpRight,
+  Store,
+  PieChart,
+  Activity,
+  Zap,
+} from "lucide-react";
 
 interface DashboardData {
   kpi: {
@@ -25,6 +38,79 @@ interface DashboardData {
     by_category: Array<{ category: string; amount: number }>;
     by_store: Array<{ store: string; amount: number }>;
   };
+}
+
+function formatCurrency(n?: number) {
+  if (n === undefined || n === null) return "$0.00";
+  return "$" + n.toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function KpiCard({
+  title,
+  value,
+  icon: Icon,
+  trend,
+  color,
+}: {
+  title: string;
+  value: string;
+  icon: any;
+  trend?: string;
+  color: "blue" | "emerald" | "amber" | "rose";
+}) {
+  const gradients: Record<string, string> = {
+    blue: "from-blue-500 to-indigo-600",
+    emerald: "from-emerald-500 to-teal-600",
+    amber: "from-amber-500 to-orange-600",
+    rose: "from-rose-500 to-pink-600",
+  };
+  return (
+    <div className="card p-6 flex items-start justify-between group">
+      <div>
+        <p className="text-sm font-medium text-[var(--text-muted)] mb-1">{title}</p>
+        <p className="text-2xl sm:text-3xl font-bold text-[var(--text)]">{value}</p>
+        {trend && <p className="text-xs text-[var(--text-muted)] mt-2 flex items-center gap-1">{trend}</p>}
+      </div>
+      <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${gradients[color]} flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform`}>
+        <Icon className="h-6 w-6" />
+      </div>
+    </div>
+  );
+}
+
+function BarChart({ data, labelKey }: { data: Array<{ category?: string; store?: string; amount: number }>; labelKey: "category" | "store" }) {
+  if (!data || data.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 text-[var(--text-muted)]">
+        <PieChart className="h-10 w-10 mb-3 opacity-40" />
+        <p className="text-sm">Sin datos este mes</p>
+        <p className="text-xs opacity-70">Sube tu primer ticket para ver análisis</p>
+      </div>
+    );
+  }
+  const max = Math.max(...data.map((d) => d.amount), 1);
+  return (
+    <div className="space-y-4">
+      {data.map((item, idx) => {
+        const label = (item[labelKey] as string) || "Otro";
+        const pct = (item.amount / max) * 100;
+        return (
+          <div key={idx} className="group">
+            <div className="flex justify-between text-sm mb-1.5">
+              <span className="font-medium text-[var(--text)] capitalize truncate max-w-[60%]">{label}</span>
+              <span className="font-semibold text-[var(--text-secondary)]">{formatCurrency(item.amount)}</span>
+            </div>
+            <div className="h-2.5 w-full bg-[var(--surface-elevated)] rounded-full overflow-hidden border border-[var(--border)]">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-primary-500 to-indigo-500 transition-all duration-700 ease-out"
+                style={{ width: `${pct}%` }}
+              />
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
 }
 
 function DashboardContent() {
@@ -56,10 +142,12 @@ function DashboardContent() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
+      <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center">
-          <div className="text-4xl animate-pulse mb-4">🏦</div>
-          <p className="text-gray-500">Cargando dashboard...</p>
+          <div className="w-16 h-16 rounded-2xl gradient-bg flex items-center justify-center mx-auto mb-4 animate-pulse">
+            <Activity className="h-8 w-8 text-white" />
+          </div>
+          <p className="text-[var(--text-secondary)]">Cargando tu dashboard...</p>
         </div>
       </div>
     );
@@ -68,147 +156,164 @@ function DashboardContent() {
   const kpi = data?.kpi;
 
   return (
-    <>
-      <div className="flex items-center justify-between mb-8">
+    <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8 animate-slide-up">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-1">Dashboard</h1>
-          <p className="text-sm text-gray-500">
-            Resumen de tus finanzas y estado del sistema
+          <h1 className="text-3xl font-bold text-[var(--text)]">Dashboard</h1>
+          <p className="text-[var(--text-secondary)] text-sm mt-1">
+            Resumen de tus finanzas personales
           </p>
         </div>
         <button
           onClick={() => setShowUpload(true)}
-          className="flex items-center gap-2 px-5 py-2.5 bg-sky-600 text-white rounded-lg font-medium hover:bg-sky-700 shadow-sm transition-all"
+          className="btn btn-primary px-6 py-3"
         >
-          <span className="text-lg">📸</span>
-          Subir Ticket
+          <Camera className="h-5 w-5" />
+          <span>Subir ticket</span>
         </button>
       </div>
 
-      {showUpload && <TicketUpload onClose={() => { setShowUpload(false); fetchDashboard(); }} />}
+      {showUpload && (
+        <TicketUpload onClose={() => { setShowUpload(false); fetchDashboard(); }} />
+      )}
 
       {/* KPIs */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <div className="bg-white rounded-lg shadow p-6">
-          <p className="text-sm text-gray-500 mb-1">Gastos del Mes</p>
-          <p className="text-2xl font-bold text-gray-900">
-            ${kpi?.monthly_spent?.toFixed(2) || "0.00"}
-          </p>
-        </div>
-        <div className="bg-white rounded-lg shadow p-6">
-          <p className="text-sm text-gray-500 mb-1">Ticket Promedio</p>
-          <p className="text-2xl font-bold text-gray-900">
-            ${kpi?.avg_ticket?.toFixed(2) || "0.00"}
-          </p>
-        </div>
-        <div className="bg-white rounded-lg shadow p-6">
-          <p className="text-sm text-gray-500 mb-1">Facturas Pendientes</p>
-          <p className={`text-2xl font-bold ${(kpi?.pending_invoices || 0) > 0 ? "text-yellow-600" : "text-green-600"}`}>
-            {kpi?.pending_invoices || 0}
-          </p>
-        </div>
-        <div className="bg-white rounded-lg shadow p-6">
-          <p className="text-sm text-gray-500 mb-1">Garantías Activas</p>
-          <p className={`text-2xl font-bold ${(kpi?.active_warranties || 0) > 0 ? "text-green-600" : "text-gray-900"}`}>
-            {kpi?.active_warranties || 0}
-          </p>
-        </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+        <KpiCard
+          title="Gastos del mes"
+          value={formatCurrency(kpi?.monthly_spent)}
+          icon={TrendingUp}
+          trend={<><ArrowUpRight className="h-3 w-3" /> Acumulado mensual</>}
+          color="blue"
+        />
+        <KpiCard
+          title="Ticket promedio"
+          value={formatCurrency(kpi?.avg_ticket)}
+          icon={Receipt}
+          color="emerald"
+        />
+        <KpiCard
+          title="Facturas pendientes"
+          value={(kpi?.pending_invoices || 0).toString()}
+          icon={FileWarning}
+          color="amber"
+        />
+        <KpiCard
+          title="Garantías activas"
+          value={(kpi?.active_warranties || 0).toString()}
+          icon={ShieldCheck}
+          color="rose"
+        />
       </div>
 
-      {/* Recent Tickets */}
-      <div className="bg-white rounded-lg shadow p-6 mb-8">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Tickets Recientes</h2>
-        {data?.recent_tickets && data.recent_tickets.length > 0 ? (
-          <div className="space-y-3">
-            {data.recent_tickets.map((t) => (
-              <div key={t.id} className="flex items-center justify-between py-2 border-b last:border-0">
-                <div>
-                  <p className="font-medium text-gray-900">{t.store_name}</p>
-                  <p className="text-sm text-gray-500">
-                    {t.purchase_date} · {t.product_count} producto(s)
-                    {t.has_warranty && " · 🔧 Garantía"}
-                  </p>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        {/* Recent tickets */}
+        <div className="card p-6 lg:col-span-2">
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="text-lg font-bold text-[var(--text)] flex items-center gap-2">
+              <Receipt className="h-5 w-5 text-primary-500" />
+              Tickets recientes
+            </h2>
+            <button
+              onClick={() => setShowUpload(true)}
+              className="text-sm font-medium text-primary-600 dark:text-primary-400 hover:underline"
+            >
+              + Nuevo
+            </button>
+          </div>
+
+          {data?.recent_tickets && data.recent_tickets.length > 0 ? (
+            <div className="divide-y divide-[var(--border)]">
+              {data.recent_tickets.map((t) => (
+                <div key={t.id} className="py-4 flex items-center justify-between group hover:bg-[var(--surface-elevated)]/50 -mx-2 px-2 rounded-xl transition-colors">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-primary-50 dark:bg-primary-500/10 flex items-center justify-center text-primary-600 dark:text-primary-400">
+                      <Store className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-[var(--text)]">{t.store_name}</p>
+                      <p className="text-xs text-[var(--text-muted)]">
+                        {t.purchase_date} · {t.product_count} producto(s)
+                        {t.has_warranty && " · 🔧 Garantía"}
+                      </p>
+                    </div>
+                  </div>
+                  <p className="font-bold text-[var(--text)]">{formatCurrency(t.total_amount)}</p>
                 </div>
-                <p className="font-semibold text-gray-900">${t.total_amount.toFixed(2)}</p>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <div className="w-16 h-16 rounded-2xl bg-primary-50 dark:bg-primary-500/10 flex items-center justify-center mx-auto mb-4">
+                <Camera className="h-8 w-8 text-primary-500" />
               </div>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-8 text-gray-400">
-            <p className="text-4xl mb-2">📸</p>
-            <p>No hay tickets aún. Sube tu primer ticket para verlo aquí.</p>
-          </div>
-        )}
-      </div>
-
-      {/* Spending by Category */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Gastos por Categoría</h2>
-          {data?.charts?.by_category && data.charts.by_category.length > 0 ? (
-            <div className="space-y-2">
-              {data.charts.by_category.map((c) => (
-                <div key={c.category} className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600 capitalize">{c.category}</span>
-                  <span className="text-sm font-semibold">${c.amount.toFixed(2)}</span>
-                </div>
-              ))}
+              <p className="text-[var(--text)] font-medium mb-1">No hay tickets aún</p>
+              <p className="text-sm text-[var(--text-muted)] mb-4">Sube tu primer ticket para verlo aquí.</p>
+              <button onClick={() => setShowUpload(true)} className="btn btn-primary">
+                Subir ticket
+              </button>
             </div>
-          ) : (
-            <p className="text-sm text-gray-400 text-center py-4">Sin datos este mes</p>
           )}
         </div>
 
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Gastos por Tienda</h2>
-          {data?.charts?.by_store && data.charts.by_store.length > 0 ? (
+        {/* Status & quick actions */}
+        <div className="space-y-6">
+          <div className="card p-6">
+            <h3 className="font-bold text-[var(--text)] mb-4 flex items-center gap-2">
+              <Zap className="h-5 w-5 text-amber-500" />
+              Conexiones
+            </h3>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between py-2">
+                <span className="text-sm text-[var(--text-secondary)]">API Backend</span>
+                <span className="badge badge-success">● Activo</span>
+              </div>
+              <div className="flex items-center justify-between py-2">
+                <span className="text-sm text-[var(--text-secondary)]">Base de datos</span>
+                <span className="badge badge-success">● Conectada</span>
+              </div>
+              <div className="flex items-center justify-between py-2">
+                <span className="text-sm text-[var(--text-secondary)]">Bot Telegram</span>
+                <span className="badge badge-warning">● Configurar</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="card p-6">
+            <h3 className="font-bold text-[var(--text)] mb-3">Accesos rápidos</h3>
             <div className="space-y-2">
-              {data.charts.by_store.map((s) => (
-                <div key={s.store} className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">{s.store}</span>
-                  <span className="text-sm font-semibold">${s.amount.toFixed(2)}</span>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-gray-400 text-center py-4">Sin datos este mes</p>
-          )}
-        </div>
-      </div>
-
-      {/* Status */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="font-semibold text-gray-900 mb-3">Conexiones</h3>
-          <div className="space-y-2">
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">API Backend</span>
-              <span className="text-sm text-green-600 font-medium">● Activo</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Base de Datos</span>
-              <span className="text-sm text-green-600 font-medium">● Conectada</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Bot Telegram</span>
-              <span className="text-sm text-yellow-600 font-medium">● Configurar</span>
+              <Link href="/settings" className="flex items-center gap-3 p-3 rounded-xl hover:bg-[var(--surface-elevated)] transition-colors text-[var(--text-secondary)] hover:text-[var(--text)]">
+                <Settings className="h-5 w-5" />
+                <span className="text-sm font-medium">Configuración</span>
+              </Link>
+              <Link href="/shopping-list" className="flex items-center gap-3 p-3 rounded-xl hover:bg-[var(--surface-elevated)] transition-colors text-[var(--text-secondary)] hover:text-[var(--text)]">
+                <ShoppingCart className="h-5 w-5" />
+                <span className="text-sm font-medium">Lista de compras</span>
+              </Link>
             </div>
           </div>
         </div>
+      </div>
 
-        <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="font-semibold text-gray-900 mb-3">Accesos Rápidos</h3>
-          <div className="space-y-2">
-            <a href="/settings" className="block text-sm text-blue-600 hover:underline">
-              → Configuración
-            </a>
-            <a href="/shopping-list" className="block text-sm text-blue-600 hover:underline">
-              → Lista de Compras
-            </a>
-          </div>
+      {/* Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="card p-6">
+          <h2 className="text-lg font-bold text-[var(--text)] mb-5 flex items-center gap-2">
+            <PieChart className="h-5 w-5 text-primary-500" />
+            Gastos por categoría
+          </h2>
+          <BarChart data={data?.charts?.by_category || []} labelKey="category" />
+        </div>
+        <div className="card p-6">
+          <h2 className="text-lg font-bold text-[var(--text)] mb-5 flex items-center gap-2">
+            <Store className="h-5 w-5 text-primary-500" />
+            Gastos por tienda
+          </h2>
+          <BarChart data={data?.charts?.by_store || []} labelKey="store" />
         </div>
       </div>
-    </>
+    </main>
   );
 }
 
