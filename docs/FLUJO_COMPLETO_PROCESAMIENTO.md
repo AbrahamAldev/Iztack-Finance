@@ -40,7 +40,7 @@ Pillow redimensiona (máx 1536px), mejora contraste 1.5x
 SENSOR 2: trace_step("preprocess") → ✅ dimensiones finales
 ```
 
-### Paso 1.3 — OCR con IA (OpenRouter GPT-4o-mini Vision)
+### Paso 1.3 — OCR con IA (OpenRouter — configurable vía OCR_MODEL)
 ```
         │
         ▼
@@ -259,11 +259,11 @@ SENSOR 6: trace_step("billing") → ✅/❌ step + detalles
            │     {store}_{fecha}_{producto}_GARANTIA.pdf
            └── Tickets Vencidos/ (si plazo > 60 días)
   └── No → Almacenamiento interno (5GB límite)
-        │
-        ▼
-Mostrar barra de uso en Dashboard
-Si alcanza 85% → Notificar al usuario
-Si llega a 100% → Borrar más antiguos (con aviso)
+
+⚠️ Limitaciones actuales:
+  • Dedup por nombre de archivo (no SHA-256 real)
+  • Sin monitoreo de cuota de almacenamiento
+  • Sin barra de uso en Dashboard
 ```
 
 ### Paso 3.2 — Envío al email (opcional)
@@ -352,7 +352,8 @@ USUARIO
   │       │               │
   │       │               ├── OCRService.extract_from_image()
   │       │               │       │
-  │       │               │       ├── OpenRouter GPT-4o-mini Vision
+  │       │               │       ├── OpenRouter (modelo configurable: OCR_MODEL env var)
+        │     Default: google/gemma-4-26b-a4b-it:free
   │       │               │       └── → OCRTicketData (JSON)
   │       │               │
   │       │               ├── trigger_billing()
@@ -399,6 +400,7 @@ USUARIO
 | `backend/app/modules/facturacion/portal_learner.py` | Playwright + templates |
 | `backend/app/modules/facturacion/credential_manager.py` | Gestión de credenciales |
 | `backend/app/modules/facturacion/fiscal_advisor.py` | Recomendaciones fiscales |
+| `backend/app/modules/facturacion/email/gmail_service.py` | Búsqueda en Gmail (no integrado al orquestador) |
 | `backend/app/modules/finanzas/service.py` | Análisis financiero |
 | `backend/app/modules/tickets/tracer.py` | Sensores de pipeline |
 | `backend/app/scheduler.py` | Tareas programadas |
@@ -413,7 +415,7 @@ USUARIO
 |------|--------|-------|
 | 1.1 Recepción | ✅ Listo | Ambos canales (web + Telegram) |
 | 1.2 Preproceso | ✅ Listo | Pillow con contraste |
-| 1.3 OCR | ✅ Listo | OpenRouter GPT-4o-mini Vision |
+| 1.3 OCR | ✅ Listo | OpenRouter (default Gemma, configurable vía OCR_MODEL) |
 | 1.4 Validación | ✅ Listo | Prompt anti-alucinación |
 | 1.5 Presentación | ✅ Listo | Con estado de facturación |
 | 2.1 Detección tienda | ✅ Listo | `portal_discovery.py` |
@@ -422,8 +424,8 @@ USUARIO
 | 2.4 Gestión credenciales | ✅ Listo | DB + AES-256-GCM |
 | 2.5 Llenado formulario | ✅ Listo | `portal_learner.py` |
 | 2.6 Envío y resultado | ✅ Listo | Sube a DB |
-| 2.7 Gmail fallback | ⏳ Stub | Requiere OAuth funcional |
-| 3.1 Drive | ✅ Listo | `drive_service.py` |
+| 2.7 Gmail fallback | ⏳ No integrado | Código implementado (gmail_service.py) pero no conectado al orquestador |
+| 3.1 Drive | ✅ Listo | Estructura carpetas OK; sin SHA-256 dedup ni monitoreo cuota |
 | 3.2 Email | ⏳ Pendiente | Configurable en settings |
 | 3.3 Análisis financiero | ✅ Listo | `finanzas/service.py` |
 | 3.4 Garantías | ✅ Listo | `garantias/service.py` |
