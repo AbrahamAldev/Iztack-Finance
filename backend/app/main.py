@@ -13,6 +13,7 @@ from app.database.connection import close_db, init_db
 from app.modules.admin_staff.routes import router as admin_router
 from app.modules.agents.routes import router as agents_router
 from app.modules.almacenamiento.routes import router as almacenamiento_router
+from app.modules.almacenamiento.local_routes import router as storage_router
 from app.modules.auth.routes import router as auth_router
 from app.modules.business.routes import router as business_router
 from app.modules.chat.routes import router as chat_router
@@ -120,6 +121,7 @@ app.include_router(shopping_list_router)
 app.include_router(almacenamiento_router)
 app.include_router(clasificacion_router)
 app.include_router(agents_router)
+app.include_router(storage_router, tags=["Storage"])
 app.include_router(monitoring_router, prefix="/api", tags=["Monitoring"])
 
 # Future modules (to be activated in subsequent phases):

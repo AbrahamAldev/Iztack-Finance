@@ -18,6 +18,8 @@ import {
   Zap,
   Settings,
   ShoppingCart,
+  HardDrive,
+  ExternalLink,
 } from "lucide-react";
 
 interface DashboardData {
@@ -26,6 +28,12 @@ interface DashboardData {
     avg_ticket: number;
     pending_invoices: number;
     active_warranties: number;
+  };
+  storage: {
+    used_bytes: number;
+    max_bytes: number;
+    used_pct: number;
+    free_bytes: number;
   };
   recent_tickets: Array<{
     id: string;
@@ -280,6 +288,46 @@ function DashboardContent() {
                 <span className="badge badge-warning">● Configurar</span>
               </div>
             </div>
+          </div>
+
+          <div className="card p-6">
+            <h3 className="font-bold text-[var(--text)] mb-4 flex items-center gap-2">
+              <HardDrive className="h-5 w-5 text-primary-500" />
+              Almacenamiento
+            </h3>
+            {data?.storage ? (
+              <>
+                <div className="flex items-center justify-between text-sm mb-2">
+                  <span className="text-[var(--text-secondary)]">
+                    {(data.storage.used_bytes / 1024 / 1024).toFixed(1)} MB / {(data.storage.max_bytes / 1024 / 1024 / 1024).toFixed(1)} GB
+                  </span>
+                  <span className={`font-semibold ${data.storage.used_pct > 80 ? "text-rose-500" : data.storage.used_pct > 50 ? "text-amber-500" : "text-emerald-500"}`}>
+                    {data.storage.used_pct}%
+                  </span>
+                </div>
+                <div className="h-2.5 w-full bg-[var(--surface-elevated)] rounded-full overflow-hidden border border-[var(--border)] mb-4">
+                  <div
+                    className={`h-full rounded-full transition-all duration-700 ${
+                      data.storage.used_pct > 80
+                        ? "bg-gradient-to-r from-rose-500 to-pink-500"
+                        : data.storage.used_pct > 50
+                        ? "bg-gradient-to-r from-amber-500 to-orange-500"
+                        : "bg-gradient-to-r from-emerald-500 to-teal-500"
+                    }`}
+                    style={{ width: `${Math.min(data.storage.used_pct, 100)}%` }}
+                  />
+                </div>
+                <Link
+                  href="/storage"
+                  className="flex items-center gap-2 p-3 rounded-xl hover:bg-[var(--surface-elevated)] transition-colors text-[var(--text-secondary)] hover:text-[var(--text)] text-sm"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                  <span className="font-medium">Administrar almacenamiento</span>
+                </Link>
+              </>
+            ) : (
+              <p className="text-sm text-[var(--text-muted)]">Cargando...</p>
+            )}
           </div>
 
           <div className="card p-6">

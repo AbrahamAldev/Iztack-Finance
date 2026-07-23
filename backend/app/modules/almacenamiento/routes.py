@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database.connection import get_db
 from app.database.models import User
 from app.modules.almacenamiento.drive_service import DriveStorageService
+from app.modules.almacenamiento.local_storage import LocalStorageService
 from app.modules.auth.deps import get_current_user
 from app.modules.tickets.tracer import trace_step
 
@@ -77,6 +78,12 @@ async def store_invoice(
             ticket_id=ticket_id,
             has_warranty=data.get("has_warranty", False),
             expense_type=data.get("expense_type", ""),
+        )
+        local = LocalStorageService(current_user.id)
+        local.save_invoice_file(
+            invoice_id=ticket_id,
+            pdf_bytes=pdf_bytes,
+            xml_bytes=xml_bytes,
         )
         trace_step(
             user_id=current_user.id,

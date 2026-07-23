@@ -112,7 +112,7 @@ class OCRService:
 }"""
 
     def extract_from_image(self, image_bytes: bytes) -> OCRResponse:
-        """Process an image with OpenRouter GPT-4o-mini and extract structured data."""
+        """Process an image with OpenRouter vision and extract structured data."""
         client = self._get_client()
         if not client:
             return OCRResponse(
@@ -121,58 +121,90 @@ class OCRService:
                 raw_text="",
             )
 
-        try:
-            processed_bytes = self.preprocess_image(image_bytes)
-            b64_image = base64.b64encode(processed_bytes).decode("utf-8")
+        processed_bytes = self.preprocess_image(image_bytes)
+        b64_image = base64.b64encode(processed_bytes).decode("utf-8")
 
-            import os
-            ocr_model = os.getenv("OCR_MODEL", "google/gemma-4-26b-a4b-it:free")
-            response = client.chat.completions.create(
-                model=ocr_model,
-                messages=[
-                    {
-                        "role": "user",
-                        "content": [
-                            {"type": "text", "text": self._build_ocr_prompt()},
-                            {
-                                "type": "image_url",
-                                "image_url": {
-                                    "url": f"data:image/jpeg;base64,{b64_image}",
-                                    "detail": "high",
+        primary_model = os.getenv("OCR_MODEL", "google/gemma-4-26b-a4b-it:free")
+        fallback_models = [
+            m.strip()
+            for m in os.getenv("OCR_FALLBACK_MODELS", "meta-llama/llama-3.2-90b-vision:free,mistralai/mistral-small-3.1-24b-instruct:free").split(",")
+            if m.strip()
+        ]
+        models_to_try = [primary_model] + fallback_models
+        last_error = ""
+
+        for idx, model in enumerate(models_to_try):
+            try:
+                response = client.chat.completions.create(
+                    model=model,
+                    messages=[
+                        {
+                            "role": "user",
+                            "content": [
+                                {"type": "text", "text": self._build_ocr_prompt()},
+                                {
+                                    "type": "image_url",
+                                    "image_url": {
+                                        "url": f"data:image/jpeg;base64,{b64_image}",
+                                        "detail": "high",
+                                    },
                                 },
-                            },
-                        ],
-                    }
-                ],
-                max_tokens=2048,
-                temperature=0.0,
-            )
-
-            raw_text = response.choices[0].message.content or ""
-            logger.info(f"OCR raw: {raw_text[:200]}")
-
-            # Try to parse JSON from response
-            data = self._parse_ocr_response(raw_text)
-            if data:
-                return OCRResponse(
-                    success=True,
-                    data=OCRTicketData(**data),
-                    raw_text=raw_text,
+                            ],
+                        }
+                    ],
+                    max_tokens=2048,
+                    temperature=0.0,
                 )
-            else:
+
+                raw_text = response.choices[0].message.content or ""
+                logger.info(f"OCR ({model}) raw: {raw_text[:200]}")
+
+                data = self._parse_ocr_response(raw_text)
+                if data:
+                    return OCRResponse(
+                        success=True,
+                        data=OCRTicketData(**data),
+                        raw_text=raw_text,
+                    )
+                else:
+                    return OCRResponse(
+                        success=False,
+                        error="No se pudo interpretar el ticket. Intenta con mejor iluminación y sin sombras.",
+                        raw_text=raw_text,
+                    )
+
+            except Exception as e:
+                error_str = str(e)
+                last_error = error_str
+                is_rate = "429" in error_str or "rate limit" in error_str.lower()
+                is_quota = "insufficient_quota" in error_str or "free-models-per-day" in error_str
+
+                if is_rate or is_quota:
+                    if idx < len(models_to_try) - 1:
+                        logger.warning(f"Modelo {model} alcanzó límite, probando fallback: {models_to_try[idx + 1]}")
+                        continue
+                    return OCRResponse(
+                        success=False,
+                        error="Límite de uso de IA alcanzado. Agrega créditos a OpenRouter o inténtalo más tarde.",
+                        raw_text="",
+                    )
+
+                if idx < len(models_to_try) - 1:
+                    logger.warning(f"Error con modelo {model}, probando fallback: {models_to_try[idx + 1]}: {error_str[:100]}")
+                    continue
+
+                logger.error(f"OCR error with all models: {e}", exc_info=True)
                 return OCRResponse(
                     success=False,
-                    error="No se pudo interpretar el ticket. Intenta con mejor iluminación y sin sombras.",
-                    raw_text=raw_text,
+                    error=f"Error al procesar la imagen: {error_str[:100]}",
+                    raw_text="",
                 )
 
-        except Exception as e:
-            logger.error(f"OCR error: {e}", exc_info=True)
-            return OCRResponse(
-                success=False,
-                error=f"Error al procesar la imagen: {str(e)[:100]}",
-                raw_text="",
-            )
+        return OCRResponse(
+            success=False,
+            error=f"Error al procesar la imagen: {last_error[:100]}",
+            raw_text="",
+        )
 
     def extract_from_base64(self, image_base64: str) -> OCRResponse:
         """Process a base64-encoded ticket image and extract structured data."""

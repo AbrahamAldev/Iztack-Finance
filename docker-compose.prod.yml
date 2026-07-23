@@ -53,6 +53,7 @@ services:
       - "8000:8000"
     volumes:
       - /opt/iztack-finance/.setup_key:/opt/iztack-finance/.setup_key:ro
+      - storage_data:/data/storage
 
   telegram-bot:
     build:
@@ -103,3 +104,4 @@ services:
 volumes:
   postgres_data:
   redis_data:
+  storage_data:

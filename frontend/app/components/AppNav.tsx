@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
-import { Menu, X, LogOut, Wallet, LayoutDashboard, ShoppingCart, Settings } from "lucide-react";
+import { Menu, X, LogOut, Wallet, LayoutDashboard, ShoppingCart, Settings, HardDrive } from "lucide-react";
 import ChatWidget from "./ChatWidget";
 import ThemeToggle from "./ThemeToggle";
 
@@ -20,6 +20,7 @@ export default function AppNav() {
   const links = [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { href: "/shopping-list", label: "Lista de compras", icon: ShoppingCart },
+    { href: "/storage", label: "Almacenamiento", icon: HardDrive },
     { href: "/settings", label: "Configuración", icon: Settings },
   ];
 

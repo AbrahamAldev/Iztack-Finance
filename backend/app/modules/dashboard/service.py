@@ -9,6 +9,7 @@ from sqlalchemy import desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.models import Product, Ticket
+from app.modules.almacenamiento.local_storage import LocalStorageService
 
 logger = logging.getLogger(__name__)
 
@@ -45,12 +46,22 @@ class DashboardService:
         # Spending by store
         spending_by_store = await self._get_spending_by_store(user_id, first_of_month)
 
+        # Storage usage
+        storage = LocalStorageService(user_id)
+        storage_usage = storage.get_usage()
+
         return {
             "kpi": {
                 "monthly_spent": monthly_spent,
                 "avg_ticket": avg_ticket,
                 "pending_invoices": pending_invoices,
                 "active_warranties": active_warranties,
+            },
+            "storage": {
+                "used_bytes": storage_usage["used_bytes"],
+                "max_bytes": storage_usage["max_bytes"],
+                "used_pct": storage_usage["used_pct"],
+                "free_bytes": storage_usage["free_bytes"],
             },
             "recent_tickets": recent_tickets,
             "charts": {

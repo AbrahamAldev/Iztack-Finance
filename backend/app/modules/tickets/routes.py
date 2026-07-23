@@ -13,6 +13,7 @@ from app.modules.auth.deps import get_current_user
 from app.modules.tickets.repository import TicketRepository
 from app.modules.tickets.service import TicketsService
 from app.modules.tickets.tracer import trace_step
+from app.modules.almacenamiento.local_storage import LocalStorageService
 
 router = APIRouter(prefix="/api/tickets", tags=["Tickets"])
 
@@ -80,6 +81,11 @@ async def upload_ticket(
                     status="ok",
                     ticket_id=ticket.id,
                     details={"store_name": result.data.store_name, "total_amount": result.data.total_amount},
+                )
+                storage = LocalStorageService(current_user.id)
+                storage.save_ticket_image(
+                    ticket_id=ticket.id,
+                    original=image_bytes_list[idx],
                 )
                 saved_tickets.append({
                     "ticket_id": ticket.id,
@@ -185,6 +191,11 @@ async def upload_ticket_base64(
                     status="ok",
                     ticket_id=ticket.id,
                     details={"store_name": result.data.store_name, "total_amount": result.data.total_amount},
+                )
+                storage = LocalStorageService(current_user.id)
+                storage.save_ticket_image(
+                    ticket_id=ticket.id,
+                    original=image_bytes_list[idx],
                 )
                 saved_tickets.append({
                     "ticket_id": ticket.id,
