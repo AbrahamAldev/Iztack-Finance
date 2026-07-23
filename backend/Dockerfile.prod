@@ -21,10 +21,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
-RUN pip install --no-cache-dir --user -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Install Playwright Chromium browser for the target platform
-ENV PATH=/root/.local/bin:$PATH
 RUN playwright install chromium
 RUN playwright install-deps chromium 2>/dev/null || echo "install-deps partial failure (non-critical), continuing..."
 
@@ -47,9 +46,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy Python packages from builder
-COPY --from=builder /root/.local /root/.local
-ENV PATH=/root/.local/bin:$PATH
+# Copy Python packages from builder (installed globally in /usr/local)
+COPY --from=builder /usr/local /usr/local
 
 # Copy Playwright browsers from builder
 COPY --from=builder /root/.cache/ms-playwright /root/.cache/ms-playwright
@@ -58,7 +56,7 @@ COPY --from=builder /root/.cache/ms-playwright /root/.cache/ms-playwright
 COPY . .
 
 # Non-root user for security
-RUN chmod -R o+rX /root/.local /root/.cache/ms-playwright && \
+RUN chmod -R o+rX /root/.cache/ms-playwright && \
     useradd -m -u 1000 appuser && chown -R appuser:appuser /app
 USER appuser
 
