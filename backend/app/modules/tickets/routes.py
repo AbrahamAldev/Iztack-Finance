@@ -89,7 +89,7 @@ async def upload_ticket(
                 )
                 saved_tickets.append({
                     "ticket_id": ticket.id,
-                    "data": result.data.dict(),
+                    "data": result.data.model_dump(),
                 })
             except Exception as exc:
                 trace_step(
@@ -199,7 +199,7 @@ async def upload_ticket_base64(
                 )
                 saved_tickets.append({
                     "ticket_id": ticket.id,
-                    "data": result.data.dict(),
+                    "data": result.data.model_dump(),
                 })
             except Exception as exc:
                 trace_step(

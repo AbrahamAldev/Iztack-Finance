@@ -193,12 +193,15 @@ class ChatService:
 
         # Fallback if no AI key configured or AI failed
         response = (
-            "Hola, actualmente no tengo conexión con mi servicio de IA. 🧠\n\n"
+            "Hola, el servicio de IA no está disponible actualmente. 🧠\n\n"
+            "Posibles causas:\n"
+            "• Límite de uso diario gratuito alcanzado (vuelve mañana)\n"
+            "• Clave API de OpenRouter no configurada\n\n"
             "Pero aún puedo ayudarte:\n"
-            "📸 Envíame fotos de tickets para procesarlos con OCR\n"
+            "📸 Envíame fotos de tickets para procesarlos con OCR local\n"
             "📊 Consulta tu Dashboard para ver tus finanzas\n"
             "🛒 Revisa tu lista de compras inteligente\n\n"
-            "Si necesitas asistencia personalizada, contacta a soporte."
+            "Si configuraste una API key, verifica que sea válida en Settings."
         )
         await self._save_message(user_id, "bot", response, "text")
         return response, {"type": "fallback"}

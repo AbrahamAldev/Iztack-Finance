@@ -106,6 +106,15 @@ class LLMClient:
             return result
 
         except Exception as e:
+            error_str = str(e)
+            if "429" in error_str or "Rate limit" in error_str or "free-models-per-day" in error_str:
+                logger.warning(f"OpenRouter rate limit (429) exceeded: {error_str[:100]}")
+                return (
+                    "❌ Límite de uso diario de IA alcanzado. "
+                    "Los modelos gratuitos de OpenRouter tienen un límite de 50 solicitudes/día. "
+                    "Vuelve a intentar mañana o agrega créditos a tu cuenta de OpenRouter "
+                    "(sk-or-v1-...) para aumentar el límite a 1000 solicitudes/día."
+                )
             logger.error(f"OpenRouter API error: {e}", exc_info=True)
             return (
                 "❌ Lo siento, tuve un problema al procesar tu mensaje. "

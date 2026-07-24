@@ -48,7 +48,10 @@ COPY --from=builder /root/.cache/ms-playwright /root/.cache/ms-playwright
 COPY . .
 
 RUN chmod -R o+rX /root/.cache/ms-playwright && \
-    useradd -m -u 1000 appuser && chown -R appuser:appuser /app
+    useradd -m -u 1000 appuser && chown -R appuser:appuser /app && \
+    mkdir -p /home/appuser/.cache && \
+    ln -s /root/.cache/ms-playwright /home/appuser/.cache/ms-playwright && \
+    chown -R appuser:appuser /home/appuser/.cache
 USER appuser
 
 CMD ["python", "-m", "app.modules.bots.telegram_bot"]
